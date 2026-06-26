@@ -14,7 +14,7 @@ This doc is the source of truth for how the orchestration is built. It is intent
 | A2 | Create a new **Asana project** to manage this work. Decide whether to reuse the `agent_status` custom-field state machine from Edge or run lighter (e.g. plain sections / a simpler status field). | todo |
 | A3 | **Strip Edge-specific restrictions** (see "Workflow simplifications" below): drop `lint-commit.sh`, the `/im` clean-commit discipline, the CHANGELOG gate, iOS sim + maestro, and yarn assumptions. Adopt commit-to-main with minimal ceremony. | todo |
 | A4 | **Decide CI posture.** Default: Vercel build status only, no GitHub Actions (see "CI / GitHub Actions" below). Revisit GH Actions only if a standing regression suite is wanted later. | decided: skip GH Actions for now |
-| A5 | **Port the control plane** (watcher / hooks / eval) keeping the agent **local + interactive + subscription-billed**. No `-p`, no Agent SDK, no `claude-code-action`. | todo |
+| A5 | **Stand up the orchestration repo-local** (fresh and lighter; see "Orchestration home" below). Reuse the global enforcement hooks as-is; rebuild `one-shot` + the verify step fresh in this repo. Agent stays **local + interactive + subscription-billed** (no `-p` / Agent SDK / `claude-code-action`). | decided: start anew, repo-local |
 | A6 | **Build the new verify step**: browser-drive the Vercel deployment for the real user flow to terminal success, capture a screenshot, attach as proof. Replaces the iOS-sim + maestro half of `build-and-test`. | todo |
 | A7 | **Scaffold the Next.js app** itself in this repo. | todo |
 
@@ -50,20 +50,37 @@ Cloud-native (`claude-code-action`) and "move the agent into GitHub Actions" wer
 
 ---
 
-## What ports / swaps / deletes / builds-new
+## Orchestration home: start anew (repo-local), reuse only the generic core
 
-| Edge piece | Action for tcg-art | Notes |
+Decision (recommended): **build the web orchestration fresh and commit it into this repo (repo-local `.claude/` skills + settings + `scripts/`). Reuse only the genuinely generic, already-global pieces of the Edge arch. Do NOT generalize the Edge `one-shot` / `build-and-test` / watcher skills into a multi-flavor system.**
+
+Why not refactor the existing Edge arch into a shared multi-target system:
+
+- **Deep Edge coupling, and we are stripping the parts that carry its value.** The Edge skills are saturated with Edge specifics (Asana custom-field state machine, edge-react-gui dep integration, iOS sim + maestro, multi-repo subtasks, reviewer-bot finalize-gate, test-fund discipline). This project drops most of that (commit-to-main, no lint-commit, no CHANGELOG gate, no multi-repo, no GH Actions). A shared path would be mostly Edge-logic-removed-for-web: a conditional-soup skeleton sharing little real behavior.
+- **Shared philosophy, not shared implementation.** Both are eager / hands-off / hook-enforced, but the implementations diverge (RN + iOS + maestro + multi-repo vs Next + Vercel + browser + single-repo). When things share principles but not code, copy the principles, not the code. Premature DRY across diverging domains buys coupling for near-zero reuse.
+- **Isolation.** A repo-local orch for a solo project cannot regress the production Edge pipeline (which runs every 120s and is graded by the eval layer).
+- **Reproducibility for free.** The orch is version-controlled with the app: clone the repo, get the orch.
+
+Refactor-existing would only win if a third web-similar target were expected soon (amortize the abstraction), or this project wanted to keep all the heavy Edge gates, or one eval rubric was needed across both. None hold, so start-anew wins. Revisit extracting a shared core only if that third target appears.
+
+What to reuse vs rebuild:
+
+| Edge piece | For tcg-art | Why / note |
 |---|---|---|
-| `claude --yolo /one-shot <url>` interactive invocation | **Port as-is** | Subscription-billed; no change needed |
-| PreToolUse / Stop enforcement hooks (deny AskUserQuestion + self-respawn, force-continue) | **Port as-is** | Native hooks, auto-loaded in interactive mode |
-| Validator / eval subagents | **Port as-is** | Native subagents |
-| Watcher / slot allocator (worktree) | **Port, simplified** | Worktree stays; drop sim + Metro allocation |
-| `resolve-run` / `agent-eval` / `orch-eval` | **Port as-is** | Evidence sources change (Vercel deploy + PR), grading logic unchanged |
-| iOS-sim pool refresh, Metro port mgmt, local build, `select-ios-sim.sh`, `ios-rn-build.sh` | **Delete** | Mac-specific; now Vercel's job |
-| `build-and-test` (sim + maestro half) | **Swap implementation** | Keep the "drive the real action to terminal success + proof screenshot" contract; replace sim + maestro with resolve-deploy-URL + Playwright-against-deployment |
-| `lint-commit.sh`, `/im` commit discipline, CHANGELOG gate | **Drop** | See workflow simplifications |
-| maestro flows + proof screenshots | **Build new** | Playwright (or Claude-in-Chrome MCP) browser drive + `page.screenshot()` |
+| Enforcement hooks (deny AskUserQuestion / self-respawn, Stop force-continue) | **Reuse as-is** (stay global, gated on `AGENT_TASK_GID`) | Already repo-agnostic; highest-value shared asset; encodes the fork-storm / no-respawn prevention. Do not fork. |
+| Global always-apply rules (act-autonomously, answer-questions-first, workflow-halt-on-error, writing-style) | **Reuse as-is** | Generic; apply fine anywhere. (`no-format-lint`'s lint-commit specifics load but stay inert without the script.) |
+| `claude --yolo /one-shot <task>` interactive invocation | **Reuse pattern as-is** | Subscription-billed; the invocation does not change |
+| `one-shot` phase-machine *skill* | **Rebuild fresh, repo-local + lighter** | Keep the phase skeleton; collapse phases, commit-to-main. Do not fork the dense Edge file. |
+| `build-and-test` | **Rebuild fresh** (Vercel + browser verify) | Keep only the contract: drive the real action to terminal success + proof screenshot |
 | Vercel deploy-URL resolution + protection bypass | **Build new (A1 spike)** | The only unconfirmed layer |
+| Browser drive + proof | **Build new** | Playwright (or Claude-in-Chrome MCP) drive + `page.screenshot()` |
+| Watcher / watchdog daemon + slot/pool allocator | **Copy-adapt later (optional)** | Reuse the poll -> allocate -> spawn -> tend pattern; slot loses sim/Metro. Not needed day 1: manually kicking `claude --yolo /one-shot <task>` works until auto-pickup is wanted. |
+| Eval layer (resolve-run / agent-eval / orch-eval) | **Copy-adapt later** | Pattern reusable; the rubric is Edge-process-specific, rewrite for web. Not needed day 1. |
+| `im` / `pr-create` / `pr-land` / `lint-commit` / `changelog` | **Drop** | Edge ceremony being removed |
+| iOS-sim pool refresh, Metro mgmt, local build, `select-ios-sim.sh`, `ios-rn-build.sh` | **Delete** | Mac-specific; now Vercel's job |
+| Asana integration | **Rebuild light** | New project (A2), simpler status field |
+
+Minor wrinkle to watch: the global always-apply rules and hooks fire in *every* session, including tcg-art. That is desired for the hooks and the generic rules; just be aware the Edge-flavored bits (e.g. `no-format-lint` referencing `lint-commit.sh`) load but stay inert here.
 
 ---
 
