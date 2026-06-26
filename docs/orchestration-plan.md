@@ -11,7 +11,7 @@ This doc is the source of truth for how the orchestration is built. It is intent
 | # | Item | Status |
 |---|------|--------|
 | **A1** | **De-risk the Vercel deploy-verify chain (DO THIS FIRST).** Given a commit SHA, resolve its Vercel deployment URL, wait for `READY`, and confirm a headless browser (Playwright) can load it, handling Vercel deployment protection / auth if the deployment is protected. This is the **only** piece the research could not confirm against primary sources (verifier agents were rate-limited, not refuted, on every Vercel claim). Build nothing else around the loop until this works end to end. | todo |
-| A2 | Create a new **Asana project** to manage this work. Decide whether to reuse the `agent_status` custom-field state machine from Edge or run lighter (e.g. plain sections / a simpler status field). | todo |
+| A2 | **Task backend = GitHub Projects (done).** Board "Agent Orchestration" (#1, private), custom single-select **Agent Status** (Pending/Running/Blocked/Done). First task queued: tcg-art#1, Agent Status = Pending. See "Task backend" below. | done |
 | A3 | **Strip Edge-specific restrictions** (see "Conventions" + "Workflow simplifications" below): drop `lint-commit.sh`, the `/im` clean-commit discipline, the CHANGELOG gate, iOS sim + maestro, and yarn assumptions. Adopt commit-to-main with minimal ceremony. | in progress: `CLAUDE.md` overrides written |
 | A4 | **Decide CI posture.** Default: Vercel build status only, no GitHub Actions (see "CI / GitHub Actions" below). Revisit GH Actions only if a standing regression suite is wanted later. | decided: skip GH Actions for now |
 | A5 | **Stand up the orchestration repo-local** (fresh and lighter; see "Orchestration home" below). Reuse the global enforcement hooks as-is; rebuild `one-shot` + the verify step fresh in this repo. Agent stays **local + interactive + subscription-billed** (no `-p` / Agent SDK / `claude-code-action`). | decided: start anew, repo-local |
@@ -78,7 +78,7 @@ What to reuse vs rebuild:
 | Eval layer (resolve-run / agent-eval / orch-eval) | **Copy-adapt later** | Pattern reusable; the rubric is Edge-process-specific, rewrite for web. Not needed day 1. |
 | `im` / `pr-create` / `pr-land` / `lint-commit` / `changelog` | **Drop** | Edge ceremony being removed |
 | iOS-sim pool refresh, Metro mgmt, local build, `select-ios-sim.sh`, `ios-rn-build.sh` | **Delete** | Mac-specific; now Vercel's job |
-| Asana integration | **Rebuild light** | New project (A2), simpler status field |
+| Task backend (was Asana) | **GitHub Projects (done)** | Native board + Agent Status field; data lives in GitHub. See "Task backend". |
 
 Minor wrinkle to watch: the global always-apply rules and hooks fire in *every* session, including tcg-art. That is desired for the hooks and the generic rules; the few Edge rules that would misfire here are redirected by `CLAUDE.md` (see "Conventions" below).
 
@@ -120,6 +120,17 @@ tcg-art/
 **Dropped outright:** `lint-commit.sh`, `/im` commit discipline, CHANGELOG gate, `eslint-warnings.mdc`, `review-standards.mdc`, yarn assumptions (use npm/pnpm), `develop` base branch (use `main`), the Asana `agent_status`/`tested`/`blocked` state machine (simpler or none, A2), `GIT_BRANCH_PREFIX` naming, multi-repo subtasks / dep-pr. The reviewer-bot finalize-gate (`cursor[bot]`) applies only if Cursor Bugbot is actually run on this repo.
 
 ---
+
+## Task backend (GitHub Projects)
+
+The orch's queue + state store is **GitHub Projects** (native, first-party; task data lives in GitHub). No Asana, no DB, no custom board. GitHub Projects is a GitHub feature, not a third-party developer's board, so it clears the security bar.
+
+- Board: "Agent Orchestration" (user-level, private) - https://github.com/users/j0ntz/projects/1 (project #1, id `PVT_kwHOD6Er384BbyER`).
+- State: custom single-select **Agent Status** field (id `PVTSSF_lAHOD6Er384BbyERzhWgFFU`) with options Pending / Running / Blocked / Done. Deliberately coarse (no granular per-phase state needed).
+- Tasks are GitHub issues (in the relevant project repo) added as board items; one user-level board spans every project repo.
+- Access: `gh` CLI with the `project` scope, added to the keyring login (`GITHUB_TOKEN` in `~/.zshrc` mirrors that token via `gh auth token`, so it inherits the scope on a new shell).
+- Loop: the watcher polls `gh project item-list` for Agent Status = Pending; the agent flips the field via `gh project item-edit`, comments on the issue, and links its PR (auto-closes the issue on merge).
+- You add tasks by opening an issue (GitHub mobile works) and dropping it on the board.
 
 ## Verification bar
 
@@ -170,7 +181,7 @@ The A1 spike should cover both: SHA -> deployment URL -> wait `READY` (always), 
 
 1. **Vercel deploy-URL resolution + protection bypass** mechanics against live Vercel docs (the A1 spike). The research pool's claims on `x-vercel-protection-bypass`, `VERCEL_AUTOMATION_BYPASS_SECRET`, the bypass cookie, and `wait-for-deployment` actions were rate-limited in verification, not confirmed.
 2. **Playwright MCP vs Claude-in-Chrome MCP** for the proof drive against a (possibly protected) deployment: auth / headless limits of each.
-3. **Asana project shape** (A2): reuse the `agent_status` state machine or run lighter.
+3. **(resolved)** Task backend = GitHub Projects (Agent Orchestration board #1); see "Task backend".
 4. Whether to keep any PR-based preview flow at all, or go pure commit-to-main -> production.
 5. **Stack conventions to lock** as the app takes shape (record in `CLAUDE.md`): styling (CSS modules / Tailwind / styled), data fetching (App Router server components vs client TanStack Query), state (Context / Zustand).
 
