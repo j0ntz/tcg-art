@@ -12,7 +12,7 @@ This doc is the source of truth for how the orchestration is built. It is intent
 |---|------|--------|
 | **A1** | **De-risk the Vercel deploy-verify chain (DO THIS FIRST).** Given a commit SHA, resolve its Vercel deployment URL, wait for `READY`, and confirm a headless browser (Playwright) can load it, handling Vercel deployment protection / auth if the deployment is protected. This is the **only** piece the research could not confirm against primary sources (verifier agents were rate-limited, not refuted, on every Vercel claim). Build nothing else around the loop until this works end to end. | todo |
 | A2 | Create a new **Asana project** to manage this work. Decide whether to reuse the `agent_status` custom-field state machine from Edge or run lighter (e.g. plain sections / a simpler status field). | todo |
-| A3 | **Strip Edge-specific restrictions** (see "Workflow simplifications" below): drop `lint-commit.sh`, the `/im` clean-commit discipline, the CHANGELOG gate, iOS sim + maestro, and yarn assumptions. Adopt commit-to-main with minimal ceremony. | todo |
+| A3 | **Strip Edge-specific restrictions** (see "Conventions" + "Workflow simplifications" below): drop `lint-commit.sh`, the `/im` clean-commit discipline, the CHANGELOG gate, iOS sim + maestro, and yarn assumptions. Adopt commit-to-main with minimal ceremony. | in progress: `CLAUDE.md` overrides written |
 | A4 | **Decide CI posture.** Default: Vercel build status only, no GitHub Actions (see "CI / GitHub Actions" below). Revisit GH Actions only if a standing regression suite is wanted later. | decided: skip GH Actions for now |
 | A5 | **Stand up the orchestration repo-local** (fresh and lighter; see "Orchestration home" below). Reuse the global enforcement hooks as-is; rebuild `one-shot` + the verify step fresh in this repo. Agent stays **local + interactive + subscription-billed** (no `-p` / Agent SDK / `claude-code-action`). | decided: start anew, repo-local |
 | A6 | **Build the new verify step**: browser-drive the Vercel deployment for the real user flow to terminal success, capture a screenshot, attach as proof. Replaces the iOS-sim + maestro half of `build-and-test`. | todo |
@@ -80,7 +80,44 @@ What to reuse vs rebuild:
 | iOS-sim pool refresh, Metro mgmt, local build, `select-ios-sim.sh`, `ios-rn-build.sh` | **Delete** | Mac-specific; now Vercel's job |
 | Asana integration | **Rebuild light** | New project (A2), simpler status field |
 
-Minor wrinkle to watch: the global always-apply rules and hooks fire in *every* session, including tcg-art. That is desired for the hooks and the generic rules; just be aware the Edge-flavored bits (e.g. `no-format-lint` referencing `lint-commit.sh`) load but stay inert here.
+Minor wrinkle to watch: the global always-apply rules and hooks fire in *every* session, including tcg-art. That is desired for the hooks and the generic rules; the few Edge rules that would misfire here are redirected by `CLAUDE.md` (see "Conventions" below).
+
+---
+
+## Disk layout & sync
+
+The orchestration lives in this repo (repo-local `.claude/`), synced by plain git. No bootstrap, no convention-sync, no symlinks.
+
+```
+tcg-art/
+├── CLAUDE.md                     # project instructions + Edge-rule overrides (committed)
+├── .claude/
+│   ├── settings.json             # project settings + project hooks (committed)
+│   ├── settings.local.json       # machine-local secrets/overrides (gitignored)
+│   ├── skills/<skill>/SKILL.md    # repo-local web skills (committed)
+│   └── agents/                   # validator/eval subagents, if/when added
+├── scripts/                      # companion scripts (committed)
+├── docs/orchestration-plan.md
+└── ...the Next.js app...
+```
+
+- **Discovery is by working directory.** Claude Code auto-loads `.claude/` when cwd is this repo. Gotcha: the agent must be launched from INSIDE the repo or its worktree (`cd <repo-or-worktree> && claude --yolo /one-shot <task>`), or `.claude/` is invisible and `/one-shot` falls through to the global Edge skill. Launch-from-home (the Edge watcher's `~/git` pattern) does NOT work here.
+- **Sync = git.** Clone or pull the repo and the orch comes with it. That is the whole sync story.
+- **Reused enforcement hooks stay global**, gated on `AGENT_TASK_GID`. They are NOT copied into the repo; the spawn sets that env var to light them up.
+- **convention-sync overlap: none, by one rule.** convention-sync walks `~/.cursor/` only. NEVER author tcg-art skills under `~/.cursor/skills/`: if you do, convention-sync sweeps them into edge-dev-agents AND they apply globally to Edge sessions. Keep them in `tcg-art/.claude/skills/`.
+
+## Conventions: dropped / overridden from Edge
+
+`CLAUDE.md` carries the repo-local overrides (project instructions win over the global Edge rules). Summary:
+
+**Overridden (global rules that would otherwise misfire here):**
+- `load-standards-by-filetype` -> use the slim "Web TypeScript standards" in `CLAUDE.md`, not the Edge `typescript-standards.mdc` (which enforces `lstrings`, `cacheStyles`, `biggystring`, `cleaners`, Redux selectors, and Edge ESLint recipes - none of which exist here). Kept ~2/3 of it as generic TS/React hygiene; dropped the Edge-mechanism third.
+- `no-format-lint` -> no `lint-commit.sh` / `yarn` here; use the app's package manager (npm/pnpm) + its ESLint/Prettier, plain `git commit`, fix formatting directly.
+- `slash-command-detection` (in `workflow-halt-on-error`) -> resolve `/<command>` from repo-local `.claude/skills/` first, NOT `~/.cursor/skills/` (otherwise `/one-shot` here loads the heavy Edge skill).
+
+**Kept (generic, useful):** `act-autonomously`, `answer-questions-first`, `writing-style` (em-dash + no-slop), the enforcement hooks.
+
+**Dropped outright:** `lint-commit.sh`, `/im` commit discipline, CHANGELOG gate, `eslint-warnings.mdc`, `review-standards.mdc`, yarn assumptions (use npm/pnpm), `develop` base branch (use `main`), the Asana `agent_status`/`tested`/`blocked` state machine (simpler or none, A2), `GIT_BRANCH_PREFIX` naming, multi-repo subtasks / dep-pr. The reviewer-bot finalize-gate (`cursor[bot]`) applies only if Cursor Bugbot is actually run on this repo.
 
 ---
 
@@ -135,6 +172,7 @@ The A1 spike should cover both: SHA -> deployment URL -> wait `READY` (always), 
 2. **Playwright MCP vs Claude-in-Chrome MCP** for the proof drive against a (possibly protected) deployment: auth / headless limits of each.
 3. **Asana project shape** (A2): reuse the `agent_status` state machine or run lighter.
 4. Whether to keep any PR-based preview flow at all, or go pure commit-to-main -> production.
+5. **Stack conventions to lock** as the app takes shape (record in `CLAUDE.md`): styling (CSS modules / Tailwind / styled), data fetching (App Router server components vs client TanStack Query), state (Context / Zustand).
 
 ---
 
