@@ -28,4 +28,8 @@ Apply to every `.ts`/`.tsx` edit:
 - Descriptive variable names. Comments explain why (not what) and document the current state, not change history.
 - Components: `const C: React.FC<Props> = props => {...}`.
 
-Stack conventions to lock as the app takes shape (record the chosen one here once decided): styling (CSS modules / Tailwind / styled), data fetching (App Router server components vs client TanStack Query), and state (Context / Zustand).
+Stack conventions (locked in Phase 0; revisit as the app grows):
+
+- **Styling:** Tailwind CSS v4.
+- **Data fetching:** App Router server components fetching server-side. No client data library yet; add TanStack Query only if client-side fetching becomes necessary.
+- **State:** none yet (no client state library). Add Zustand or Context when a real client-state need appears.
