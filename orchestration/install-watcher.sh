@@ -11,7 +11,7 @@ PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 TICK="$HERE/tick.sh"
 LOGDIR="$HOME/.config/tcg-orch"; mkdir -p "$LOGDIR"
 LOG="$LOGDIR/tick.log"
-INTERVAL="${TICK_INTERVAL:-30}"   # 30s: fetch-once = 1 board read (~31 GraphQL pts) per tick ~= 74% of the 5000/hr budget; the tick's rate_limit reserve guardrail auto-throttles before exhaustion
+INTERVAL="${TICK_INTERVAL:-60}"   # 60s: fetch-once = 1 board read (~31 GraphQL pts) per tick ~= 37% of the 5000/hr budget; neighborly on the account-wide budget, and the tick's rate_limit reserve guardrail still auto-throttles before exhaustion
 
 case "${1:-}" in
   install)
