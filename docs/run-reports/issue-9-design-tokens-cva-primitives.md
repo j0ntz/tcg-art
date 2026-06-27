@@ -1,12 +1,12 @@
 # Agent run report — Two-tier design tokens + shared CVA primitives
 
-**▶ Live preview: https://tcg-6atgrbuhw-jontz.vercel.app**  ·  **PR: https://github.com/j0ntz/tcg-art/pull/10**
+**▶ Live preview: https://tcg-4e4fdqvio-jontz.vercel.app**  ·  **PR: https://github.com/j0ntz/tcg-art/pull/10**
 
 | field | value |
 |---|---|
 | Task | #9 · https://github.com/j0ntz/tcg-art/issues/9 |
 | PR | https://github.com/j0ntz/tcg-art/pull/10 |
-| Preview | https://tcg-6atgrbuhw-jontz.vercel.app |
+| Preview | https://tcg-4e4fdqvio-jontz.vercel.app (HEAD 71192c8) |
 | Branch | jon/task-9 |
 | Verified | pass |
 | Date | 2026-06-27 |
@@ -22,9 +22,9 @@ Established a central two-tier design-token source (primitive `@theme` ramps ali
 - New deps (only): `clsx`, `tailwind-merge`, `class-variance-authority`.
 
 ## Test evidence
-- `verify-preview.sh 10 "Smart Trading Card Search"` → **RESULT=pass** (HTTP 200) against the preview (https://tcg-6atgrbuhw-jontz.vercel.app).
+- `verify-preview.sh 10 "Simple Pricing"` → **RESULT=pass** (HTTP 200) against the current-HEAD preview (https://tcg-4e4fdqvio-jontz.vercel.app, commit 71192c8, which includes the address-round fix routing the last primitive leaks through semantic tokens).
 - All three pages return HTTP 200 on the preview: landing `/`, `/search`, `/signup`.
-- Desktop and mobile screenshots captured for each page. Mobile parity confirmed against the pre-PR `main` deployment (pixel-identical landing mobile), so no visual regression. The right-edge crop visible in the mobile PNGs is a headless-Chrome capture artifact (plain `--screenshot` does not emulate the mobile viewport); it appears identically on both branches, which is the point: the PR matches `main`.
+- Desktop and mobile (390px-wide) screenshots re-captured for each page on the current HEAD by a fresh testing agent. Landing renders the full token-sourced layout (hero, How It Works cards, brand-gradient Build Your Binder, Simple Pricing CVA cards/badges/buttons); `/search` and `/signup` render the token-sourced forms with #8 parity intact. No visual regression. The right-edge crop visible in the mobile PNGs is a headless-Chrome capture artifact (plain `--screenshot` does not emulate a device viewport), not a layout defect; body content stacks correctly at mobile width.
 - Screenshots (committed under `docs/screenshots/`, linked as blob URLs since the repo is private):
   - [landing — desktop](https://github.com/j0ntz/tcg-art/blob/jon/task-9/docs/screenshots/issue-9-landing-desktop.png)
   - [landing — mobile](https://github.com/j0ntz/tcg-art/blob/jon/task-9/docs/screenshots/issue-9-landing-mobile.png)
@@ -35,9 +35,9 @@ Established a central two-tier design-token source (primitive `@theme` ramps ali
   - [signup — mobile](https://github.com/j0ntz/tcg-art/blob/jon/task-9/docs/screenshots/issue-9-signup-mobile.png)
 
 ## Decisions (yolo defaults)
-- Verification substring chosen as the stable hero eyebrow "Smart Trading Card Search" to prove the landing rendered. Reversible (verification-only).
+- Verification substring chosen as the stable "Simple Pricing" section heading to prove the landing rendered through to the CVA pricing cards. Reversible (verification-only).
 - Mobile regression check done by comparing against the live pre-PR `main` Production deployment rather than a local rebuild, since the deployed artifact is the ground truth for "no visual regression." Reversible.
 
 ## Notes & follow-ups
 - The headless screenshot tool (`verify-preview.sh` and the manual captures) does not emulate a mobile viewport, so mobile PNGs show a right-edge crop on all branches. Real mobile rendering is fine; if future tasks need true mobile screenshots, drive Chrome with device emulation (CDP `Emulation.setDeviceMetricsOverride`). Not a blocker here.
-- No code changes were required during testing; the preview was correct on the first verification round.
+- No code changes were required during this testing pass; the current-HEAD preview was correct on the first verification round. Screenshots and preview URL were refreshed to the current HEAD (71192c8) since the prior report captured an earlier commit.
