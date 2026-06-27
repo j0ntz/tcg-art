@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 // Shared top nav across the marketing landing and the search app. Branding on the
-// left, a search entry point and a sign-up tease on the right (auth is deferred to
-// v2, so "Sign Up Free" links to the working search for now).
+// left, a search entry point and a sign-up CTA on the right; "Sign Up Free" links
+// to the /signup flow.
 const SiteHeader: React.FC = () => {
   return (
     <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/80 backdrop-blur">
@@ -22,7 +22,7 @@ const SiteHeader: React.FC = () => {
             Search
           </Link>
           <Link
-            href="/search"
+            href="/signup"
             className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
           >
             Sign Up Free

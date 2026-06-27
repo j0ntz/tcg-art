@@ -6,7 +6,7 @@ import Pricing from "./components/Pricing";
 
 // Landing page (`/`), modeled on artfindertcg.com: hero with a real search entry
 // point, how-it-works, a binder tease, and the freemium pricing table. The actual
-// search app lives at /search.
+// search app lives at /search. Sign-up CTAs (header + pricing) point at /signup.
 const Home = async () => {
   let showcase: Card[] = [];
   try {
