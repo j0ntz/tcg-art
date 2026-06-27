@@ -13,6 +13,13 @@ LOGDIR="$HOME/.config/tcg-orch"; mkdir -p "$LOGDIR"
 LOG="$LOGDIR/tick.log"
 INTERVAL="${TICK_INTERVAL:-60}"   # 60s: fetch-once = 1 board read (~31 GraphQL pts) per tick ~= 37% of the 5000/hr budget; neighborly on the account-wide budget, and the tick's rate_limit reserve guardrail still auto-throttles before exhaustion
 
+# launchd gives the job a bare environment (no HOME, PATH=/usr/bin:/bin:/usr/sbin:/sbin), so
+# lib.sh's $HOME-relative paths, node, gh, git, and tmux are all unresolvable under the cron.
+# Capture a working HOME + PATH at install time and bake them into the plist. NODE_DIR is
+# wherever this machine installed node (nvm, homebrew, asdf, ...), so this is portable.
+NODE_DIR="$(cd "$(dirname "$(command -v node)")" && pwd -P)"
+CRON_PATH="$NODE_DIR:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
 case "${1:-}" in
   install)
     cat > "$PLIST" <<EOF
@@ -26,6 +33,11 @@ case "${1:-}" in
     <string>/bin/bash</string>
     <string>$TICK</string>
   </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key><string>$HOME</string>
+    <key>PATH</key><string>$CRON_PATH</string>
+  </dict>
   <key>StartInterval</key><integer>$INTERVAL</integer>
   <key>RunAtLoad</key><true/>
   <key>StandardOutPath</key><string>$LOG</string>
