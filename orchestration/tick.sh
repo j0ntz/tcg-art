@@ -25,6 +25,12 @@ else
   echo "[tick] board fetch failed/empty; skipping"; exit 0
 fi
 
+# Order: tend sessions first, then advance the pipeline stage by stage. Every handler shares the
+# one snapshot (free) and acts on at most one task per tick; each is idempotent via a session
+# presence-guard, so re-running a tick never double-spawns.
 bash "$HERE/watchdog.sh" || echo "[tick] watchdog errored (continuing)"
-bash "$HERE/watch.sh"     || echo "[tick] watch errored (continuing)"
-bash "$HERE/land.sh"      || echo "[tick] land errored"
+bash "$HERE/watch.sh"     || echo "[tick] watch errored (continuing)"   # Pending  -> run-task
+bash "$HERE/test.sh"      || echo "[tick] test errored (continuing)"    # Coded    -> test-task
+bash "$HERE/review.sh"    || echo "[tick] review errored (continuing)"  # Review   -> review-task
+bash "$HERE/address.sh"   || echo "[tick] address errored (continuing)" # Address  -> address-task
+bash "$HERE/land.sh"      || echo "[tick] land errored"                 # Land     -> land/land-task

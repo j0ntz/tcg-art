@@ -12,8 +12,8 @@ This doc is the source of truth for how the orchestration is built. It is intent
 
 | # | Item | Status |
 |---|------|--------|
-| **A1** | **De-risk the Vercel deploy-verify chain (DO THIS FIRST).** Given a commit SHA, resolve its Vercel deployment URL, wait for `READY`, and confirm a headless browser (Playwright) can load it, handling Vercel deployment protection / auth if the deployment is protected. This is the **only** piece the research could not confirm against primary sources (verifier agents were rate-limited, not refuted, on every Vercel claim). Build nothing else around the loop until this works end to end. | todo |
-| A2 | **Task backend = GitHub Projects (done).** Board "Agent Orchestration" (#1, private), custom single-select **Agent Status** (Pending/Running/Blocked/Done). First task queued: tcg-art#1, Agent Status = Pending. See "Task backend" below. | done |
+| **A1** | **De-risk the Vercel deploy-verify chain.** Given a commit SHA, resolve its Vercel deployment URL, wait for `READY`, and confirm a headless browser can load it. **Done:** `verify-preview.sh` resolves the PR preview URL (GitHub Deployments API + Vercel-bot fallback), asserts live, headless-Chrome screenshot; protection disabled so no bypass token needed. Proven end to end. | done |
+| A2 | **Task backend = GitHub Projects (done).** Board "Agent Orchestration" (#1, private), custom single-select **Agent Status**. Full pipeline now: Pending/Running/Coded/Testing/Review/Address/Reviewed/Land/Landed/Blocked. See "Task backend" below. | done |
 | A3 | **Strip Edge-specific restrictions** (see "Conventions" + "Workflow simplifications" below): drop `lint-commit.sh`, the `/im` clean-commit discipline, the CHANGELOG gate, iOS sim + maestro, and yarn assumptions. Adopt commit-to-main with minimal ceremony. | in progress: `CLAUDE.md` overrides written |
 | A4 | **Decide CI posture.** Default: Vercel build status only, no GitHub Actions (see "CI / GitHub Actions" below). Revisit GH Actions only if a standing regression suite is wanted later. | decided: skip GH Actions for now |
 | A5 | **Stand up the orchestration repo-local** (fresh and lighter; see "Orchestration home" below). Reuse the global enforcement hooks as-is; rebuild `one-shot` + the verify step fresh in this repo. Agent stays **local + interactive + subscription-billed** (no `-p` / Agent SDK / `claude-code-action`). | decided: start anew, repo-local |
@@ -128,8 +128,15 @@ tcg-art/
 The orch's queue + state store is **GitHub Projects** (native, first-party; task data lives in GitHub). No Asana, no DB, no custom board. GitHub Projects is a GitHub feature, not a third-party developer's board, so it clears the security bar.
 
 - Board: "Agent Orchestration" (user-level, private) - https://github.com/users/j0ntz/projects/1 (project #1, id `PVT_kwHOD6Er384BbyER`).
-- State: custom single-select **Agent Status** field, state machine **Pending → Running → [Blocked] → Done → Land → Landed**. Done = PR open + verified, awaiting your review; you move Done → **Land** to approve merging, and the lander sets **Landed**. (Option IDs live in `orch.config.json`. Editing the option set via the API *recreates all option IDs* and clears existing items' values — snapshot statuses first, then refresh the config IDs and restore.)
-- Lander (`land.sh` + `/land-task`, runs each tick): one Land task per tick (sequential — each merge moves `main`, the next rebases onto it). **Clean rebase → deterministic squash-merge inline** (no LLM). **Conflict → spawn a `/land-task` agent that resolves it SEMANTICALLY** (merge both intents; regenerate lockfiles), verifies the build, then squash-merges — no blocking on conflicts. Only a genuine NON-conflict failure (merge rejected, build unfixable) → **Blocked**. Follow-up: have the watchdog also frozen-sweep `claude-land-*` sessions.
+- State: custom single-select **Agent Status** field. Full pipeline (10 states, built 2026-06-27): **Pending → Running → Coded → Testing → Review → Address → (loop) → Reviewed → Land → Landed**, with **Blocked** reachable from any state. (Option IDs live in `orch.config.json`. Editing the option set via the API *recreates all option IDs* and clears existing items' values — snapshot statuses first, then refresh the config IDs and restore.)
+  - **Pending →(watcher)→ Running** `/run-task` codes + opens PR + local-build gate **→ Coded**.
+  - **Coded →(test.sh)→** `/test-task` verifies on the Vercel preview (fix-on-fail), attaches the run report **→ Testing**; if the task carries `auto-review` (primed at creation) or `in-review` (set once in the loop), it auto-advances **→ Review**, else it waits for you to move Testing → Review.
+  - **Review →(review.sh)→** `/review-task` runs an INDEPENDENT local review (fresh agent, on the Max subscription, NOT the cloud `/code-review ultra`) and posts it to the PR via `gh`. Clean **→ Reviewed** (clears `in-review`); actionable issues **→ Address** (sets `in-review`).
+  - **Address →(address.sh)→** `/address-task` fixes the blocking findings, replies, pushes, and re-enters at **Coded** (so it re-tests, and `in-review` makes Testing → Review automatic for the re-review). Loop caps at 2 rounds → **Blocked** (validated).
+  - **Reviewed →(you, ALWAYS manual)→ Land →(lander)→ Landed.**
+  - Human touchpoints only: create the task; `Testing → Review` (unless `auto-review`); `Reviewed → Land`. A `/validate-block` check gates every agent-set Blocked.
+  - Labels are TAGS, not state: `blocked` (board.sh adds on → Blocked), `auto-review` (prime a task to auto-review), `in-review` (loop is active → auto Testing → Review).
+- Lander (`land.sh` + `/land-task`, runs each tick): one Land task per tick (sequential — each merge moves `main`, the next rebases onto it). **Clean → deterministic squash-merge inline** (no LLM, via GitHub's computed mergeability). **Conflict → spawn a `/land-task` agent that resolves it SEMANTICALLY** (merge both intents; regenerate lockfiles), then squash-merges — no blocking on conflicts. Only a genuine NON-conflict failure (merge rejected, build unfixable) → **Blocked**. The watchdog frozen/dead-sweeps `claude-land-*` (and `claude-test/review/address-*`) too.
 - Tasks are GitHub issues (in the relevant project repo) added as board items; one user-level board spans every project repo.
 - Access: `gh` CLI with the `project` scope, added to the keyring login (`GITHUB_TOKEN` in `~/.zshrc` mirrors that token via `gh auth token`, so it inherits the scope on a new shell).
 - Loop: the watcher polls `gh project item-list` for Agent Status = Pending; the agent flips the field via `gh project item-edit`, comments on the issue, and links its PR (auto-closes the issue on merge).
@@ -137,10 +144,10 @@ The orch's queue + state store is **GitHub Projects** (native, first-party; task
 
 ## Verification bar
 
-"Done" requires both signals:
+Verification is the **Testing** stage (`/test-task`, Coded → Testing), not the coding stage. It requires both signals:
 
 1. **Vercel build green** (the app compiled and deployed). Automatic via Vercel's Git integration. No GitHub Actions involved.
-2. **Agent browser-drives the real user flow** against the deployed URL to terminal success, with a screenshot as proof. Run by the local agent (Playwright MCP for scripted/deterministic flows; Claude-in-Chrome MCP for exploratory). The local agent can also run `tsc` / unit tests before pushing.
+2. **Agent browser-drives the real user flow** against the deployed PREVIEW URL to terminal success, with a screenshot as proof (`verify-preview.sh`, `RESULT=pass`), then attaches the run report to the board issue. `/run-task` only gates on the local `npm run build`; the deployed-preview drive is `/test-task`'s job and is the real bar.
 
 CI-green alone is not sufficient. The actual browser drive is the bar.
 
