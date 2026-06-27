@@ -40,11 +40,16 @@ else note "global ~/.claude/CLAUDE.md absent" "spawned agents inherit it; bring 
 if command -v sfw >/dev/null 2>&1; then pass "sfw npm wrapper present"
 else note "sfw npm wrapper absent" "only needed if this machine blocks bare npm; comes from the edge-dev-agents setup"; fi
 
-# 6. Board reachable (needs node + project scope; only source lib.sh once node is confirmed)
+# 6. Board reachable (needs node + project scope; only source lib.sh once node is confirmed).
+# Guard on the GraphQL budget first (the rate_limit endpoint is FREE) so a rate-limited read
+# is reported as transient throttling, not a false "check your config" failure.
 if command -v node >/dev/null 2>&1 && gh auth status 2>&1 | grep -qi "token scopes:.*project"; then
   # shellcheck disable=SC1091
   source "$HERE/lib.sh"
-  if gh project item-list "$PROJECT_NUMBER" --owner "$OWNER" --format json --limit 1 >/dev/null 2>&1; then
+  rem="$(gh api rate_limit --jq '.resources.graphql.remaining' 2>/dev/null || echo 0)"
+  if [ "${rem:-0}" -lt 50 ]; then
+    note "GraphQL budget low (remaining=$rem), board read skipped" "transient; the tick guardrail also backs off below ${GRAPHQL_RESERVE:-800}. retry after the hourly reset"
+  elif gh project item-list "$PROJECT_NUMBER" --owner "$OWNER" --format json --limit 1 >/dev/null 2>&1; then
     pass "board reachable (project #$PROJECT_NUMBER, owner $OWNER, repo $REPO)"
   else bad "cannot read board #$PROJECT_NUMBER" "check board.owner / board.projectNumber in orch.config.json"; fi
 fi
