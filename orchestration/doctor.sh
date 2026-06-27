@@ -62,6 +62,28 @@ if launchctl list com.tcg-art.orch >/dev/null 2>&1; then
   else note "no tick log yet" "the first tick writes $log within 60s of arming"; fi
 else note "cron not armed" "orchestration/install-watcher.sh install"; fi
 
+# 8. No drift vs git. The cron runs orchestration/*.sh from THIS checkout, so it must match
+# git. Uncommitted/untracked changes, or a checkout that has diverged from origin, mean the
+# running orch differs from what is on git (and from what a fresh machine would clone). The
+# per-task worktrees self-heal via reset-to-origin; the main checkout has no such guard.
+if [ -n "$(git -C "$REPO_ROOT" status --porcelain 2>/dev/null)" ]; then
+  bad "checkout has uncommitted/untracked changes (running orch may differ from git)" "cd $REPO_ROOT && git status; commit or restore"
+else
+  pass "checkout clean (no uncommitted/untracked changes)"
+fi
+branch="$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo '?')"
+if git -C "$REPO_ROOT" fetch origin -q 2>/dev/null; then
+  counts="$(git -C "$REPO_ROOT" rev-list --left-right --count "origin/$branch...HEAD" 2>/dev/null || echo '0 0')"
+  behind="${counts%%[[:space:]]*}"; ahead="${counts##*[[:space:]]}"
+  if [ "${behind:-0}" -gt 0 ] || [ "${ahead:-0}" -gt 0 ]; then
+    bad "checkout diverged from origin/$branch ($behind behind, $ahead ahead)" "cd $REPO_ROOT && git pull --ff-only; push any local commits"
+  else
+    pass "checkout in sync with origin/$branch"
+  fi
+else
+  note "could not fetch origin (offline?)" "drift-vs-origin check skipped; re-run with network"
+fi
+
 echo
 if [ "$fail" -gt 0 ]; then echo "== $fail required check(s) FAILED, $warn warning(s) =="; exit 1
 else echo "== all required checks passed ($warn warning(s)) =="; fi
