@@ -6,9 +6,7 @@ set -euo pipefail
 
 source "$(cd "$(dirname "$0")" && pwd)/lib.sh"
 
-items_json() {
-  gh project item-list "$PROJECT_NUMBER" --owner "$OWNER" --format json --limit 200
-}
+items_json() { board_items_json; }   # uses the tick-wide snapshot when present (fetch-once)
 
 case "${1:-}" in
   list-pending)

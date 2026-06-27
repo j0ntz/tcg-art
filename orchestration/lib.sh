@@ -24,5 +24,15 @@ WORKTREES="$(cfg worktreesRoot)"; WORKTREES="${WORKTREES/#\~/$HOME}"
 MAX="${AGENT_MAX_CONCURRENT:-$(cfg maxConcurrent)}"
 MERGE_METHOD="$(cfg land.mergeMethod)"; [ -z "$MERGE_METHOD" ] && MERGE_METHOD="squash"
 
-# opt_id <Pending|Running|Blocked|Done> -> option id
+# opt_id <Pending|Running|Blocked|Done|Land|Landed> -> option id
 opt_id() { cfg "board.statusOptions.$1"; }
+
+# Board items JSON. If a tick exported ORCH_BOARD_SNAPSHOT (fetch-once), reuse it (free);
+# otherwise fetch fresh (1 GraphQL read) for standalone runs.
+board_items_json() {
+  if [ -n "${ORCH_BOARD_SNAPSHOT:-}" ] && [ -s "${ORCH_BOARD_SNAPSHOT:-/nonexistent}" ]; then
+    cat "$ORCH_BOARD_SNAPSHOT"
+  else
+    gh project item-list "$PROJECT_NUMBER" --owner "$OWNER" --format json --limit 200
+  fi
+}

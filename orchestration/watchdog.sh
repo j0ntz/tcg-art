@@ -17,7 +17,7 @@ STATE="$STATE_DIR/watchdog-state.json"
 FROZEN_MIN="${TCG_FROZEN_MIN:-15}"
 now="$(date +%s)"
 
-items="$(gh project item-list "$PROJECT_NUMBER" --owner "$OWNER" --format json --limit 200 2>/dev/null \
+items="$(board_items_json 2>/dev/null \
   | node -e 'const d=JSON.parse(require("fs").readFileSync(0,"utf8"));for(const it of d.items||[]){if(!it.content||!it.content.number)continue;const e=Object.entries(it).find(([k])=>/agent ?status/i.test(k));console.log(it.content.number+"\t"+(e?e[1]:""))}' 2>/dev/null || true)"
 
 live_count=0
