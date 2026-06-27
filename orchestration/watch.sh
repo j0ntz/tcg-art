@@ -2,7 +2,7 @@
 # Minimal watcher tick for the agent orchestration.
 # Polls the GitHub Projects board for Agent Status = Pending, provisions a
 # worktree, marks the item Running, and spawns an autonomous
-# `claude --yolo /run-task <issue-url>` in a tmux session.
+# `claude --dangerously-skip-permissions /run-task <issue-url>` in a tmux session.
 # Run once by hand, or on a schedule (cron/launchd). Concurrency-capped.
 set -euo pipefail
 
@@ -45,7 +45,7 @@ while IFS=$'\t' read -r num url; do
   bash "$HERE/board.sh" status "$num" Running
   tmux new-session -d -s "$session"
   # interactive shell so ~/.zshrc (PATH, gh keyring) is sourced, then launch the agent
-  tmux send-keys -t "$session" "cd \"$wt\" && claude --yolo \"/run-task $url\"" C-m
+  tmux send-keys -t "$session" "cd \"$wt\" && claude --dangerously-skip-permissions \"/run-task $url\"" C-m
   echo "spawned $session  (attach: tmux attach -t $session  |  peek: tmux capture-pane -t $session -p)"
   break   # one spawn per tick while we babysit; remove to drain the queue
 done <<< "$pending"
