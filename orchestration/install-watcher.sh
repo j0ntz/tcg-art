@@ -11,7 +11,7 @@ PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 TICK="$HERE/tick.sh"
 LOGDIR="$HOME/.config/tcg-orch"; mkdir -p "$LOGDIR"
 LOG="$LOGDIR/tick.log"
-INTERVAL="${TICK_INTERVAL:-120}"
+INTERVAL="${TICK_INTERVAL:-300}"   # 5 min: GitHub Projects queries are GraphQL-point-costly (~30 pts each); 300s keeps us well under the 5000/hr GraphQL budget
 
 case "${1:-}" in
   install)
