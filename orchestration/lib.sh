@@ -3,6 +3,9 @@
 # Single source of truth = orch.config.json. Sourced by board.sh, watch.sh, watchdog.sh.
 # Switching the Vercel account/scope/project, the board, or the repo = edit orch.config.json only.
 
+# Ensure tools resolve under launchd/cron's minimal PATH (node, gh, tmux, git, shasum, claude).
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
 ORCH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 ORCH_CONFIG="${ORCH_CONFIG:-$ORCH_DIR/orch.config.json}"
 
