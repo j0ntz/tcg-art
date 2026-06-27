@@ -9,7 +9,7 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$HERE/.." && pwd)"
 REPO_NAME="tcg-art"
-WORKTREES="$HOME/git/.agent-worktrees"
+WORKTREES="$HOME/git/.tcg-art-worktrees"   # MUST stay separate from Edge orch's ~/git/.agent-worktrees (its watchdog GCs that dir every 120s)
 MAX="${AGENT_MAX_CONCURRENT:-1}"
 
 live="$(tmux ls 2>/dev/null | grep -c '^claude-task-' || true)"
