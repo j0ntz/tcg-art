@@ -1,5 +1,7 @@
 import Image from "next/image";
 import type { Card } from "@/lib/pokemon";
+import Badge from "./ui/Badge";
+import Button from "./ui/Button";
 
 interface HeroProps {
   // Best-effort showcase art. Empty when the API is unavailable; the hero then
@@ -9,18 +11,16 @@ interface HeroProps {
 
 const Hero: React.FC<HeroProps> = ({ showcase }) => {
   return (
-    <section className="relative overflow-hidden border-b border-zinc-200 bg-gradient-to-b from-violet-50 via-white to-white">
-      <div className="mx-auto grid w-full max-w-6xl gap-12 px-4 py-16 sm:py-24 lg:grid-cols-2 lg:items-center">
+    <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-brand-50 via-white to-white">
+      <div className="mx-auto grid w-full max-w-content gap-12 px-gutter py-16 sm:py-24 lg:grid-cols-2 lg:items-center">
         <div className="flex flex-col gap-6">
-          <span className="inline-flex w-fit items-center gap-2 rounded-full border border-violet-200 bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700">
-            Smart Trading Card Search
-          </span>
+          <Badge variant="soft">Smart Trading Card Search</Badge>
 
-          <h1 className="text-4xl font-bold leading-tight tracking-tight text-zinc-900 sm:text-5xl">
+          <h1 className="text-title font-bold leading-tight tracking-tight text-foreground sm:text-display">
             Find Pokémon Cards by What&apos;s In the Art
           </h1>
 
-          <p className="max-w-xl text-lg text-zinc-600">
+          <p className="max-w-xl text-lead text-foreground-muted">
             Describe a scene, a mood, or a color and search across 20,000+ Pokémon TCG
             illustrations. Remember the art, not the name? Start there.
           </p>
@@ -31,17 +31,14 @@ const Hero: React.FC<HeroProps> = ({ showcase }) => {
               name="q"
               placeholder="Try: surfing pikachu, on the beach, mewtwo…"
               aria-label="Search Pokémon cards"
-              className="flex-1 rounded-full border border-zinc-300 bg-white px-5 py-3 text-zinc-900 shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+              className="flex-1 rounded-pill border border-border-strong bg-surface px-5 py-3 text-foreground shadow-card outline-none focus:border-ring focus:ring-2 focus:ring-primary-border"
             />
-            <button
-              type="submit"
-              className="rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-7 py-3 font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
-            >
+            <Button type="submit" variant="gradient" size="lg" className="shadow-card">
               Search Free
-            </button>
+            </Button>
           </form>
 
-          <p className="text-sm text-zinc-400">No credit card required.</p>
+          <p className="text-sm text-foreground-faint">No credit card required.</p>
         </div>
 
         {showcase.length > 0 ? (
@@ -57,7 +54,7 @@ const Hero: React.FC<HeroProps> = ({ showcase }) => {
             {showcase.slice(0, 5).map((card, index) => (
               <div
                 key={card.id}
-                className="absolute top-1/2 left-1/2 w-28 -translate-y-1/2 rounded-xl shadow-xl ring-1 ring-black/5 transition-transform sm:w-32 lg:w-44"
+                className="absolute top-1/2 left-1/2 w-28 -translate-y-1/2 rounded-xl shadow-float ring-1 ring-black/5 transition-transform sm:w-32 lg:w-44"
                 style={
                   {
                     "--i": index - 2,

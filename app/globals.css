@@ -1,13 +1,179 @@
 @import "tailwindcss";
 
+/* =============================================================================
+   Design tokens — two tiers, one source of truth.
+
+   This file is the central design-token source for the whole app. The UI stays
+   in visual sync *by construction*: pages never hardcode hex or pick raw palette
+   shades, they consume the SEMANTIC role tokens (and the shared CVA primitives in
+   app/components/ui/*). Change a role here and every page follows.
+
+   Tier 1 — PRIMITIVES (raw palette ramps, spacing, radius, shadow, type scale).
+     Named by what they ARE (brand-600, ink-900). Each maps to a Tailwind utility
+     (bg-brand-600, text-ink-900, rounded-card, shadow-float, text-heading).
+     Pages should NOT consume these directly; they are the raw material that the
+     semantic tier aliases.
+   Tier 2 — SEMANTIC ROLES (primary, surface, border, foreground, ...).
+     Named by what they DO. Each aliases a primitive via var(). Pages consume
+     THESE — that is what stops drift, because "primary" has exactly one value.
+
+   When to add a token vs a one-off:
+     - Add a SEMANTIC token when a color/role recurs or carries meaning (a brand
+       action, a surface, a border). Pages reference it.
+     - Add a PRIMITIVE only when the palette/scale itself needs a new step.
+     - Do NOT add a token for a true one-off with no variants; a shared component
+       or a Tailwind `@utility` (see :root below) is enough. Two tiers is the
+       ceiling for an app this size — no third "component token" tier.
+
+   `@theme static` forces every token to emit as a CSS variable even when only the
+   semantic tier references it, so the primitive -> semantic var() chain never
+   dangles. Primitive ramps mirror Tailwind's violet / indigo / zinc exactly, so
+   the refactor onto tokens is pixel-identical to the pre-token utilities.
+   ========================================================================== */
+
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-/* The marketing landing and search app are designed light-mode-first to match the
-   clone target. Colors are set per-section with Tailwind utilities, so the body
-   only needs a sane light default. */
+@theme static {
+  /* ---- Tier 1: primitive palette ramps ---------------------------------- */
+
+  /* brand: the violet identity ramp */
+  --color-brand-50: oklch(96.9% 0.016 293.756);
+  --color-brand-100: oklch(94.3% 0.029 294.588);
+  --color-brand-200: oklch(89.4% 0.057 293.283);
+  --color-brand-300: oklch(81.1% 0.111 293.571);
+  --color-brand-400: oklch(70.2% 0.183 293.541);
+  --color-brand-500: oklch(60.6% 0.25 292.717);
+  --color-brand-600: oklch(54.1% 0.281 293.009);
+  --color-brand-700: oklch(49.1% 0.27 292.581);
+  --color-brand-800: oklch(43.2% 0.232 292.759);
+  --color-brand-900: oklch(38% 0.189 293.745);
+  --color-brand-950: oklch(28.3% 0.141 291.089);
+
+  /* accent: the indigo ramp, used as the brand gradient's second stop */
+  --color-accent-50: oklch(96.2% 0.018 272.314);
+  --color-accent-100: oklch(93% 0.034 272.788);
+  --color-accent-200: oklch(87% 0.065 274.039);
+  --color-accent-300: oklch(78.5% 0.115 274.713);
+  --color-accent-400: oklch(67.3% 0.182 276.935);
+  --color-accent-500: oklch(58.5% 0.233 277.117);
+  --color-accent-600: oklch(51.1% 0.262 276.966);
+  --color-accent-700: oklch(45.7% 0.24 277.023);
+  --color-accent-800: oklch(39.8% 0.195 277.366);
+  --color-accent-900: oklch(35.9% 0.144 278.697);
+  --color-accent-950: oklch(25.7% 0.09 281.288);
+
+  /* ink: the neutral (zinc) ramp for text, surfaces, and borders */
+  --color-ink-50: oklch(98.5% 0 0);
+  --color-ink-100: oklch(96.7% 0.001 286.375);
+  --color-ink-200: oklch(92% 0.004 286.32);
+  --color-ink-300: oklch(87.1% 0.006 286.286);
+  --color-ink-400: oklch(70.5% 0.015 286.067);
+  --color-ink-500: oklch(55.2% 0.016 285.938);
+  --color-ink-600: oklch(44.2% 0.017 285.786);
+  --color-ink-700: oklch(37% 0.013 285.805);
+  --color-ink-800: oklch(27.4% 0.006 286.033);
+  --color-ink-900: oklch(21% 0.006 285.885);
+  --color-ink-950: oklch(14.1% 0.005 285.823);
+
+  /* state ramps (only the steps the UI uses) */
+  --color-danger-500: oklch(63.7% 0.237 25.331);
+  --color-danger-600: oklch(57.7% 0.245 27.325);
+  --color-success-100: oklch(96.2% 0.044 156.743);
+
+  /* ---- Tier 1: primitive radius scale ----------------------------------- */
+  --radius-field: 0.5rem; /* inputs, small dense controls (= rounded-lg) */
+  --radius-control: 0.5rem; /* logo mark, chips (= rounded-lg) */
+  --radius-card: 1rem; /* cards, panels (= rounded-2xl) */
+  --radius-pill: 9999px; /* buttons, badges, search fields */
+
+  /* ---- Tier 1: primitive shadow scale ----------------------------------- */
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-card-lifted: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-float: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* ---- Tier 1: primitive type scale ------------------------------------- */
+  --text-display: 3rem; /* hero headline (large breakpoint) */
+  --text-display--line-height: 1;
+  --text-title: 2.25rem; /* hero headline (base breakpoint) */
+  --text-title--line-height: calc(2.5 / 2.25);
+  --text-heading: 1.875rem; /* section <h2> */
+  --text-heading--line-height: calc(2.25 / 1.875);
+  --text-lead: 1.125rem; /* lead paragraph under a headline */
+  --text-lead--line-height: calc(1.75 / 1.125);
+
+  /* ---- Tier 1: primitive layout spacing --------------------------------- */
+  --spacing-gutter: 1rem; /* page horizontal padding (= px-4) */
+  --container-content: 72rem; /* marketing content max width (= max-w-6xl) */
+
+  /* ---- Tier 2: semantic role tokens (pages consume THESE) ---------------- */
+
+  /* surfaces */
+  --color-background: #ffffff; /* page background */
+  --color-surface: #ffffff; /* cards, inputs, raised panels */
+  --color-surface-muted: var(--color-ink-50); /* footer, subtle fills */
+  --color-surface-inverse: var(--color-ink-900); /* dark solid buttons */
+  --color-surface-inverse-hover: var(--color-ink-700);
+
+  /* foreground text, ordered most -> least prominent */
+  --color-foreground: var(--color-ink-900); /* headings, primary text */
+  --color-foreground-secondary: var(--color-ink-700); /* labels, dense lists */
+  --color-foreground-muted: var(--color-ink-600); /* body copy */
+  --color-foreground-subtle: var(--color-ink-500); /* captions, metadata */
+  --color-foreground-faint: var(--color-ink-400); /* legal fine print */
+  --color-foreground-inverse: #ffffff; /* text on dark / brand surfaces */
+
+  /* borders */
+  --color-border: var(--color-ink-200); /* default hairline */
+  --color-border-strong: var(--color-ink-300); /* inputs, outline buttons */
+
+  /* brand / primary action */
+  --color-primary: var(--color-brand-600);
+  --color-primary-hover: var(--color-brand-700);
+  --color-primary-foreground: #ffffff; /* text on a solid primary fill */
+  --color-primary-foreground-muted: var(--color-brand-100); /* muted text on a dark brand surface */
+  --color-primary-muted: var(--color-brand-50); /* faint brand-tinted panel */
+  --color-primary-subtle: var(--color-brand-100); /* brand-tinted chip / badge fill */
+  --color-primary-subtle-foreground: var(--color-brand-700); /* text/icon on a subtle brand fill */
+  --color-primary-border: var(--color-brand-200); /* brand hairline, focus ring */
+  --color-primary-border-strong: var(--color-brand-300); /* highlighted panel border */
+
+  /* accent (brand gradient's second stop) */
+  --color-accent: var(--color-accent-600);
+
+  /* focus ring */
+  --color-ring: var(--color-brand-500);
+
+  /* feedback states */
+  --color-danger: var(--color-danger-600); /* error text */
+  --color-danger-border: var(--color-danger-500); /* invalid field border */
+  --color-success-subtle: var(--color-success-100); /* success indicator fill */
+
+  /* semantic radius aliases */
+  --radius-input: var(--radius-field);
+  --radius-panel: var(--radius-card);
+}
+
+/* Decorative motifs that don't need their own utility class live in :root, not
+   @theme. The brand gradient is the "T" logo fill used in the header and footer.
+   `in oklab` matches Tailwind's gradient interpolation so it equals the prior
+   `bg-gradient-to-br from-violet-600 to-indigo-600` exactly. */
+:root {
+  --gradient-brand: linear-gradient(
+    to bottom right in oklab,
+    var(--color-primary),
+    var(--color-accent)
+  );
+}
+
+@utility bg-brand-gradient {
+  background-image: var(--gradient-brand);
+}
+
+/* The marketing landing and search app are light-mode-first to match the clone
+   target. The body just needs a sane light default; sections set their own roles. */
 body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }

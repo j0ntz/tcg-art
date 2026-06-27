@@ -1,4 +1,9 @@
 import Link from "next/link";
+import SectionHeading from "./ui/SectionHeading";
+import Card from "./ui/Card";
+import Badge from "./ui/Badge";
+import { buttonVariants } from "./ui/Button";
+import { cn } from "@/lib/utils";
 
 // "Simple Pricing" — the exact freemium model captured from the clone target
 // (docs/spec.md §9). Display-only in v1: no Stripe, no checkout.
@@ -47,46 +52,43 @@ const TIERS: Tier[] = [
 
 const Pricing: React.FC = () => {
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:py-20">
-      <div className="mb-12 flex flex-col gap-3 text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-zinc-900">Simple Pricing</h2>
-        <p className="mx-auto max-w-2xl text-zinc-600">
-          Start free, forever. Upgrade when you want more results and unlimited collecting.
-        </p>
-      </div>
+    <section className="mx-auto w-full max-w-content px-gutter py-16 sm:py-20">
+      <SectionHeading
+        className="mb-12"
+        title="Simple Pricing"
+        subtitle="Start free, forever. Upgrade when you want more results and unlimited collecting."
+      />
 
       <div className="grid gap-6 md:grid-cols-2">
         {TIERS.map(tier => (
-          <div
+          <Card
             key={tier.name}
-            className={`flex flex-col gap-6 rounded-2xl border p-8 ${
-              tier.highlight
-                ? "border-violet-300 bg-violet-50 shadow-md ring-1 ring-violet-200"
-                : "border-zinc-200 bg-white shadow-sm"
-            }`}
+            variant={tier.highlight ? "highlight" : "default"}
+            className="flex flex-col gap-6 p-8"
           >
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
-                <h3 className="text-xl font-semibold text-zinc-900">{tier.name}</h3>
+                <h3 className="text-xl font-semibold text-foreground">{tier.name}</h3>
                 {tier.highlight ? (
-                  <span className="rounded-full bg-violet-600 px-2.5 py-0.5 text-xs font-medium text-white">
+                  <Badge variant="solid" size="sm">
                     Most popular
-                  </span>
+                  </Badge>
                 ) : null}
               </div>
               <p className="flex items-baseline gap-1">
-                <span className="text-4xl font-bold text-zinc-900">{tier.price}</span>
-                <span className="text-sm text-zinc-500">{tier.cadence}</span>
+                <span className="text-4xl font-bold text-foreground">{tier.price}</span>
+                <span className="text-sm text-foreground-subtle">{tier.cadence}</span>
               </p>
             </div>
 
             <ul className="flex flex-col gap-3">
               {tier.features.map(feature => (
-                <li key={feature} className="flex items-start gap-2 text-sm text-zinc-700">
+                <li key={feature} className="flex items-start gap-2 text-sm text-foreground-secondary">
                   <span
-                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs ${
-                      tier.highlight ? "bg-violet-600 text-white" : "bg-zinc-900 text-white"
-                    }`}
+                    className={cn(
+                      "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-pill text-xs text-primary-foreground",
+                      tier.highlight ? "bg-primary" : "bg-surface-inverse",
+                    )}
                     aria-hidden="true"
                   >
                     ✓
@@ -98,15 +100,14 @@ const Pricing: React.FC = () => {
 
             <Link
               href={tier.highlight ? "/signup" : "/search"}
-              className={`mt-auto rounded-full px-6 py-3 text-center font-semibold transition-colors ${
-                tier.highlight
-                  ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:opacity-90"
-                  : "border border-zinc-300 text-zinc-900 hover:bg-zinc-100"
-              }`}
+              className={cn(
+                buttonVariants({ variant: tier.highlight ? "gradient" : "secondary", size: "md" }),
+                "mt-auto",
+              )}
             >
               {tier.cta}
             </Link>
-          </div>
+          </Card>
         ))}
       </div>
     </section>
