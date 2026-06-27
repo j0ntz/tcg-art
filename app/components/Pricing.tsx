@@ -97,7 +97,7 @@ const Pricing: React.FC = () => {
             </ul>
 
             <Link
-              href="/search"
+              href={tier.highlight ? "/signup" : "/search"}
               className={`mt-auto rounded-full px-6 py-3 text-center font-semibold transition-colors ${
                 tier.highlight
                   ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:opacity-90"
