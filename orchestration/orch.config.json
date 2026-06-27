@@ -30,6 +30,11 @@
     "enabled": true
   },
 
+  "land": {
+    "_doc": "How the lander merges PRs from Land-state tasks. mergeMethod: squash | merge | rebase.",
+    "mergeMethod": "squash"
+  },
+
   "worktreesRoot": "~/git/.tcg-art-worktrees",
   "maxConcurrent": 1
 }

@@ -22,6 +22,7 @@ REPO="$(cfg github.owner)/$(cfg github.repo)"
 REPO_NAME="$(cfg github.repo)"
 WORKTREES="$(cfg worktreesRoot)"; WORKTREES="${WORKTREES/#\~/$HOME}"
 MAX="${AGENT_MAX_CONCURRENT:-$(cfg maxConcurrent)}"
+MERGE_METHOD="$(cfg land.mergeMethod)"; [ -z "$MERGE_METHOD" ] && MERGE_METHOD="squash"
 
 # opt_id <Pending|Running|Blocked|Done> -> option id
 opt_id() { cfg "board.statusOptions.$1"; }
