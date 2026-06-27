@@ -4,20 +4,7 @@
 # Used by both the watcher (read Pending) and the agent (write status).
 set -euo pipefail
 
-OWNER="j0ntz"
-PROJECT_NUMBER="1"
-PROJECT_ID="PVT_kwHOD6Er384BbyER"
-FIELD_ID="PVTSSF_lAHOD6Er384BbyERzhWgFFU"
-
-opt_id() {
-  case "$1" in
-    Pending) echo "8e0dcfd2" ;;
-    Running) echo "9579340e" ;;
-    Blocked) echo "4d4643ae" ;;
-    Done)    echo "400c6aca" ;;
-    *)       echo "" ;;
-  esac
-}
+source "$(cd "$(dirname "$0")" && pwd)/lib.sh"
 
 items_json() {
   gh project item-list "$PROJECT_NUMBER" --owner "$OWNER" --format json --limit 200

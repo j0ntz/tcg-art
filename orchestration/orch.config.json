@@ -1,0 +1,33 @@
+{
+  "_doc": "Single source of truth for the tcg-art agent orchestration. Switching the Vercel account/scope/project, the board, or the repo later = edit this file only; the scripts read from here.",
+
+  "github": {
+    "owner": "j0ntz",
+    "repo": "tcg-art"
+  },
+
+  "board": {
+    "_doc": "GitHub Projects board the watcher polls and the agent writes. ids from `gh project` / field-create.",
+    "owner": "j0ntz",
+    "projectNumber": 1,
+    "projectId": "PVT_kwHOD6Er384BbyER",
+    "statusFieldId": "PVTSSF_lAHOD6Er384BbyERzhWgFFU",
+    "statusOptions": {
+      "Pending": "8e0dcfd2",
+      "Running": "9579340e",
+      "Blocked": "4d4643ae",
+      "Done": "400c6aca"
+    }
+  },
+
+  "vercel": {
+    "_doc": "SWAP THIS BLOCK to move to a different Vercel account/scope/project (e.g. a future j0ntz-owned Vercel). scope = the team/account slug from the dashboard URL. bypassSecret = Vercel Protection Bypass for Automation token (set once deployment protection is configured; empty disables the protected-preview drive).",
+    "scope": "jon-edges-projects-227d4517",
+    "project": "tcg-art",
+    "bypassSecret": "",
+    "enabled": false
+  },
+
+  "worktreesRoot": "~/git/.tcg-art-worktrees",
+  "maxConcurrent": 1
+}
