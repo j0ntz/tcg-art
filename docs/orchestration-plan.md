@@ -1,5 +1,7 @@
 # TCG-Art Orchestration Plan
 
+> **Picking this up (e.g. a new session)?** Start with [handoff.md](handoff.md) — current built state, the confirmed-but-unbuilt review/test/land pipeline, and the hard-won gotchas.
+
 Goal: a YOLO, hands-off, one-shot autonomous agent orchestration for a **Next.js webapp deployed on Vercel**, with the same eagerness as the existing Edge "sim dev" orchestration, but generalized for the web and kept on a **flat Claude subscription** (no per-token API billing).
 
 This doc is the source of truth for how the orchestration is built. It is intentionally lighter than the Edge setup: solo project, commit-to-main, minimal ceremony.
