@@ -6,7 +6,8 @@
 # Stdout contract (the agent parses these):
 #   PREVIEW_URL=<url>
 #   HTTP_STATUS=<code>
-#   SCREENSHOT=<path>      (PNG proof; commit it + reference it in the PR)
+#   SCREENSHOT=<path>             (desktop-width PNG proof; commit it + reference it in the PR)
+#   SCREENSHOT_MOBILE=<path>      (mobile-width PNG proof; required in every run report)
 #   RESULT=pass|fail
 # Exit 0 on pass, non-zero on fail.
 set -uo pipefail
@@ -55,8 +56,15 @@ ok=1
 grep -qiE "Application error|DEPLOYMENT_NOT_FOUND|404: NOT_FOUND|_vercel/sso" "$body" 2>/dev/null && ok=0
 if [ -n "$EXPECT" ]; then grep -qiF "$EXPECT" "$body" 2>/dev/null || ok=0; fi
 
+# Desktop-width capture.
 shot="/tmp/preview-$PR.png"
 "$CHROME" --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=2 --window-size=1600,2600 --screenshot="$shot" "$url" >/dev/null 2>&1 || true
 if [ -s "$shot" ]; then echo "SCREENSHOT=$shot"; else echo "SCREENSHOT=none"; ok=0; fi
+
+# Mobile-width capture (iPhone-class viewport) so mobile rendering is proven, not
+# assumed. Both screenshots belong in the run report.
+shot_mobile="/tmp/preview-$PR-mobile.png"
+"$CHROME" --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=2 --window-size=390,844 --screenshot="$shot_mobile" "$url" >/dev/null 2>&1 || true
+if [ -s "$shot_mobile" ]; then echo "SCREENSHOT_MOBILE=$shot_mobile"; else echo "SCREENSHOT_MOBILE=none"; ok=0; fi
 
 if [ "$ok" = 1 ]; then echo "RESULT=pass"; exit 0; else echo "RESULT=fail"; exit 1; fi
