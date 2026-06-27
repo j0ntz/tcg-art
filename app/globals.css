@@ -114,6 +114,7 @@
   --color-background: #ffffff; /* page background */
   --color-surface: #ffffff; /* cards, inputs, raised panels */
   --color-surface-muted: var(--color-ink-50); /* footer, subtle fills */
+  --color-surface-hover: var(--color-ink-100); /* hover fill on quiet surfaces */
   --color-surface-inverse: var(--color-ink-900); /* dark solid buttons */
   --color-surface-inverse-hover: var(--color-ink-700);
 

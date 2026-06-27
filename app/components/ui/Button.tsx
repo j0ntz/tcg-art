@@ -18,7 +18,7 @@ export const buttonVariants = cva(
           "bg-gradient-to-r from-primary to-accent font-semibold text-primary-foreground transition-opacity hover:opacity-90",
         // outline: the secondary pricing CTA
         secondary:
-          "border border-border-strong font-semibold text-foreground transition-colors hover:bg-ink-100",
+          "border border-border-strong font-semibold text-foreground transition-colors hover:bg-surface-hover",
         // text link styled as a pill (nav)
         ghost:
           "font-medium text-foreground-muted transition-colors hover:text-foreground",

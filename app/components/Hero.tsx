@@ -11,7 +11,7 @@ interface HeroProps {
 
 const Hero: React.FC<HeroProps> = ({ showcase }) => {
   return (
-    <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-brand-50 via-white to-white">
+    <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-primary-muted via-white to-white">
       <div className="mx-auto grid w-full max-w-content gap-12 px-gutter py-16 sm:py-24 lg:grid-cols-2 lg:items-center">
         <div className="flex flex-col gap-6">
           <Badge variant="soft">Smart Trading Card Search</Badge>
