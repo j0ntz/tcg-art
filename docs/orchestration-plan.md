@@ -126,7 +126,8 @@ tcg-art/
 The orch's queue + state store is **GitHub Projects** (native, first-party; task data lives in GitHub). No Asana, no DB, no custom board. GitHub Projects is a GitHub feature, not a third-party developer's board, so it clears the security bar.
 
 - Board: "Agent Orchestration" (user-level, private) - https://github.com/users/j0ntz/projects/1 (project #1, id `PVT_kwHOD6Er384BbyER`).
-- State: custom single-select **Agent Status** field (id `PVTSSF_lAHOD6Er384BbyERzhWgFFU`) with options Pending / Running / Blocked / Done. Deliberately coarse (no granular per-phase state needed).
+- State: custom single-select **Agent Status** field, state machine **Pending → Running → [Blocked] → Done → Land → Landed**. Done = PR open + verified, awaiting your review; you move Done → **Land** to approve merging, and the lander sets **Landed**. (Option IDs live in `orch.config.json`. Editing the option set via the API *recreates all option IDs* and clears existing items' values — snapshot statuses first, then refresh the config IDs and restore.)
+- Lander (`land.sh`, runs each tick): for each **Land** task, **sequentially** — rebase its PR branch onto latest `origin/main`, force-push, squash-merge, delete branch, set **Landed**. Rebase conflict / un-mergeable → **Blocked** + a comment (you resolve, re-set Land). Sequential because each merge moves `main`, so the next PR rebases onto the new `main`.
 - Tasks are GitHub issues (in the relevant project repo) added as board items; one user-level board spans every project repo.
 - Access: `gh` CLI with the `project` scope, added to the keyring login (`GITHUB_TOKEN` in `~/.zshrc` mirrors that token via `gh auth token`, so it inherits the scope on a new shell).
 - Loop: the watcher polls `gh project item-list` for Agent Status = Pending; the agent flips the field via `gh project item-edit`, comments on the issue, and links its PR (auto-closes the issue on merge).

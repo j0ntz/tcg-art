@@ -4,4 +4,5 @@
 HERE="$(cd "$(dirname "$0")" && pwd)"
 echo "===== tick $(date '+%Y-%m-%d %H:%M:%S') ====="
 bash "$HERE/watchdog.sh" || echo "[tick] watchdog errored (continuing)"
-bash "$HERE/watch.sh"     || echo "[tick] watch errored"
+bash "$HERE/watch.sh"     || echo "[tick] watch errored (continuing)"
+bash "$HERE/land.sh"      || echo "[tick] land errored"
