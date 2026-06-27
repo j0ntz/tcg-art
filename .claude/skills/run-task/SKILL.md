@@ -11,6 +11,7 @@ description: Autonomously take ONE board task (a GitHub issue) from Pending to a
 <rule id="conventions">Follow this repo's CLAUDE.md (web TS standards, repo-local skills, plain `git commit`). Use npm (the repo's package manager). If your shell blocks bare npm/npx, prefix with `sfw` (e.g. `sfw npm run build`).</rule>
 <rule id="stop-at-pr">Open a PR and stop. NEVER merge, tag, publish, or deploy.</rule>
 <rule id="verification-preview">Verify on the real Vercel PREVIEW deployment, not just locally. (1) Before opening the PR, run `npm run build` as a sanity gate (never open a PR on a broken build). (2) After the PR is open, Vercel auto-builds a preview; run `bash orchestration/verify-preview.sh <pr#> "<expected-substring>"` — it resolves the preview URL, asserts it is live (HTTP 200, not an error/SSO page), and captures a screenshot. `RESULT=pass` is required. Commit the screenshot it produced into the branch and reference it (plus the preview URL) in the PR's Test Evidence section. State honestly what was verified; never claim more than `RESULT=pass` shows.</rule>
+<rule id="run-report">On completion the board task (issue) MUST carry a run report — the GitHub equivalent of Asana's attached agent-run-report. Fill `orchestration/templates/run-report.md`, commit it under `docs/run-reports/`, and post it as an issue comment, alongside the screenshots (committed under `docs/screenshots/` + blob-linked), the PR link, and — prominently — the **live preview URL** (so the operator can click straight to the deployed change, not production). A bare "PR: <url>" comment is NOT sufficient.</rule>
 </rules>
 
 <step id="1" name="Read the task">
@@ -37,6 +38,10 @@ Push the branch and `gh pr create --repo j0ntz/tcg-art --base main --head <branc
 Per `verification-preview`: run `bash orchestration/verify-preview.sh <pr#> "<expected-substring>"` (choose an expected string that proves your change rendered). It resolves the PR's preview URL, asserts it is live, and writes a screenshot (`SCREENSHOT=<path>`). On `RESULT=pass`: copy the screenshot into `docs/screenshots/`, commit + push it, and add/refresh a **Test Evidence** section in the PR body linking it and naming the preview URL. On `RESULT=fail`: read the output, fix the code, push (which re-triggers the preview), and re-run verify-preview until it passes — or, if it's a genuine wall, set Blocked.
 </step>
 
-<step id="7" name="Mark Done">
-`bash orchestration/board.sh status <n> Done`. Comment the PR URL on the issue: `gh issue comment <n> --repo j0ntz/tcg-art --body "PR: <url> (preview verified)"`. Print a one-line final summary, then stop.
+<step id="7" name="Run report + Mark Done">
+Per `run-report`, attach the report to the board task, THEN mark Done:
+1. Fill `orchestration/templates/run-report.md` into `docs/run-reports/issue-<n>-<slug>.md` (every field; "_None._" for empty ones). Commit + push it, along with the screenshots under `docs/screenshots/`.
+2. Post it on the issue so the board task carries it: `gh issue comment <n> --repo j0ntz/tcg-art --body-file docs/run-reports/issue-<n>-<slug>.md`.
+3. `bash orchestration/board.sh status <n> Done`.
+4. Print a one-line final summary, then stop.
 </step>

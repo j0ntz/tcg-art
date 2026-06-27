@@ -56,7 +56,7 @@ grep -qiE "Application error|DEPLOYMENT_NOT_FOUND|404: NOT_FOUND|_vercel/sso" "$
 if [ -n "$EXPECT" ]; then grep -qiF "$EXPECT" "$body" 2>/dev/null || ok=0; fi
 
 shot="/tmp/preview-$PR.png"
-"$CHROME" --headless=new --disable-gpu --hide-scrollbars --window-size=1440,2400 --screenshot="$shot" "$url" >/dev/null 2>&1 || true
+"$CHROME" --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=2 --window-size=1600,2600 --screenshot="$shot" "$url" >/dev/null 2>&1 || true
 if [ -s "$shot" ]; then echo "SCREENSHOT=$shot"; else echo "SCREENSHOT=none"; ok=0; fi
 
 if [ "$ok" = 1 ]; then echo "RESULT=pass"; exit 0; else echo "RESULT=fail"; exit 1; fi
