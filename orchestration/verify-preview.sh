@@ -62,9 +62,13 @@ shot="/tmp/preview-$PR.png"
 if [ -s "$shot" ]; then echo "SCREENSHOT=$shot"; else echo "SCREENSHOT=none"; ok=0; fi
 
 # Mobile-width capture (iPhone-class viewport) so mobile rendering is proven, not
-# assumed. Both screenshots belong in the run report.
+# assumed. Both screenshots belong in the run report. Headless Chrome clamps its
+# minimum window width to ~500px, so `--window-size=390` would render at 500px and
+# then crop to 390 (clipping the right edge, faking an overflow). The helper drives
+# Chrome over the DevTools Protocol with device-metrics emulation, which honors a
+# true 390px phone viewport. It also prints MOBILE_LAYOUT=... (overflowBy) to stderr.
 shot_mobile="/tmp/preview-$PR-mobile.png"
-"$CHROME" --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=2 --window-size=390,844 --screenshot="$shot_mobile" "$url" >/dev/null 2>&1 || true
+CHROME_BIN="$CHROME" node "$HERE/screenshot-mobile.mjs" "$url" "$shot_mobile" 390 844 >/dev/null || true
 if [ -s "$shot_mobile" ]; then echo "SCREENSHOT_MOBILE=$shot_mobile"; else echo "SCREENSHOT_MOBILE=none"; ok=0; fi
 
 if [ "$ok" = 1 ]; then echo "RESULT=pass"; exit 0; else echo "RESULT=fail"; exit 1; fi
