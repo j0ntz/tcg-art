@@ -22,10 +22,10 @@
 
   "vercel": {
     "_doc": "SWAP THIS BLOCK to move to a different Vercel account/scope/project (e.g. a future j0ntz-owned Vercel). scope = the team/account slug from the dashboard URL. bypassSecret = Vercel Protection Bypass for Automation token (set once deployment protection is configured; empty disables the protected-preview drive).",
-    "scope": "jon-edges-projects-227d4517",
+    "scope": "jontz",
     "project": "tcg-art",
     "bypassSecret": "",
-    "enabled": false
+    "enabled": true
   },
 
   "worktreesRoot": "~/git/.tcg-art-worktrees",
