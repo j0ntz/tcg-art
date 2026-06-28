@@ -68,7 +68,11 @@ if [ -s "$shot" ]; then echo "SCREENSHOT=$shot"; else echo "SCREENSHOT=none"; ok
 # Chrome over the DevTools Protocol with device-metrics emulation, which honors a
 # true 390px phone viewport. It also prints MOBILE_LAYOUT=... (overflowBy) to stderr.
 shot_mobile="/tmp/preview-$PR-mobile.png"
-CHROME_BIN="$CHROME" node "$HERE/screenshot-mobile.mjs" "$url" "$shot_mobile" 390 844 >/dev/null || true
+# Do NOT swallow the helper's exit: it writes the screenshot and then exits
+# non-zero on a real mobile overflow, so a non-zero rc must flip RESULT=fail.
+CHROME_BIN="$CHROME" node "$HERE/screenshot-mobile.mjs" "$url" "$shot_mobile" 390 844 >/dev/null
+mobile_rc=$?
 if [ -s "$shot_mobile" ]; then echo "SCREENSHOT_MOBILE=$shot_mobile"; else echo "SCREENSHOT_MOBILE=none"; ok=0; fi
+[ "$mobile_rc" -ne 0 ] && { echo "MOBILE_OVERFLOW=1"; ok=0; }
 
 if [ "$ok" = 1 ]; then echo "RESULT=pass"; exit 0; else echo "RESULT=fail"; exit 1; fi

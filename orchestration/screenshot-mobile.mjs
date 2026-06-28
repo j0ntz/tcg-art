@@ -31,8 +31,9 @@ if (typeof WebSocket === "undefined") {
 const CHROME =
   process.env.CHROME_BIN ??
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-// Pick a port in a high range; collisions are unlikely for a short-lived run.
-const PORT = 9200 + (process.pid % 800);
+// Pick a port from a wide range with per-run entropy (pid + randomness) so
+// concurrent verify runs do not collide on the same DevTools port.
+const PORT = 10000 + ((process.pid + Math.floor(Math.random() * 50000)) % 50000);
 const profileDir = mkdtempSync(join(tmpdir(), "cdp-mobile-"));
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -116,8 +117,19 @@ await send("Emulation.setDeviceMetricsOverride", {
 }, sessionId);
 
 await send("Page.navigate", { url }, sessionId);
-// Wait for load, then a beat for client-side image loading in the showcase fan.
-await sleep(5000);
+// Wait for the document AND its images (the showcase fan loads art client-side)
+// to actually finish, polling instead of guessing with a fixed sleep. Cap at ~6s
+// so a stuck asset can't hang the run.
+const readyExpr = `document.readyState === "complete" && [...document.images].every((i) => i.complete)`;
+const readyDeadline = Date.now() + 6000;
+while (Date.now() < readyDeadline) {
+  const { result: ready } = await send("Runtime.evaluate", {
+    expression: readyExpr,
+    returnByValue: true,
+  }, sessionId);
+  if (ready.result.value === true) break;
+  await sleep(150);
+}
 
 // Assert there is no horizontal overflow at this true mobile width, and report it.
 const overflowExpr = `JSON.stringify({
@@ -130,6 +142,7 @@ const { result: ov } = await send("Runtime.evaluate", {
   returnByValue: true,
 }, sessionId);
 console.error(`MOBILE_LAYOUT=${ov.result.value}`);
+const overflowBy = JSON.parse(ov.result.value).overflowBy;
 
 const { result: shot } = await send("Page.captureScreenshot", {
   format: "png",
@@ -140,4 +153,7 @@ console.log(outPath);
 
 try { ws.close(); } catch {}
 try { chrome.kill(); } catch {}
-process.exit(0);
+// Self-gate: write the proof screenshot first (above), then fail the run if the
+// page actually overflows its true mobile width. This lets verify-preview.sh flip
+// RESULT=fail on a real mobile overflow instead of silently passing.
+process.exit(overflowBy > 0 ? 1 : 0);
