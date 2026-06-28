@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 const SignupPage: React.FC = () => {
   return (
     <main className="relative flex flex-1 flex-col overflow-hidden bg-gradient-to-b from-violet-50 via-white to-white">
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-6 px-4 py-16">
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 pt-16 pb-24">
         <header className="flex flex-col items-center gap-3 text-center">
           <span className="inline-flex w-fit items-center gap-2 rounded-full border border-violet-200 bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700">
             Free forever, no credit card
