@@ -31,8 +31,11 @@ now="$(date +%s)"
 items="$(board_items_json 2>/dev/null \
   | node -e 'const d=JSON.parse(require("fs").readFileSync(0,"utf8"));for(const it of d.items||[]){if(!it.content||!it.content.number)continue;const e=Object.entries(it).find(([k])=>/agent ?status/i.test(k));console.log(it.content.number+"\t"+(e?e[1]:""))}' 2>/dev/null || true)"
 
-# blocked is a label on the current state, so the human sees where it stuck.
+# blocked is a label on the current state, so the human sees where it stuck. IDEMPOTENT:
+# a task only gets flagged + commented ONCE; while it stays blocked the watchdog leaves it
+# alone (it is awaiting human action), so we never re-comment tick after tick.
 flag_blocked() {
+  has_label "$1" blocked && return 0
   add_label "$1" blocked >/dev/null 2>&1
   gh issue comment "$1" --repo "$REPO" --body "Watchdog: $2" >/dev/null 2>&1
 }
