@@ -13,16 +13,12 @@
     "projectId": "PVT_kwHOD6Er384BbyER",
     "statusFieldId": "PVTSSF_lAHOD6Er384BbyERzhWgFFU",
     "statusOptions": {
-      "Pending": "e0811dc8",
-      "Running": "f011ed88",
-      "Coded": "8c887853",
-      "Testing": "ab74c1e8",
-      "Review": "2ca20d67",
-      "Address": "085e1c2e",
-      "Reviewed": "564df4f4",
-      "Land": "a2717a3a",
-      "Landed": "5814feb8",
-      "Blocked": "9fdb567a"
+      "Pending": "5dec8eed",
+      "Running": "fabe00dd",
+      "Verifying": "e6de2edd",
+      "Verified": "48d2e479",
+      "Landing": "ee0391cd",
+      "Done": "aa4d9ccf"
     }
   },
 

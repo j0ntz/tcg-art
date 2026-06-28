@@ -1,23 +1,21 @@
 #!/usr/bin/env bash
-# Watchdog for the tcg-art orchestration. Run on a schedule (launchd) alongside the watcher.
-# Tends EVERY pipeline agent session so a crash/hang/finish never leaves the board wedged.
+# Watchdog for the tcg-art orchestration (v2). Tends every agent session so a crash/hang/finish
+# never leaves the board wedged.
 #
-# Each "active" state has one expected agent session (the handler that owns that state):
-#   Running -> claude-task-<n>     (run-task: code + PR)
-#   Coded   -> claude-test-<n>     (test-task: verify preview + run report)
-#   Review  -> claude-review-<n>   (review-task: independent PR review)
-#   Address -> claude-address-<n>  (address-task: address review + re-enter)
-#   Land    -> claude-land-<n>     (land-task: semantic-resolution merge)
-# Waiting/terminal states (Pending, Testing, Reviewed, Landed, Blocked) expect NO agent.
+# Each "active" state has one expected agent session (the handler that owns it):
+#   Running   -> claude-work-<n>    (work-task: build/write/ops + address)
+#   Verifying -> claude-verify-<n>  (verify-code / verify-doc: independent check)
+#   Landing   -> claude-land-<n>    (land-task: semantic-resolution merge)
+# Rest/terminal states (Pending, Verified, Done) expect NO agent. `blocked` is a LABEL, not a
+# state: a blocked task stays in its current state so you can see WHERE it stuck.
 #
 # Per item:
-#   - Retire any agent session for the issue that is NOT the expected one (finished / stale).
-#   - Expected session alive + frozen (pane unchanged > FROZEN_MIN): kill it. If the state is
-#     Running, also -> Blocked (a from-scratch coding crash is a real problem to surface);
-#     otherwise just kill and let the idempotent handler re-spawn next tick.
-#   - Expected session dead while state == Running: run-task crashed -> Blocked + comment.
-#     (For Coded/Review/Address/Land the handler simply re-spawns next tick; no Blocked.)
-#   - Fork-storm guard: warn if total live agent sessions exceed FORK_WARN.
+#   - Retire any agent session for the issue that is NOT the one its current state expects.
+#   - Expected session alive + frozen (pane unchanged > FROZEN_MIN): kill it. If Running, also
+#     flag `blocked` (a from-scratch work crash is worth surfacing); otherwise the idempotent
+#     handler (verify/land) re-spawns next tick.
+#   - Expected session dead while Running: work-task ended without routing out -> flag `blocked`.
+#     (Verifying/Landing just re-spawn next tick.)
 # NOT set -e: one failing check must never abort the whole sweep.
 set -uo pipefail
 
@@ -33,8 +31,9 @@ now="$(date +%s)"
 items="$(board_items_json 2>/dev/null \
   | node -e 'const d=JSON.parse(require("fs").readFileSync(0,"utf8"));for(const it of d.items||[]){if(!it.content||!it.content.number)continue;const e=Object.entries(it).find(([k])=>/agent ?status/i.test(k));console.log(it.content.number+"\t"+(e?e[1]:""))}' 2>/dev/null || true)"
 
-block() {
-  bash "$HERE/board.sh" status "$1" Blocked >/dev/null 2>&1
+# blocked is a label on the current state, so the human sees where it stuck.
+flag_blocked() {
+  add_label "$1" blocked >/dev/null 2>&1
   gh issue comment "$1" --repo "$REPO" --body "Watchdog: $2" >/dev/null 2>&1
 }
 
@@ -56,16 +55,14 @@ while IFS=$'\t' read -r num status; do
   [ -z "${num:-}" ] && continue
 
   case "$status" in
-    Running) exp="claude-task-$num" ;;
-    Coded)   exp="claude-test-$num" ;;
-    Review)  exp="claude-review-$num" ;;
-    Address) exp="claude-address-$num" ;;
-    Land)    exp="claude-land-$num" ;;
-    *)       exp="" ;;
+    Running)   exp="claude-work-$num" ;;
+    Verifying) exp="claude-verify-$num" ;;
+    Landing)   exp="claude-land-$num" ;;
+    *)         exp="" ;;
   esac
 
   # Retire any agent session for this issue that is not the one its current state expects.
-  for s in "claude-task-$num" "claude-test-$num" "claude-review-$num" "claude-address-$num" "claude-land-$num"; do
+  for s in "claude-work-$num" "claude-verify-$num" "claude-land-$num"; do
     [ "$s" = "$exp" ] && continue
     if tmux has-session -t "$s" 2>/dev/null; then
       tmux kill-session -t "$s" 2>/dev/null && echo "[watchdog] retired stale $s (state=$status)"
@@ -81,18 +78,18 @@ while IFS=$'\t' read -r num status; do
       mins="${verdict#frozen:}"
       tmux kill-session -t "$exp" 2>/dev/null
       if [ "$status" = "Running" ]; then
-        block "$num" "agent appeared frozen (~${mins}m no output); killed and marked Blocked for review."
-        echo "[watchdog] frozen #$num ($exp, ~${mins}m) -> killed + Blocked"
+        flag_blocked "$num" "agent appeared frozen (~${mins}m no output); killed and flagged blocked for review."
+        echo "[watchdog] frozen #$num ($exp, ~${mins}m) -> killed + blocked"
       else
         echo "[watchdog] frozen #$num ($exp, ~${mins}m) -> killed; handler will re-spawn"
       fi
     fi
   else
     if [ "$status" = "Running" ]; then
-      block "$num" "agent session ended without finishing; marked Blocked for review."
-      echo "[watchdog] dead session #$num ($exp) -> Blocked"
+      flag_blocked "$num" "work agent ended without finishing; flagged blocked for review (clear the label and re-queue to retry)."
+      echo "[watchdog] dead session #$num ($exp) -> blocked"
     fi
-    # Coded/Review/Address/Land with no session: the idempotent handler re-spawns next tick.
+    # Verifying/Landing with no session: the idempotent handler re-spawns next tick.
   fi
 done <<< "$items"
 

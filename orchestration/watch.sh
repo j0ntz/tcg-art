@@ -1,50 +1,34 @@
 #!/usr/bin/env bash
-# Minimal watcher tick for the agent orchestration.
-# Polls the GitHub Projects board for Agent Status = Pending, provisions a
-# worktree, marks the item Running, and spawns an autonomous
-# `claude --dangerously-skip-permissions /run-task <issue-url>` in a tmux session.
-# Run once by hand, or on a schedule (cron/launchd). Concurrency-capped.
-set -euo pipefail
+# Pending handler: ONE Pending task per tick -> provision a worktree, mark Running, spawn
+# /work-task. The work agent does the job per flavor (code / doc / ops) AND addresses any
+# open review threads, then routes out of Running when done. Idempotent via the tmux
+# presence-guard; skips tasks carrying the `blocked` label. Concurrency-capped across all
+# agent stages (work/verify/land).
+set -uo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"; source "$HERE/lib.sh"
 
-HERE="$(cd "$(dirname "$0")" && pwd)"
-REPO_ROOT="$(cd "$HERE/.." && pwd)"
-source "$HERE/lib.sh"   # REPO_NAME, WORKTREES, MAX, REPO from orch.config.json
-# NB: WORKTREES must stay separate from the Edge orch's ~/git/.agent-worktrees (its watchdog GCs that dir every 120s)
+live="$(tmux ls 2>/dev/null | grep -cE '^claude-(work|verify|land)-' || true)"
+if [ "${live:-0}" -ge "$MAX" ]; then echo "[watch] concurrency cap ($live >= $MAX); skipping"; exit 0; fi
 
-live="$(tmux ls 2>/dev/null | grep -c '^claude-task-' || true)"
-if [ "${live:-0}" -ge "$MAX" ]; then
-  echo "concurrency cap reached ($live live >= $MAX); skipping tick"
-  exit 0
+num="$(first_item_in_state Pending)"
+[ -z "$num" ] && { echo "[watch] nothing in Pending"; exit 0; }
+has_label "$num" blocked && { echo "[watch] #$num blocked; skipping"; exit 0; }
+session="claude-work-$num"
+tmux has-session -t "$session" 2>/dev/null && { echo "[watch] #$num: work-agent already running"; exit 0; }
+
+# Pending is the only stage that may need a NEW branch off main (re-entry from Verifying reuses
+# the existing branch); ensure_worktree assumes an existing origin branch, so provision here.
+slug="task-$num"; branch="jon/$slug"; wt="$WORKTREES/$slug/$REPO_NAME"; repo="$HOME/git/$REPO_NAME"
+if [ ! -d "$wt" ]; then
+  git -C "$repo" fetch -q origin main 2>/dev/null || true
+  mkdir -p "$(dirname "$wt")"
+  git -C "$repo" worktree add "$wt" -b "$branch" origin/main 2>/dev/null \
+    || git -C "$repo" worktree add "$wt" "$branch" 2>/dev/null \
+    || git -C "$repo" worktree add --force -B "$branch" "$wt" "origin/$branch" 2>/dev/null \
+    || { echo "[watch] #$num: could not provision worktree"; exit 0; }
+  [ -e "$wt/node_modules" ] || ln -s "$repo/node_modules" "$wt/node_modules" 2>/dev/null || true
 fi
 
-pending="$(bash "$HERE/board.sh" list-pending || true)"
-if [ -z "$pending" ]; then
-  echo "no pending tasks"
-  exit 0
-fi
-
-git -C "$REPO_ROOT" fetch -q origin main
-
-while IFS=$'\t' read -r num url; do
-  [ -z "${num:-}" ] && continue
-  session="claude-task-$num"
-  if tmux has-session -t "$session" 2>/dev/null; then
-    echo "#$num already has a live session; skipping"
-    continue
-  fi
-  slug="task-$num"
-  branch="jon/$slug"
-  wt="$WORKTREES/$slug/$REPO_NAME"
-  echo "=== picking up #$num ($url) ==="
-  if [ ! -d "$wt" ]; then
-    mkdir -p "$(dirname "$wt")"
-    git -C "$REPO_ROOT" worktree add "$wt" -b "$branch" origin/main
-    ln -s "$REPO_ROOT/node_modules" "$wt/node_modules"
-  fi
-  bash "$HERE/board.sh" status "$num" Running
-  tmux new-session -d -s "$session"
-  # interactive shell so ~/.zshrc (PATH, gh keyring) is sourced, then launch the agent
-  tmux send-keys -t "$session" "cd \"$wt\" && claude --dangerously-skip-permissions \"/run-task $url\"" C-m
-  echo "spawned $session  (attach: tmux attach -t $session  |  peek: tmux capture-pane -t $session -p)"
-  break   # one spawn per tick while we babysit; remove to drain the queue
-done <<< "$pending"
+bash "$HERE/board.sh" status "$num" Running
+spawn_agent "$session" "$wt" "/work-task https://github.com/$REPO/issues/$num"
+echo "[watch] #$num: PENDING -> Running, spawned $session"

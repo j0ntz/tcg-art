@@ -22,5 +22,5 @@ and when false: `what_to_try: <the concrete next action to take instead of block
 <steps>
 1. Read the issue and the proposed block reason from the prompt.
 2. Match against `taxonomy`; apply `evidence` to any wall claim.
-3. Emit the verdict per `output`. The calling skill obeys it: `false` -> do `what_to_try` and continue; `true` -> proceed to set Blocked.
+3. Emit the verdict per `output`. The calling skill obeys it: `false` -> do `what_to_try` and continue; `true` -> proceed to add the `blocked` label (the task stays in its current state so you can see where it stuck).
 </steps>

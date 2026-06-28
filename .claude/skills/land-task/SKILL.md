@@ -1,12 +1,12 @@
 ---
 name: land-task
-description: Land ONE approved PR (a board task in the Land state) when a clean rebase isn't possible — rebase onto main resolving conflicts SEMANTICALLY, verify the build, squash-merge, set Landed. This is the sanctioned merge path; only for Land-state tasks. Invoked as `/land-task <issue-url>` by the lander on conflict.
+description: Land ONE approved PR (a board task in the Landing state) when a clean rebase isn't possible — rebase onto main resolving conflicts SEMANTICALLY, verify the build, squash-merge, set Done. This is the sanctioned merge path; only for Landing-state tasks. Invoked as `/land-task <issue-url>` by the lander on conflict.
 ---
 
-<goal>Land the PR for the given task: rebase its branch onto latest `origin/main`, semantically resolving any conflicts, verify the build, squash-merge to main, delete the branch, and set the board to Landed. Hands-off, one turn.</goal>
+<goal>Land the PR for the given task: rebase its branch onto latest `origin/main`, semantically resolving any conflicts, verify the build, squash-merge to main, delete the branch, and set the board to Done. Hands-off, one turn.</goal>
 
 <rules>
-<rule id="this-is-the-merge">Unlike `/run-task`, landing DOES merge — that is the entire job. Squash-merge the approved PR to `main` and delete its branch. (This is the one sanctioned merge in the orchestration; it only runs for tasks a human moved to `Land`.)</rule>
+<rule id="this-is-the-merge">Unlike `/work-task`, landing DOES merge — that is the entire job. Squash-merge the approved PR to `main` and delete its branch. (This is the one sanctioned merge in the orchestration; it only runs for tasks promoted to `Landing`.)</rule>
 <rule id="semantic-resolution-no-block">Do NOT block on rebase conflicts — RESOLVE them. For each conflicted file, merge BOTH sides so the PR's intent AND main's newer changes are preserved (`ours`/HEAD = main being rebased onto; `theirs` = the PR's commit). Remove every conflict marker with a correct, working merge. For lockfiles (`package-lock.json`) do NOT hand-merge — take one side then regenerate with the package manager (`npm install`). Set `Blocked` ONLY for a genuine NON-conflict wall (the build can't be made to pass, or GitHub rejects the merge for a non-conflict reason). A mere conflict is never a reason to block.</rule>
 <rule id="verify-after-resolve">After resolving + rebasing, run `npm run build` (prefix `sfw` if required). It MUST pass before you merge; if your resolution broke it, fix it. Optionally re-run `bash orchestration/verify-preview.sh <pr#>` on the rebased HEAD.</rule>
 <rule id="hands-off">One turn, no interactive questions. You are unattended.</rule>
@@ -20,4 +20,4 @@ description: Land ONE approved PR (a board task in the Land state) when a clean 
 
 <step id="4" name="Push + squash-merge">`git push --force-with-lease`, then `gh pr merge <pr> --repo j0ntz/tcg-art --squash --delete-branch`.</step>
 
-<step id="5" name="Landed">`bash orchestration/board.sh status <n> Landed`. Comment on the issue: what merged + how you resolved each conflict (so the resolution is auditable). Print a one-line summary, then stop.</step>
+<step id="5" name="Done">`bash orchestration/board.sh status <n> Done`. Comment on the issue: what merged + how you resolved each conflict (so the resolution is auditable). Print a one-line summary, then stop.</step>
