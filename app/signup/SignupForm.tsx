@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import Button from "../components/ui/Button";
+import { cardVariants } from "../components/ui/Card";
+import { cn } from "@/lib/utils";
 
 // Client-only signup UI. No backend, no auth, no real account is created:
 // on a valid submit we just flip to a "check your email" success state.
@@ -29,9 +32,10 @@ const validate = (email: string, password: string, confirm: string): FieldErrors
 };
 
 const fieldClass = (hasError: boolean): string =>
-  `w-full rounded-lg border bg-white px-4 py-3 text-zinc-900 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200 ${
-    hasError ? "border-red-500" : "border-zinc-300"
-  }`;
+  cn(
+    "w-full rounded-field border bg-surface px-4 py-3 text-foreground outline-none focus:border-foreground",
+    hasError ? "border-danger-border" : "border-border-strong",
+  );
 
 const SignupForm: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -52,21 +56,18 @@ const SignupForm: React.FC = () => {
   if (submitted) {
     return (
       <div
-        className="flex flex-col items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm"
+        className={cn(cardVariants(), "flex flex-col items-center gap-4 p-8 text-center")}
         data-testid="signup-success"
       >
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-2xl text-white">
+        <div className="flex h-12 w-12 items-center justify-center rounded-pill bg-success-subtle text-2xl">
           ✓
         </div>
-        <h2 className="text-xl font-semibold text-zinc-900">Check your email</h2>
-        <p className="text-zinc-600">
-          We sent a confirmation link to <span className="font-medium text-zinc-900">{email}</span>.
+        <h2 className="text-xl font-semibold text-foreground">Check your email</h2>
+        <p className="text-foreground-subtle">
+          We sent a confirmation link to <span className="font-medium text-foreground">{email}</span>.
           Click it to finish setting up your TCG-Art account.
         </p>
-        <Link
-          href="/search"
-          className="mt-2 font-medium text-violet-700 underline underline-offset-4 hover:text-violet-900"
-        >
+        <Link href="/search" className="mt-2 font-medium text-foreground underline underline-offset-4">
           Back to search
         </Link>
       </div>
@@ -77,10 +78,10 @@ const SignupForm: React.FC = () => {
     <form
       onSubmit={handleSubmit}
       noValidate
-      className="flex flex-col gap-5 rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm"
+      className={cn(cardVariants(), "flex flex-col gap-5 p-8")}
     >
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className="text-sm font-medium text-zinc-700">
+        <label htmlFor="email" className="text-sm font-medium text-foreground-secondary">
           Email
         </label>
         <input
@@ -95,14 +96,14 @@ const SignupForm: React.FC = () => {
           aria-invalid={errors.email != null}
         />
         {errors.email != null ? (
-          <p className="text-sm text-red-600" role="alert">
+          <p className="text-sm text-danger" role="alert">
             {errors.email}
           </p>
         ) : null}
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="password" className="text-sm font-medium text-zinc-700">
+        <label htmlFor="password" className="text-sm font-medium text-foreground-secondary">
           Password
         </label>
         <input
@@ -117,14 +118,14 @@ const SignupForm: React.FC = () => {
           aria-invalid={errors.password != null}
         />
         {errors.password != null ? (
-          <p className="text-sm text-red-600" role="alert">
+          <p className="text-sm text-danger" role="alert">
             {errors.password}
           </p>
         ) : null}
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="confirm" className="text-sm font-medium text-zinc-700">
+        <label htmlFor="confirm" className="text-sm font-medium text-foreground-secondary">
           Confirm password
         </label>
         <input
@@ -139,20 +140,17 @@ const SignupForm: React.FC = () => {
           aria-invalid={errors.confirm != null}
         />
         {errors.confirm != null ? (
-          <p className="text-sm text-red-600" role="alert">
+          <p className="text-sm text-danger" role="alert">
             {errors.confirm}
           </p>
         ) : null}
       </div>
 
-      <button
-        type="submit"
-        className="mt-1 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-6 py-3 font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
-      >
+      <Button type="submit" variant="primary" size="md" className="mt-1">
         Create Account
-      </button>
+      </Button>
 
-      <p className="text-center text-sm text-zinc-500">
+      <p className="text-center text-sm text-foreground-subtle">
         No real account is created. This is a UI demo with client-side validation only.
       </p>
     </form>
