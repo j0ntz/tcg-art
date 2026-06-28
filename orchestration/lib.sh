@@ -80,9 +80,11 @@ ensure_worktree() {
 }
 
 # spawn_agent <session> <worktree> <slash-cmd-with-arg>
-# Starts a detached tmux session, cds into the worktree (so .claude/skills resolve), launches the agent.
+# Starts a detached tmux session, cds into the worktree (so .claude/skills resolve), launches the
+# agent with Remote Control enabled (named after the tmux session) so the spawned agent is
+# viewable/controllable from claude.ai on any machine, not just a local tmux pane.
 spawn_agent() {
   local session="$1" wt="$2" cmd="$3"
   tmux new-session -d -s "$session"
-  tmux send-keys -t "$session" "cd \"$wt\" && claude --dangerously-skip-permissions \"$cmd\"" C-m
+  tmux send-keys -t "$session" "cd \"$wt\" && claude --remote-control \"$session\" --dangerously-skip-permissions \"$cmd\"" C-m
 }
