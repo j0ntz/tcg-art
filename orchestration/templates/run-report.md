@@ -19,8 +19,9 @@
 
 ## Test evidence
 - `verify-preview.sh` → <RESULT> against the preview (<preview-url>).
-- Screenshots (committed under `docs/screenshots/`, linked as blob URLs since the repo is private):
-  - [<name>](<blob-url>)
+- Screenshots (committed under `docs/screenshots/`, linked as blob URLs since the repo is private). BOTH a desktop and a mobile (~390px) capture are required:
+  - Desktop: [<name>](<blob-url>)
+  - Mobile (~390px): [<name>](<blob-url>)
 
 ## Decisions (yolo defaults)
 <each deferred decision: question, default chosen, reversibility. "_None._" if none.>

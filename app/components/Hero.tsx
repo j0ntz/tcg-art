@@ -45,17 +45,28 @@ const Hero: React.FC<HeroProps> = ({ showcase }) => {
         </div>
 
         {showcase.length > 0 ? (
-          <div className="relative hidden h-[420px] lg:block" aria-hidden="true">
+          // Fan geometry is driven by CSS custom properties so the breakpoint can
+          // swap the spread/lift/card-size between a tight mobile fan and the wide
+          // lg layout, while each card keeps its per-index transform math. The
+          // mobile spread (44px) keeps all 5 cards inside a ~360px column with no
+          // horizontal overflow; lg restores the original wide fan unchanged.
+          <div
+            className="relative h-[300px] w-full [--fan-angle:6deg] [--fan-lift:12px] [--fan-spread:44px] sm:h-[360px] sm:[--fan-spread:56px] lg:h-[420px] lg:[--fan-angle:7deg] lg:[--fan-lift:22px] lg:[--fan-spread:96px]"
+            aria-hidden="true"
+          >
             {showcase.slice(0, 5).map((card, index) => (
               <div
                 key={card.id}
-                className="absolute top-1/2 left-1/2 w-44 -translate-y-1/2 rounded-xl shadow-xl ring-1 ring-black/5 transition-transform"
-                style={{
-                  transform: `translate(-50%, -50%) translateX(${(index - 2) * 96}px) translateY(${
-                    Math.abs(index - 2) * 22
-                  }px) rotate(${(index - 2) * 7}deg)`,
-                  zIndex: 10 - Math.abs(index - 2),
-                }}
+                className="absolute top-1/2 left-1/2 w-28 -translate-y-1/2 rounded-xl shadow-xl ring-1 ring-black/5 transition-transform sm:w-32 lg:w-44"
+                style={
+                  {
+                    "--i": index - 2,
+                    "--ai": Math.abs(index - 2),
+                    transform:
+                      "translate(-50%, -50%) translateX(calc(var(--i) * var(--fan-spread))) translateY(calc(var(--ai) * var(--fan-lift))) rotate(calc(var(--i) * var(--fan-angle)))",
+                    zIndex: 10 - Math.abs(index - 2),
+                  } as React.CSSProperties
+                }
               >
                 <Image
                   src={card.images.small}
