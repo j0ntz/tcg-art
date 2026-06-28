@@ -22,6 +22,10 @@ CRON_PATH="$NODE_DIR:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:
 
 case "${1:-}" in
   install)
+    # Ensure the persistent tmux server is up FIRST, so agents the cron spawns attach to a server
+    # that outlives each tick (see tmux-keepalive.sh). Without it, launchd reaps the per-tick tmux
+    # server and kills live agents ~60s in; AbandonProcessGroup below helps but is not sufficient.
+    bash "$HERE/install-tmux-keepalive.sh" install
     cat > "$PLIST" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -43,6 +47,11 @@ case "${1:-}" in
   <key>StandardOutPath</key><string>$LOG</string>
   <key>StandardErrorPath</key><string>$LOG</string>
   <key>ProcessType</key><string>Background</string>
+  <!-- AbandonProcessGroup: do NOT reap the job's process group when a tick exits. tick.sh
+       spawns the tmux server that hosts the agents; without this, launchd culls that group a
+       couple of ticks later and kills live agents mid-work (~2 min in). Proven: a non-cron
+       spawn of the same agent runs for many minutes; a cron-spawned one died at ~2 min. -->
+  <key>AbandonProcessGroup</key><true/>
 </dict>
 </plist>
 EOF

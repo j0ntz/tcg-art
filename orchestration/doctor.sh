@@ -67,6 +67,14 @@ if launchctl list com.tcg-art.orch >/dev/null 2>&1; then
   else note "no tick log yet" "the first tick writes $log within 60s of arming"; fi
 else note "cron not armed" "orchestration/install-watcher.sh install"; fi
 
+# 7b. Persistent tmux server. The cron attaches its agent sessions to this long-lived server so
+# they survive each tick; without it launchd reaps the per-tick server and kills agents ~60s in.
+# install-watcher.sh install arms it (KeepAlive LaunchAgent com.tcg-art.tmux).
+if launchctl list com.tcg-art.tmux >/dev/null 2>&1; then
+  if tmux has-session -t __orch_keepalive__ 2>/dev/null; then pass "persistent tmux server up (agents survive ticks)"
+  else note "tmux-keepalive loaded but its server session is missing" "self-heals in ~30s, or: orchestration/install-tmux-keepalive.sh install"; fi
+else note "persistent tmux server not armed (cron-spawned agents would die ~60s in)" "orchestration/install-tmux-keepalive.sh install (install-watcher.sh install also arms it)"; fi
+
 # 8. No drift vs git. The cron runs orchestration/*.sh from THIS checkout, so it must match
 # git. Uncommitted/untracked changes, or a checkout that has diverged from origin, mean the
 # running orch differs from what is on git (and from what a fresh machine would clone). The
