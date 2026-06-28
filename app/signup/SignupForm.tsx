@@ -29,7 +29,7 @@ const validate = (email: string, password: string, confirm: string): FieldErrors
 };
 
 const fieldClass = (hasError: boolean): string =>
-  `w-full rounded-lg border bg-white px-4 py-3 text-zinc-900 outline-none focus:border-zinc-900 ${
+  `w-full rounded-lg border bg-white px-4 py-3 text-zinc-900 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200 ${
     hasError ? "border-red-500" : "border-zinc-300"
   }`;
 
@@ -55,15 +55,18 @@ const SignupForm: React.FC = () => {
         className="flex flex-col items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm"
         data-testid="signup-success"
       >
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-2xl">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-2xl text-white">
           ✓
         </div>
         <h2 className="text-xl font-semibold text-zinc-900">Check your email</h2>
-        <p className="text-zinc-500">
+        <p className="text-zinc-600">
           We sent a confirmation link to <span className="font-medium text-zinc-900">{email}</span>.
           Click it to finish setting up your TCG-Art account.
         </p>
-        <Link href="/" className="mt-2 font-medium text-zinc-900 underline underline-offset-4">
+        <Link
+          href="/search"
+          className="mt-2 font-medium text-violet-700 underline underline-offset-4 hover:text-violet-900"
+        >
           Back to search
         </Link>
       </div>
@@ -144,7 +147,7 @@ const SignupForm: React.FC = () => {
 
       <button
         type="submit"
-        className="mt-1 rounded-full bg-zinc-900 px-6 py-3 font-medium text-white transition-colors hover:bg-zinc-700"
+        className="mt-1 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-6 py-3 font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
       >
         Create Account
       </button>
