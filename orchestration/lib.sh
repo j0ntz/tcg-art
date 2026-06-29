@@ -79,6 +79,19 @@ ensure_worktree() {
   printf '%s' "$wt"
 }
 
+# remove_worktree <issue#> -> tear down the per-issue worktree dir ($WORKTREES/task-<n>) and prune
+# its registration from the main checkout. Returns 0 if a worktree dir was present (and removed),
+# 1 if there was nothing to remove. Only the local checkout is touched; the branch lives on origin
+# and ensure_worktree re-provisions on demand, so this is safe once no agent is using the issue.
+remove_worktree() {
+  local num="$1" wt="$WORKTREES/task-$1/$REPO_NAME" repo="$HOME/git/$REPO_NAME"
+  [ -d "$WORKTREES/task-$1" ] || return 1
+  git -C "$repo" worktree remove --force "$wt" 2>/dev/null || true
+  rm -rf "$WORKTREES/task-$1" 2>/dev/null || true
+  git -C "$repo" worktree prune 2>/dev/null || true
+  return 0
+}
+
 # spawn_agent <session> <worktree> <slash-cmd-with-arg>
 # Starts a detached tmux session, cds into the worktree (so .claude/skills resolve), launches the
 # agent with Remote Control enabled (named after the tmux session) so the spawned agent is

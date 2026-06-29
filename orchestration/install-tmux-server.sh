@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Install/disarm the persistent tmux-server LaunchAgent (com.tcg-art.tmux). The orchestration
 # cron attaches its agent sessions to this server so they outlive each tick. See
-# tmux-keepalive.sh for the full why. install-watcher.sh install calls this first.
+# tmux-server.sh for the full why. install-watcher.sh install calls this first.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 LABEL="com.tcg-art.tmux"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
-HOLDER="$HERE/tmux-keepalive.sh"
-LOG="$HOME/.config/tcg-orch/tmux-keepalive.log"; mkdir -p "$(dirname "$LOG")"
+HOLDER="$HERE/tmux-server.sh"
+LOG="$HOME/.config/tcg-orch/tmux-server.log"; mkdir -p "$(dirname "$LOG")"
 
 # launchd hands the job a bare PATH; bake in wherever this machine keeps tmux + node so the
 # holder (and the agents spawned into its server) can resolve their tools. Portable across
@@ -48,12 +48,13 @@ EOF
   uninstall)
     launchctl unload "$PLIST" 2>/dev/null || true
     rm -f "$PLIST"
-    tmux kill-session -t __orch_keepalive__ 2>/dev/null || true
+    tmux kill-session -t __orch_tmux_server__ 2>/dev/null || true
+    tmux kill-session -t __orch_keepalive__ 2>/dev/null || true   # legacy name, pre-rename
     echo "disarmed $LABEL"
     ;;
   status)
     launchctl list | grep -q "$LABEL" && echo "agent: armed" || echo "agent: not armed"
-    tmux has-session -t __orch_keepalive__ 2>/dev/null && echo "keepalive session: alive" || echo "keepalive session: MISSING"
+    tmux has-session -t __orch_tmux_server__ 2>/dev/null && echo "tmux-server session: alive" || echo "tmux-server session: MISSING"
     ;;
-  *) echo "usage: install-tmux-keepalive.sh {install|uninstall|status}"; exit 2 ;;
+  *) echo "usage: install-tmux-server.sh {install|uninstall|status}"; exit 2 ;;
 esac

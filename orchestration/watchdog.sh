@@ -1,21 +1,25 @@
 #!/usr/bin/env bash
-# Watchdog for the tcg-art orchestration (v2). Tends every agent session so a crash/hang/finish
-# never leaves the board wedged.
+# Watchdog for the tcg-art orchestration (v2). Tends every agent session AND per-task worktree so a
+# crash/hang/finish never leaves the board wedged or leaks resources.
 #
-# Each "active" state has one expected agent session (the handler that owns it):
+# Each "active" (gerund) state has one expected agent session (the handler that owns it):
 #   Running   -> claude-work-<n>    (work-task: build/write/ops + address)
 #   Verifying -> claude-verify-<n>  (verify-code / verify-doc: independent check)
 #   Landing   -> claude-land-<n>    (land-task: semantic-resolution merge)
 # Rest/terminal states (Pending, Verified, Done) expect NO agent. `blocked` is a LABEL, not a
 # state: a blocked task stays in its current state so you can see WHERE it stuck.
 #
-# Per item:
-#   - Retire any agent session for the issue that is NOT the one its current state expects.
-#   - Expected session alive + frozen (pane unchanged > FROZEN_MIN): kill it. If Running, also
-#     flag `blocked` (a from-scratch work crash is worth surfacing); otherwise the idempotent
-#     handler (verify/land) re-spawns next tick.
-#   - Expected session dead while Running: work-task ended without routing out -> flag `blocked`.
-#     (Verifying/Landing just re-spawn next tick.)
+# Each sweep, in order:
+#   1. REAP SESSIONS: kill every live claude-{work,verify,land}-* session that is not the one some
+#      board item currently expects. This is a global sweep over the tmux server, so it covers a
+#      superseded stage session, a Done task's leftover session, AND a session whose issue has been
+#      removed from the board entirely (the off-board orphan the old per-item loop missed).
+#   2. FROZEN/DEAD WATCH: for each gerund item, kill its expected session if frozen; a Running
+#      crash/dead session also flags `blocked`. Verifying/Landing just re-spawn next tick.
+#   3. GC WORKTREES: delete the per-issue worktree once the task is Done or off the board. No agent
+#      can be using it then; the branch lives on origin and ensure_worktree re-provisions on demand.
+# Passes 1 and 3 run ONLY when the board read returned items, so a transient board-fetch failure
+# (empty read) never mass-reaps live sessions/worktrees.
 # NOT set -e: one failing check must never abort the whole sweep.
 set -uo pipefail
 
@@ -30,6 +34,15 @@ now="$(date +%s)"
 
 items="$(board_items_json 2>/dev/null \
   | node -e 'const d=JSON.parse(require("fs").readFileSync(0,"utf8"));for(const it of d.items||[]){if(!it.content||!it.content.number)continue;const e=Object.entries(it).find(([k])=>/agent ?status/i.test(k));console.log(it.content.number+"\t"+(e?e[1]:""))}' 2>/dev/null || true)"
+
+# exp_session <status> <issue#> -> the one session that status expects ("" for non-gerund states).
+exp_session() {
+  case "$1" in
+    Running)   echo "claude-work-$2" ;;
+    Verifying) echo "claude-verify-$2" ;;
+    Landing)   echo "claude-land-$2" ;;
+  esac
+}
 
 # blocked is a label on the current state, so the human sees where it stuck. IDEMPOTENT:
 # a task only gets flagged + commented ONCE; while it stays blocked the watchdog leaves it
@@ -53,25 +66,27 @@ frozen_verdict() {
   ' "$STATE" "$session" "$pane" "$now" "$FROZEN_MIN" 2>/dev/null || echo ok
 }
 
+# Set of currently-expected sessions (one per gerund item), newline-delimited.
+expected="$(while IFS=$'\t' read -r num status; do
+  [ -z "${num:-}" ] && continue
+  exp_session "$status" "$num"
+done <<< "$items")"
+
+# --- Pass 1: reap every orch agent session no board item expects (superseded / Done / off-board) ---
+if [ -n "$items" ]; then
+  while read -r s; do
+    [ -z "$s" ] && continue
+    if ! grep -qxF "$s" <<< "$expected"; then
+      tmux kill-session -t "$s" 2>/dev/null && echo "[watchdog] reaped session $s (no board item expects it)"
+    fi
+  done < <(tmux list-sessions -F '#{session_name}' 2>/dev/null | grep -E '^claude-(work|verify|land)-[0-9]+$')
+fi
+
+# --- Pass 2: frozen/dead watch on each gerund item's expected session ---
 live_count=0
 while IFS=$'\t' read -r num status; do
   [ -z "${num:-}" ] && continue
-
-  case "$status" in
-    Running)   exp="claude-work-$num" ;;
-    Verifying) exp="claude-verify-$num" ;;
-    Landing)   exp="claude-land-$num" ;;
-    *)         exp="" ;;
-  esac
-
-  # Retire any agent session for this issue that is not the one its current state expects.
-  for s in "claude-work-$num" "claude-verify-$num" "claude-land-$num"; do
-    [ "$s" = "$exp" ] && continue
-    if tmux has-session -t "$s" 2>/dev/null; then
-      tmux kill-session -t "$s" 2>/dev/null && echo "[watchdog] retired stale $s (state=$status)"
-    fi
-  done
-
+  exp="$(exp_session "$status" "$num")"
   [ -z "$exp" ] && continue
 
   if tmux has-session -t "$exp" 2>/dev/null; then
@@ -95,6 +110,21 @@ while IFS=$'\t' read -r num status; do
     # Verifying/Landing with no session: the idempotent handler re-spawns next tick.
   fi
 done <<< "$items"
+
+# --- Pass 3: GC per-issue worktrees for Done / off-board tasks ---
+# Gerund states keep their worktree (an agent may be mid-run). Pending/Verified keep theirs too
+# (re-provisioned on pickup/land if missing). Only Done or absent-from-board frees the disk.
+if [ -n "$items" ] && [ -d "$WORKTREES" ]; then
+  for d in "$WORKTREES"/task-*/; do
+    [ -d "$d" ] || continue
+    n="$(basename "$d")"; n="${n#task-}"
+    case "$n" in ''|*[!0-9]*) continue ;; esac
+    st="$(printf '%s\n' "$items" | awk -F'\t' -v n="$n" '$1==n{print $2}')"
+    if [ -z "$st" ] || [ "$st" = "Done" ]; then
+      remove_worktree "$n" && echo "[watchdog] GC worktree task-$n (status=${st:-off-board})"
+    fi
+  done
+fi
 
 if [ "$live_count" -gt "$FORK_WARN" ]; then
   echo "[watchdog] WARNING: $live_count live agent sessions > FORK_WARN=$FORK_WARN (possible fork storm)"

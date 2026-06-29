@@ -8,12 +8,14 @@
 # ones died at ~60s. AbandonProcessGroup on the cron plist did NOT prevent it (the server
 # daemonizes out of the job's PGID but is still reaped with the job's launchd context).
 #
-# FIX: keep ONE tmux server alive in a context that never exits. This script runs as a KeepAlive
-# LaunchAgent (com.tcg-art.tmux); while it loops, launchd holds its context (and the server)
-# alive. The cron's `tmux new-session` then attaches to THIS already-running server, so agent
-# sessions are children of the persistent server (not the dying tick) and survive.
+# FIX: keep ONE tmux server alive in a context that never exits. This script runs under the
+# launchd KeepAlive directive (LaunchAgent com.tcg-art.tmux); while it loops, launchd holds its
+# context (and the server) alive. The cron's `tmux new-session` then attaches to THIS
+# already-running server, so agent sessions are children of the persistent server (not the dying
+# tick) and survive. NOTE: this holds the tmux SERVER process alive; it is NOT a Remote Control
+# keepalive (the orch has none) -- nothing here touches the agents' claude.ai RC bridge.
 set -u
-SESSION="__orch_keepalive__"
+SESSION="__orch_tmux_server__"
 while true; do
   tmux has-session -t "$SESSION" 2>/dev/null || tmux new-session -d -s "$SESSION" 'while true; do sleep 86400; done'
   sleep 30
