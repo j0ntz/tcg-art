@@ -236,10 +236,13 @@ body {
 
 /* Each card drifts up and outward as the page scrolls: --i (signed index from
    the fan center) spreads horizontally, --ai (absolute index) lifts the outer
-   cards more, so the fan opens rather than sliding as one block. The hero
-   section is overflow-hidden, so the outward spread cannot widen the page. */
+   cards more, so the fan opens rather than sliding as one block. The card's
+   resting `translate` is `0 -50%` (Tailwind -translate-y-1/2 centers it), so
+   the keyframe must keep that -50% baseline and only add the drift; dropping
+   it would sink the fan instead of lifting it. The hero section is
+   overflow-hidden, so the outward spread cannot widen the page. */
 @keyframes hero-fan-drift {
   to {
-    translate: calc(var(--i) * 16px) calc(-24px - var(--ai) * 18px);
+    translate: calc(var(--i) * 16px) calc(-50% - 24px - var(--ai) * 18px);
   }
 }
