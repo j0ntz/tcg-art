@@ -50,8 +50,7 @@ case "${mergeable:-}" in
         || { flag_blocked "$num" "could not provision a worktree for $branch."; exit 0; }
     fi
     session="claude-land-$num"
-    tmux new-session -d -s "$session"
-    tmux send-keys -t "$session" "cd \"$wt\" && claude --remote-control \"$session\" --dangerously-skip-permissions \"/land-task $url\"" C-m
+    spawn_agent "$session" "$wt" "/land-task $url"
     echo "[land] #$num: CONFLICTING -> spawned $session for semantic resolution"
     ;;
   UNKNOWN|"")

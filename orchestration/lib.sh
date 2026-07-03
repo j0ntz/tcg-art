@@ -45,6 +45,29 @@ remove_label() { gh issue edit "$1" --repo "$REPO" --remove-label "$2" >/dev/nul
 # pr_head_sha <issue#> -> the PR's head commit (for idempotency checks); empty if no open PR.
 pr_head_sha() { gh pr list --repo "$REPO" --head "jon/task-$1" --state open --json headRefOid -q '.[0].headRefOid' 2>/dev/null || true; }
 
+# model_for <issue#> -> the CLI model string spawned agents for this issue start on ("" = no
+# --model flag, i.e. the server-side default alias). Mirrors the Edge orch's agent_model:
+#   1. The task's "Agent Model" board single-select, label mapped via agent.models{} in config.
+#      Read from the tick snapshot (fetch-once), so the per-task lookup costs zero GraphQL.
+#   2. agent.defaultModel from config.
+# Best-effort: unset field / unknown label / read failure all fall through to the default.
+model_for() {
+  local sel model
+  sel="$(board_items_json 2>/dev/null | NUM="$1" node -e '
+    const num=process.env.NUM;
+    const d=JSON.parse(require("fs").readFileSync(0,"utf8"));
+    const it=(d.items||[]).find(x=>x.content&&String(x.content.number)===String(num));
+    if(!it)process.exit(0);
+    const e=Object.entries(it).find(([k])=>/agent ?model/i.test(k));
+    if(e&&typeof e[1]==="string")process.stdout.write(e[1]);
+  ' 2>/dev/null || true)"
+  model=""
+  # Labels carry dots ("Opus 4.8"), so cfg()'s dot-path split cannot address them; look up direct.
+  [ -n "$sel" ] && model="$(node -e 'const c=require(process.argv[1]);const m=((c.agent||{}).models||{})[process.argv[2]];process.stdout.write(m==null?"":String(m))' "$ORCH_CONFIG" "$sel" 2>/dev/null || true)"
+  [ -z "$model" ] && model="$(cfg "agent.defaultModel")"
+  printf '%s' "$model"
+}
+
 # first_item_in_state <Status> -> issue number of the first board item in that state ("" if none).
 # Shared by the pipeline handlers (test/review/address/land) to find their one task per tick.
 first_item_in_state() {
@@ -96,8 +119,14 @@ remove_worktree() {
 # Starts a detached tmux session, cds into the worktree (so .claude/skills resolve), launches the
 # agent with Remote Control enabled (named after the tmux session) so the spawned agent is
 # viewable/controllable from claude.ai on any machine, not just a local tmux pane.
+# The session name always ends in the issue number (claude-{work,verify,land}-<n>); the model the
+# agent starts on resolves from it via model_for. Model strings carry [1m] (a glob class), so the
+# flag value stays double-quoted in the invocation.
 spawn_agent() {
   local session="$1" wt="$2" cmd="$3"
+  local model model_flag=""
+  model="$(model_for "${session##*-}")"
+  [ -n "$model" ] && model_flag="--model \"$model\" "
   tmux new-session -d -s "$session"
-  tmux send-keys -t "$session" "cd \"$wt\" && claude --remote-control \"$session\" --dangerously-skip-permissions \"$cmd\"" C-m
+  tmux send-keys -t "$session" "cd \"$wt\" && claude ${model_flag}--remote-control \"$session\" --dangerously-skip-permissions \"$cmd\"" C-m
 }

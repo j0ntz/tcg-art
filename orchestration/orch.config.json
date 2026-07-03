@@ -35,6 +35,26 @@
     "mergeMethod": "squash"
   },
 
+  "agent": {
+    "_doc": "What model spawned agents START on (claude --model <value>); a human can still flip a LIVE session per-turn via the RC/desktop picker. Resolution order: the task's Agent Model board field (its option label maps to a CLI string via models{}) -> defaultModel -> no --model flag (the server-side default alias). modelFieldId/modelOptions are only needed to WRITE the field (board.sh model); reads come free from the tick's board snapshot. GOTCHA: editing this field's options via the API recreates all option IDs and clears items' selections, same as Agent Status.",
+    "modelFieldId": "PVTSSF_lAHOD6Er384BbyERzhW-zdA",
+    "modelOptions": {
+      "Fable 5": "f9785bc8",
+      "Opus 4.8": "35d09df7",
+      "Opus 4.7": "ec3f4bb9",
+      "Sonnet 5": "5d2c2426",
+      "Sonnet 4.6": "6b72c87c"
+    },
+    "models": {
+      "Fable 5": "claude-fable-5[1m]",
+      "Opus 4.8": "claude-opus-4-8[1m]",
+      "Opus 4.7": "claude-opus-4-7[1m]",
+      "Sonnet 5": "claude-sonnet-5[1m]",
+      "Sonnet 4.6": "claude-sonnet-4-6[1m]"
+    },
+    "defaultModel": ""
+  },
+
   "worktreesRoot": "~/git/.tcg-art-worktrees",
   "maxConcurrent": 1
 }
