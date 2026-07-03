@@ -49,9 +49,19 @@ case "${1:-}" in
     gh project item-edit --id "$iid" --field-id "$(cfg agent.modelFieldId)" --project-id "$PROJECT_ID" --single-select-option-id "$oid" >/dev/null
     echo "board: #$issue agent model -> $label"
     ;;
+  effort)
+    # Set the task's Agent Effort single-select (reasoning effort its agents start on).
+    # The option label IS the CLI value: low | medium | high | xhigh | max.
+    issue="$2"; label="$3"
+    oid="$(node -e 'const c=require(process.argv[1]);const o=((c.agent||{}).effortOptions||{})[process.argv[2]];process.stdout.write(o==null?"":String(o))' "$ORCH_CONFIG" "$label")"
+    [ -z "$oid" ] && { echo "unknown effort level: $label (use low|medium|high|xhigh|max)"; exit 2; }
+    iid="$("$0" item-id "$issue")"
+    gh project item-edit --id "$iid" --field-id "$(cfg agent.effortFieldId)" --project-id "$PROJECT_ID" --single-select-option-id "$oid" >/dev/null
+    echo "board: #$issue agent effort -> $label"
+    ;;
   has-label)    has_label    "$2" "$3" ;;                 # exit 0 if issue #$2 carries label $3
   add-label)    add_label    "$2" "$3"; echo "label +$3 on #$2" ;;
   remove-label) remove_label "$2" "$3"; echo "label -$3 on #$2" ;;
   *)
-    echo "usage: board.sh {list-pending | item-id <issue#> | status <issue#> <Pending|Running|Verifying|Verified|Landing|Done> | model <issue#> \"<Fable 5|Opus 4.8|Opus 4.7|Sonnet 5|Sonnet 4.6>\" | has-label <issue#> <label> | add-label <issue#> <label> | remove-label <issue#> <label>}"; exit 2 ;;
+    echo "usage: board.sh {list-pending | item-id <issue#> | status <issue#> <Pending|Running|Verifying|Verified|Landing|Done> | model <issue#> \"<Fable 5|Opus 4.8|Opus 4.7|Sonnet 5|Sonnet 4.6>\" | effort <issue#> <low|medium|high|xhigh|max> | has-label <issue#> <label> | add-label <issue#> <label> | remove-label <issue#> <label>}"; exit 2 ;;
 esac

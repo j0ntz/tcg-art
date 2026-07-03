@@ -8,7 +8,7 @@ description: Front door for the orchestration — turn a task intent (free text 
 <rules>
 <rule id="flavor">Classify the work and set the flavor label(s). None = **code** (produces a code PR). `research` / `design` / `instructions` = a **doc** that lands in the repo (research findings / a design or TDD proposal / a runbook). `chore` = **ops/maintenance** (board ops, deps, config). Flavors are multi-select (e.g. `research` + `design`) and do NOT decide the path — **PR-presence** does: a doc/chore that commits a file lands (Verified -> Landing -> Done); research-only findings or board-ops with no PR go straight to Done.</rule>
 <rule id="auto-land">Add `auto-land` only for low-risk, trust-to-merge tasks (most docs, most chores) so they skip the human Verified -> Landing gate and run fully hands-off. Leave it off for code you want to eyeball before it merges.</rule>
-<rule id="model">The task's agents start on the model in its **Agent Model** board single-select (unset = the orch default). Set it only when the caller asked for a specific model or the task obviously warrants one (e.g. a heavy design task on the top model, a mechanical chore on a cheaper one): `bash orchestration/board.sh model <n> "<label>"` (labels: Fable 5 / Opus 4.8 / Opus 4.7 / Sonnet 5 / Sonnet 4.6; quote them). When in doubt leave it unset.</rule>
+<rule id="model">The task's agents start on the model/effort in its **Agent Model** / **Agent Effort** board single-selects (unset = the orch defaults). Set them only when the caller asked or the task obviously warrants it (e.g. a heavy design task on the top model at xhigh, a mechanical chore on a cheaper one at low): `bash orchestration/board.sh model <n> "<label>"` (labels: Fable 5 / Opus 4.8 / Opus 4.7 / Sonnet 5 / Sonnet 4.6; quote them) and `bash orchestration/board.sh effort <n> <low|medium|high|xhigh|max>`. When in doubt leave them unset.</rule>
 <rule id="structure">The issue body MUST have **Goal**, **Deliverables** (concrete and checkable), **Constraints** (cite `CLAUDE.md` standards), and **Acceptance**. For a doc task, the deliverables name the doc path(s) under `docs/` and what each must contain. Write the body with the editor (a body file), NOT a heredoc (the `sfw` npm-heredoc gotcha).</rule>
 </rules>
 
@@ -21,5 +21,5 @@ description: Front door for the orchestration — turn a task intent (free text 
 - `gh project item-add 1 --owner j0ntz --url "$url"`.
 - `bash orchestration/board.sh status <n> Pending`.
 - if warranted: `bash orchestration/board.sh add-label <n> auto-land`.
-- if a model was chosen: `bash orchestration/board.sh model <n> "<label>"`.
-Print the issue URL, the labels applied, and the model (if set). The orch's watch handler picks it up on the next tick.</step>
+- if a model/effort was chosen: `bash orchestration/board.sh model <n> "<label>"`, `bash orchestration/board.sh effort <n> <level>`.
+Print the issue URL, the labels applied, and the model/effort (if set). The orch's watch handler picks it up on the next tick.</step>

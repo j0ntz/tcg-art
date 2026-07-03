@@ -52,7 +52,17 @@
       "Sonnet 5": "claude-sonnet-5[1m]",
       "Sonnet 4.6": "claude-sonnet-4-6[1m]"
     },
-    "defaultModel": ""
+    "defaultModel": "",
+    "_effortDoc": "Reasoning effort spawned agents start on (claude --effort <level>). Same resolution as model: the task's Agent Effort board field -> defaultEffort -> no flag. The option label IS the CLI value (low|medium|high|xhigh|max), validated against that set, mirroring Edge's agent_effort.",
+    "effortFieldId": "PVTSSF_lAHOD6Er384BbyERzhW-1gA",
+    "effortOptions": {
+      "low": "5b91529f",
+      "medium": "e866caa7",
+      "high": "28c335e7",
+      "xhigh": "4f0a5b7d",
+      "max": "68601140"
+    },
+    "defaultEffort": ""
   },
 
   "worktreesRoot": "~/git/.tcg-art-worktrees",
