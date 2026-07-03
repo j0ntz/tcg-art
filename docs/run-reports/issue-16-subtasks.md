@@ -1,10 +1,11 @@
 # Agent run report: Orch subtask support via GitHub sub-issues
 
-**PR: (filled on the issue; branch `jon/task-16`)**
+**PR: https://github.com/j0ntz/tcg-art/pull/26**
 
 | field | value |
 |---|---|
 | Task | #16 · https://github.com/j0ntz/tcg-art/issues/16 |
+| PR | https://github.com/j0ntz/tcg-art/pull/26 |
 | Branch | `jon/task-16` |
 | Design | `docs/orch-subtasks-design.md` |
 | Date | 2026-07-02 |
