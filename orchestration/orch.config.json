@@ -62,7 +62,9 @@
       "xhigh": "4f0a5b7d",
       "max": "68601140"
     },
-    "defaultEffort": ""
+    "defaultEffort": "",
+    "_remoteControlDoc": "Which agent stages spawn with --remote-control (viewable/controllable from claude.ai). Every RC spawn adds a session to the claude.ai list and fires one notification, so keep this tight: verify/land agents are short-lived and already transparent via their artifacts (PR review comments, issue run reports, tick.log, tmux attach). [] = no RC anywhere.",
+    "remoteControlStages": ["work"]
   },
 
   "worktreesRoot": "~/git/.tcg-art-worktrees",

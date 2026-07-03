@@ -134,19 +134,24 @@ remove_worktree() {
 }
 
 # spawn_agent <session> <worktree> <slash-cmd-with-arg>
-# Starts a detached tmux session, cds into the worktree (so .claude/skills resolve), launches the
-# agent with Remote Control enabled (named after the tmux session) so the spawned agent is
-# viewable/controllable from claude.ai on any machine, not just a local tmux pane.
-# The session name always ends in the issue number (claude-{work,verify,land}-<n>); the model and
-# effort the agent starts on resolve from it via model_for / effort_for. Model strings carry [1m]
-# (a glob class), so the flag value stays double-quoted in the invocation.
+# Starts a detached tmux session, cds into the worktree (so .claude/skills resolve), and launches
+# the agent. Remote Control (viewable/controllable from claude.ai) is attached ONLY for the stages
+# listed in agent.remoteControlStages: every RC spawn adds a session to the claude.ai list and
+# fires one notification, so churny short-lived stages (verify/land) stay off it by default and
+# are observed via their artifacts (PR review, issue run report, tick.log) or tmux attach.
+# The session name is always claude-<stage>-<n>; the issue number resolves model/effort via
+# model_for / effort_for. Model strings carry [1m] (a glob class), so the flag value stays
+# double-quoted in the invocation.
 spawn_agent() {
   local session="$1" wt="$2" cmd="$3"
-  local num="${session##*-}" model effort model_flag="" effort_flag=""
+  local num="${session##*-}" model effort model_flag="" effort_flag="" rc_flag=""
+  local stage="${session#claude-}"; stage="${stage%%-*}"
+  local rc_stages; rc_stages="$(cfg agent.remoteControlStages)"
+  case ",$rc_stages," in *",$stage,"*) rc_flag="--remote-control \"$session\" " ;; esac
   model="$(model_for "$num")"
   [ -n "$model" ] && model_flag="--model \"$model\" "
   effort="$(effort_for "$num")"
   [ -n "$effort" ] && effort_flag="--effort $effort "
   tmux new-session -d -s "$session"
-  tmux send-keys -t "$session" "cd \"$wt\" && claude ${model_flag}${effort_flag}--remote-control \"$session\" --dangerously-skip-permissions \"$cmd\"" C-m
+  tmux send-keys -t "$session" "cd \"$wt\" && claude ${model_flag}${effort_flag}${rc_flag}--dangerously-skip-permissions \"$cmd\"" C-m
 }

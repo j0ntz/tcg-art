@@ -1,13 +1,13 @@
 ---
 name: verify-doc
-description: Independently verify ONE Verifying doc or ops task — a completeness + soundness check (no preview to test) — and route it binary: change requests -> Running, clean -> Verified (opened a PR) or Done (research-only / board-ops with no PR). Fresh agent, not the author. CHECKS, does not fix. Invoked as `/verify-doc <issue-url>` by the Verify handler. Repo-local.
+description: Independently verify ONE Verifying doc or ops task — a completeness + soundness check (no preview to test) — and route it binary: change requests -> Pending (re-work pickup), clean -> Verified (opened a PR) or Done (research-only / board-ops with no PR). Fresh agent, not the author. CHECKS, does not fix. Invoked as `/verify-doc <issue-url>` by the Verify handler. Repo-local.
 ---
 
-<goal>Verify ONE doc or ops task (the GitHub issue passed as `/verify-doc <issue-url>`) COLD. For a doc: does it deliver what the issue asked, are claims/links sound, is it internally consistent and standards-clean. For an ops task: was the operational goal actually met. Binary verdict: change requests -> Running; clean + open PR -> Verified; clean + no PR -> Done. You did NOT write it; you CHECK, you do NOT fix.</goal>
+<goal>Verify ONE doc or ops task (the GitHub issue passed as `/verify-doc <issue-url>`) COLD. For a doc: does it deliver what the issue asked, are claims/links sound, is it internally consistent and standards-clean. For an ops task: was the operational goal actually met. Binary verdict: change requests -> Pending for re-work pickup; clean + open PR -> Verified; clean + no PR -> Done. You did NOT write it; you CHECK, you do NOT fix.</goal>
 
 <rules>
 <rule id="hands-off">ONE turn, unattended. Before flagging blocked run `/validate-block <issue-url> "<reason>"` and obey it (true -> add the `blocked` label, do NOT change the state, post the blocker, stop).</rule>
-<rule id="check-not-fix">Verify and report; do NOT edit (fixes happen in Running). File change requests and route to Running.</rule>
+<rule id="check-not-fix">Verify and report; do NOT edit (fixes happen in the re-spawned work agent). File change requests and route to Pending. NEVER route to Running: no handler spawns for Running, so the task strands until the watchdog wrongly flags it blocked.</rule>
 <rule id="binary-verdict">A finding is either a CHANGE REQUEST or you do not raise it.</rule>
 </rules>
 
@@ -21,7 +21,7 @@ Parse `<n>`. `gh issue view <n> --repo j0ntz/tcg-art --json title,body,labels`. 
 </step>
 
 <step id="3" name="Post + route (binary)">
-- **Any change requests**: post them — for a PR, ONE formal review (`gh api -X POST repos/j0ntz/tcg-art/pulls/<pr>/reviews --input <payload.json>`, `event=COMMENT`, body `<!-- review-task -->`, one inline thread per request); for an ops task with no PR, ONE issue comment listing them with the `<!-- review-task -->` marker (write with the editor, not a heredoc). Then `bash orchestration/board.sh status <n> Running`.
+- **Any change requests**: post them — for a PR, ONE formal review (`gh api -X POST repos/j0ntz/tcg-art/pulls/<pr>/reviews --input <payload.json>`, `event=COMMENT`, body `<!-- review-task -->`, one inline thread per request); for an ops task with no PR, ONE issue comment listing them with the `<!-- review-task -->` marker (write with the editor, not a heredoc). Then `bash orchestration/board.sh status <n> Pending` (the watch handler re-spawns work-task in address mode).
 - **Clean + open PR**: `bash orchestration/board.sh status <n> Verified`.
 - **Clean + no PR** (research-only / ops): post a one-line "verified: <what was confirmed>" issue comment, then `bash orchestration/board.sh status <n> Done`.
 Print a one-line summary, then stop.

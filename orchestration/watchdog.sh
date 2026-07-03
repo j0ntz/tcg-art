@@ -103,7 +103,8 @@ while IFS=$'\t' read -r num status; do
       fi
     fi
   else
-    if [ "$status" = "Running" ]; then
+    # Already-blocked tasks are awaiting the human: skip silently instead of re-logging each tick.
+    if [ "$status" = "Running" ] && ! has_label "$num" blocked; then
       flag_blocked "$num" "work agent ended without finishing; flagged blocked for review (clear the label and re-queue to retry)."
       echo "[watchdog] dead session #$num ($exp) -> blocked"
     fi
