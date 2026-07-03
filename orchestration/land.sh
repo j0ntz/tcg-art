@@ -13,6 +13,24 @@ source "$HERE/lib.sh"
 REPOPATH="$HOME/git/$REPO_NAME"
 flag_blocked() { add_label "$1" blocked >/dev/null 2>&1; gh issue comment "$1" --repo "$REPO" --body "Lander: $2" >/dev/null 2>&1; echo "[land] #$1 -> blocked: $2"; }
 
+# Auto-land promotion: a Verified task carrying `auto-land` skips the human gate. Deterministic
+# (no agent): promote every such task to Landing here; the lander below then takes one per tick.
+# Without this the label is decoration and auto-land tasks strand in Verified (bit issue #12).
+while read -r vnum; do
+  [ -z "$vnum" ] && continue
+  has_label "$vnum" blocked && continue
+  if has_label "$vnum" auto-land; then
+    bash "$HERE/board.sh" status "$vnum" Landing >/dev/null 2>&1 \
+      && echo "[land] #$vnum: VERIFIED + auto-land -> Landing"
+  fi
+done < <(board_items_json 2>/dev/null | node -e '
+  const d=JSON.parse(require("fs").readFileSync(0,"utf8"));
+  for(const it of d.items||[]){
+    if(!it.content||!it.content.number)continue;
+    const e=Object.entries(it).find(([k])=>/agent ?status/i.test(k));
+    if((e?e[1]:"")==="Verified")console.log(it.content.number);
+  }' 2>/dev/null || true)
+
 num="$(first_item_in_state Landing)"
 [ -z "$num" ] && { echo "[land] nothing in Landing"; exit 0; }
 has_label "$num" blocked && { echo "[land] #$num blocked; skipping"; exit 0; }
