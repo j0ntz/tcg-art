@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "auth:flows": "node orchestration/playwright/auth-flows.mjs"
+    "auth:flows": "node orchestration/playwright/auth-flows.mjs",
+    "binder:flows": "node orchestration/playwright/binder-flows.mjs"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.2",
