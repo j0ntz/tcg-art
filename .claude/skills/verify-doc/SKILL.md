@@ -20,6 +20,7 @@ Parse `<n>`. `gh issue view <n> --repo j0ntz/tcg-art --json title,body,labels`. 
 <step id="2" name="Check">
 - **Doc task (PR present)**: read `gh pr diff <pr>` and the doc(s). Verify EACH deliverable named in the issue is actually delivered; spot-check that cited facts/links resolve and the proposed design is sound and self-consistent; if the change touches code, `npm run build` (sfw) must pass. Anything missing / wrong / unsound is a change request (file:line).
 - **Ops task (no PR)**: verify the operational goal stated in the issue is met — e.g. the target tasks reached their expected states and their PRs merged (`gh pr list`, the board). If the goal is not met, that is a change request.
+- **Parent task** (`bash orchestration/board.sh gate <n>` prints anything but `none`; see `docs/orch-subtasks-design.md`): ADDITIONALLY verify every child is complete (`bash orchestration/board.sh children <n>`: each row closed or board-Done) and that the fan-in deliverable (summary comment / integration) matches the children's ACTUAL outcomes (spot-check the claimed PRs/merges). An incomplete child or a summary that misstates a child's outcome is a change request.
 </step>
 
 <step id="3" name="Post + route (binary)">

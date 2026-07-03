@@ -2,19 +2,30 @@
 # Pending handler: ONE Pending task per tick -> provision a worktree, mark Running, spawn
 # /work-task. The work agent does the job per flavor (code / doc / ops) AND addresses any
 # open review threads, then routes out of Running when done. Idempotent via the tmux
-# presence-guard; skips tasks carrying the `blocked` label. Concurrency-capped across all
-# agent stages (work/verify/land).
+# presence-guard; skips tasks carrying the `blocked` label. A PARENT task (has sub-issues)
+# is held in Pending until every child is complete (children_gate; docs/orch-subtasks-design.md),
+# so candidates are scanned in board order for the first ELIGIBLE one. Concurrency-capped
+# across all agent stages (work/verify/land).
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"; source "$HERE/lib.sh"
 
 live="$(tmux ls 2>/dev/null | grep -cE '^claude-(work|verify|land)-' || true)"
 if [ "${live:-0}" -ge "$MAX" ]; then echo "[watch] concurrency cap ($live >= $MAX); skipping"; exit 0; fi
 
-num="$(first_item_in_state Pending)"
-[ -z "$num" ] && { echo "[watch] nothing in Pending"; exit 0; }
-has_label "$num" blocked && { echo "[watch] #$num blocked; skipping"; exit 0; }
+num=""
+while IFS=$'\t' read -r cand _url; do
+  [ -z "${cand:-}" ] && continue
+  has_label "$cand" blocked && { echo "[watch] #$cand blocked; skipping"; continue; }
+  tmux has-session -t "claude-work-$cand" 2>/dev/null && { echo "[watch] #$cand: work-agent already running; skipping"; continue; }
+  gate="$(children_gate "$cand")"
+  case "$gate" in
+    waiting:*) echo "[watch] #$cand parent waiting (${gate#waiting:} children complete)"; continue ;;
+    ready)     echo "[watch] #$cand parent gate open (all children complete)" ;;
+  esac
+  num="$cand"; break
+done < <(bash "$HERE/board.sh" list-pending 2>/dev/null)
+[ -z "$num" ] && { echo "[watch] nothing eligible in Pending"; exit 0; }
 session="claude-work-$num"
-tmux has-session -t "$session" 2>/dev/null && { echo "[watch] #$num: work-agent already running"; exit 0; }
 
 # Pending is the only stage that may need a NEW branch off main (re-entry from Verifying reuses
 # the existing branch); ensure_worktree assumes an existing origin branch, so provision here.
