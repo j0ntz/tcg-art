@@ -12,12 +12,22 @@ interface HeroProps {
 const Hero: React.FC<HeroProps> = ({ showcase }) => {
   return (
     <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-primary-muted via-white to-white">
-      <div className="mx-auto grid w-full max-w-content gap-12 px-gutter py-16 sm:py-24 lg:grid-cols-2 lg:items-center">
+      {/* Soft blurred glows give the hero depth without competing with the art.
+          Decorative only, and behind the content. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-32 right-[-10%] h-[28rem] w-[28rem] rounded-full bg-primary-glow/50 blur-3xl" />
+        <div className="absolute top-48 left-[-12%] h-96 w-96 rounded-full bg-accent-glow/40 blur-3xl" />
+      </div>
+
+      <div className="relative mx-auto grid w-full max-w-content gap-12 px-gutter py-16 sm:py-24 lg:grid-cols-2 lg:items-center">
         <div className="flex flex-col gap-6">
           <Badge variant="soft">Smart Trading Card Search</Badge>
 
           <h1 className="text-title font-bold leading-tight tracking-tight text-foreground sm:text-display">
-            Find Pokémon Cards by What&apos;s In the Art
+            Find Pokémon Cards by{" "}
+            <span className="bg-brand-gradient bg-clip-text text-transparent">
+              What&apos;s In the Art
+            </span>
           </h1>
 
           <p className="max-w-xl text-lead text-foreground-muted">
@@ -54,7 +64,9 @@ const Hero: React.FC<HeroProps> = ({ showcase }) => {
             {showcase.slice(0, 5).map((card, index) => (
               <div
                 key={card.id}
-                className="absolute top-1/2 left-1/2 w-28 -translate-y-1/2 rounded-xl shadow-float ring-1 ring-black/5 transition-transform sm:w-32 lg:w-44"
+                // hero-fan-card adds the scroll-linked drift (globals.css); it
+                // animates `translate`, which composes with this transform.
+                className="hero-fan-card absolute top-1/2 left-1/2 w-28 -translate-y-1/2 rounded-xl shadow-float ring-1 ring-black/5 transition-transform duration-300 hover:scale-105 sm:w-32 lg:w-44"
                 style={
                   {
                     "--i": index - 2,
