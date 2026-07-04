@@ -9,6 +9,7 @@ description: Independently verify ONE Verifying doc or ops task — a completene
 <rule id="hands-off">ONE turn, unattended. Before flagging blocked run `/validate-block <issue-url> "<reason>"` and obey it (true -> add the `blocked` label, do NOT change the state, post the blocker, stop).</rule>
 <rule id="check-not-fix">Verify and report; do NOT edit (fixes happen in the re-spawned work agent). File change requests and route to Pending. NEVER route to Running: no handler spawns for Running, so the task strands until the watchdog wrongly flags it blocked.</rule>
 <rule id="binary-verdict">A finding is either a CHANGE REQUEST or you do not raise it.</rule>
+<rule id="feedback-comments">Human `feedback:` issue comments newer than the last `<!-- address-round -->` marker are acceptance criteria. If the work did not act on one (no +1 reaction, no round summary entry, not reflected in the deliverable), that is a change request.</rule>
 </rules>
 
 <step id="1" name="Read + classify">

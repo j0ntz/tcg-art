@@ -26,6 +26,8 @@ Each handler acts on ONE task per tick, is idempotent via a tmux session presenc
 
 **Human touchpoints only:** create the task (`/draft-task`); `Verified -> Landing` (unless `auto-land`). Everything else is the orch.
 
+**Follow-up feedback (pre-land):** comment `feedback: <what you want>` on the ISSUE (works from GitHub mobile), then move the task back to **Pending** (board UI drag or `board.sh status <n> Pending`). The re-spawned work agent treats every `feedback:` comment newer than the last `<!-- address-round -->` marker as a requirement (alongside PR review threads), acts on it, +1-reacts it as a receipt, and re-enters verification; the verifier fails any feedback that went unconsumed. Fresh feedback resets the 2-round address cap (the cap only stops verifier ping-pong). Variant selection in multi-branch tasks is the same move: `feedback: promote option B (PR #<x>) to the primary branch, close the others`. Post-land (Done) there is no reopen: follow-up = a new `/draft-task`.
+
 **Sessions:** `claude-work-<n>`, `claude-verify-<n>`, `claude-land-<n>`. The watchdog maps each active state to its session: frozen -> kill (Running also -> `blocked`; Verifying/Landing re-spawn), Running with a dead session -> `blocked`, and it retires any stale session whose state has moved on.
 
 ## 3. Gotchas (hard-won -- these WILL bite if unknown)
