@@ -9,7 +9,8 @@ description: Independently verify ONE Verifying doc or ops task — a completene
 <rule id="hands-off">ONE turn, unattended. Before flagging blocked run `/validate-block <issue-url> "<reason>"` and obey it (true -> add the `blocked` label, do NOT change the state, post the blocker, stop).</rule>
 <rule id="check-not-fix">Verify and report; do NOT edit (fixes happen in the re-spawned work agent). File change requests and route to Pending. NEVER route to Running: no handler spawns for Running, so the task strands until the watchdog wrongly flags it blocked.</rule>
 <rule id="binary-verdict">A finding is either a CHANGE REQUEST or you do not raise it.</rule>
-<rule id="feedback-comments">Human `feedback:` issue comments newer than the last `<!-- address-round -->` marker are acceptance criteria. If the work did not act on one (no +1 reaction, no round summary entry, not reflected in the deliverable), that is a change request.</rule>
+<rule id="feedback-comments">ANY issue comment not starting with `<!--` is human feedback; it is consumed only when it carries the orch's +1 reaction. An unconsumed one the work did not act on is a change request. When directives conflict, the newest wins.</rule>
+<rule id="orch-comment-marker">EVERY issue comment you post (run report, verified line, blocked line) MUST start with an HTML marker (`<!-- orch -->` or a specific one); unmarked comments are reserved for the human.</rule>
 </rules>
 
 <step id="1" name="Read + classify">
@@ -24,6 +25,6 @@ Parse `<n>`. `gh issue view <n> --repo j0ntz/tcg-art --json title,body,labels`. 
 <step id="3" name="Post + route (binary)">
 - **Any change requests**: post them — for a PR, ONE formal review (`gh api -X POST repos/j0ntz/tcg-art/pulls/<pr>/reviews --input <payload.json>`, `event=COMMENT`, body `<!-- review-task -->`, one inline thread per request); for an ops task with no PR, ONE issue comment listing them with the `<!-- review-task -->` marker (write with the editor, not a heredoc). Then `bash orchestration/board.sh status <n> Pending` (the watch handler re-spawns work-task in address mode).
 - **Clean + open PR**: `bash orchestration/board.sh status <n> Verified`.
-- **Clean + no PR** (research-only / ops): post a one-line "verified: <what was confirmed>" issue comment, then `bash orchestration/board.sh status <n> Done`.
+- **Clean + no PR** (research-only / ops): post a one-line `<!-- orch -->` "verified: <what was confirmed>" issue comment, then `bash orchestration/board.sh status <n> Done`.
 Print a one-line summary, then stop.
 </step>

@@ -10,7 +10,8 @@ description: Independently verify ONE Verifying code task — preview-test on it
 <rule id="check-not-fix">You verify and report; you do NOT edit code (that is work-task's job). File each problem as a change request and route the task to Pending. NEVER route to Running: no handler spawns for Running, so the task strands until the watchdog wrongly flags it blocked (this exact failure happened on issue #13).</rule>
 <rule id="binary-verdict">A finding is either a CHANGE REQUEST (worth a code change before land) or you do not raise it — no "nit" tier.</rule>
 <rule id="self-review-limit">Same-account PR, so GitHub forbids a formal APPROVE/REQUEST_CHANGES (422); submit the review with `event=COMMENT`. Routing is driven by whether you filed change-request threads, not a GitHub review state.</rule>
-<rule id="feedback-comments">Human `feedback:` issue comments newer than the last `<!-- address-round -->` marker are acceptance criteria. If the work did not act on one (no +1 reaction, no round summary entry, not reflected in the deliverable), that is a change request.</rule>
+<rule id="feedback-comments">ANY issue comment not starting with `<!--` is human feedback; it is consumed only when it carries the orch's +1 reaction. An unconsumed one the work did not act on is a change request. When directives conflict, the newest wins.</rule>
+<rule id="orch-comment-marker">EVERY issue comment you post (run report, verified line, blocked line) MUST start with an HTML marker (`<!-- orch -->` or a specific one); unmarked comments are reserved for the human.</rule>
 </rules>
 
 <step id="1" name="Read + resolve the PR">

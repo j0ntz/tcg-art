@@ -1,3 +1,4 @@
+<!-- orch -->
 # Agent run report — <task title>
 
 **▶ Live preview: <preview-url>**  ·  **PR: <pr-url>**

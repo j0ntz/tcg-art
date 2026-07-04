@@ -50,7 +50,7 @@ exp_session() {
 flag_blocked() {
   has_label "$1" blocked && return 0
   add_label "$1" blocked >/dev/null 2>&1
-  gh issue comment "$1" --repo "$REPO" --body "Watchdog: $2" >/dev/null 2>&1
+  gh issue comment "$1" --repo "$REPO" --body "<!-- orch --> Watchdog: $2" >/dev/null 2>&1
 }
 
 # is the expected session frozen? echoes "frozen:<mins>" or "ok" and updates the state file.

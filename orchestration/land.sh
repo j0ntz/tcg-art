@@ -11,7 +11,7 @@ set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 source "$HERE/lib.sh"
 REPOPATH="$HOME/git/$REPO_NAME"
-flag_blocked() { add_label "$1" blocked >/dev/null 2>&1; gh issue comment "$1" --repo "$REPO" --body "Lander: $2" >/dev/null 2>&1; echo "[land] #$1 -> blocked: $2"; }
+flag_blocked() { add_label "$1" blocked >/dev/null 2>&1; gh issue comment "$1" --repo "$REPO" --body "<!-- orch --> Lander: $2" >/dev/null 2>&1; echo "[land] #$1 -> blocked: $2"; }
 
 # Auto-land promotion: a Verified task carrying `auto-land` skips the human gate. Deterministic
 # (no agent): promote every such task to Landing here; the lander below then takes one per tick.
@@ -46,7 +46,7 @@ case "${mergeable:-}" in
   MERGEABLE)
     if gh pr merge "$pr" --repo "$REPO" "--$MERGE_METHOD" --delete-branch >/dev/null 2>&1; then
       bash "$HERE/board.sh" status "$num" Done >/dev/null 2>&1
-      gh issue comment "$num" --repo "$REPO" --body "Done: PR #$pr $MERGE_METHOD-merged to main (clean)." >/dev/null 2>&1
+      gh issue comment "$num" --repo "$REPO" --body "<!-- orch --> Done: PR #$pr $MERGE_METHOD-merged to main (clean)." >/dev/null 2>&1
       git -C "$REPOPATH" worktree remove --force "$WORKTREES/task-$num/$REPO_NAME" 2>/dev/null || true
       git -C "$REPOPATH" branch -D "$branch" 2>/dev/null || true
       echo "[land] #$num -> Done (clean, PR #$pr)"
