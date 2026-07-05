@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "auth:flows": "node orchestration/playwright/auth-flows.mjs",
-    "binder:flows": "node orchestration/playwright/binder-flows.mjs"
+    "binder:flows": "node orchestration/playwright/binder-flows.mjs",
+    "art:flows": "node orchestration/playwright/art-search-flows.mjs",
+    "art:index": "node scripts/index-card-art.mjs"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.2",
