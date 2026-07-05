@@ -36,6 +36,12 @@ case "${1:-}" in
     gh project item-edit --id "$iid" --field-id "$FIELD_ID" --project-id "$PROJECT_ID" --single-select-option-id "$oid" >/dev/null
     # `blocked` is managed explicitly (validate-block / watchdog / human via add-label|remove-label);
     # setting a status never touches it, so resuming a task does not silently clear its blocked flag.
+    # Done is terminal: close the issue here, scripted, so EVERY Done path gets closure for free
+    # (code tasks auto-close via the PR's "Closes #n" -- this is then a no-op; no-PR ops/research
+    # tasks previously left open husks, e.g. #11). Also keeps children_gate's closed-check honest.
+    if [ "$status" = "Done" ]; then
+      gh issue close "$issue" --repo "$REPO" >/dev/null 2>&1 || true
+    fi
     echo "board: #$issue -> $status"
     ;;
   model)
