@@ -47,5 +47,15 @@ export interface ArtSearchResponse {
 export interface QueryTerm {
   term: string;
   weight: number;
-  field?: "subjects" | "action" | "mood" | "palette" | "setting" | "style";
+  field?: "subjects" | "scene" | "action" | "mood" | "palette" | "setting" | "style";
+}
+
+// One query concept: a single word the user typed plus its vocab expansions,
+// bundled so scoring counts it ONCE toward multi-attribute coverage (three
+// distinct concepts matched must beat one high-frequency concept) and so IDF
+// damping is computed per user concept, not per expanded synonym. `key` is the
+// canonical origin token used for coverage counting and the matched: chips.
+export interface QueryConcept {
+  key: string;
+  terms: QueryTerm[];
 }
