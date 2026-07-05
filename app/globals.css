@@ -244,9 +244,12 @@ body {
 /* The fan swings open as the page scrolls: --i (signed index from the fan
    center) spreads the cards apart horizontally, --ai (absolute index) lifts
    the outer cards, like a hand of cards being fanned under a spotlight. The
-   hero section is overflow-hidden, so the spread cannot widen the page. */
+   card's resting `translate` is `0 -50%` (Tailwind -translate-y-1/2 centers
+   it), so the keyframe must keep that -50% baseline and only add the opening
+   motion; dropping it would sink the fan instead of lifting it. The hero
+   section is overflow-hidden, so the spread cannot widen the page. */
 @keyframes hero-fan-open {
   to {
-    translate: calc(var(--i) * 34px) calc(var(--ai) * -14px - 12px);
+    translate: calc(var(--i) * 34px) calc(-50% - 12px - var(--ai) * 14px);
   }
 }
