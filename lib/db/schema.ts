@@ -41,3 +41,20 @@ export const accounts = pgTable(
   },
   account => [primaryKey({ columns: [account.provider, account.providerAccountId] })],
 );
+
+// A user's card collection (the /binder page). One row per (user, card); adding
+// a card the user already owns increments quantity instead of inserting a second
+// row. Only the Pokemon TCG API card id is stored (never card blobs); display
+// data is fetched through lib/pokemon.ts at render time.
+export const collectionItems = pgTable(
+  "collection_item",
+  {
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    cardId: text("cardId").notNull(),
+    quantity: integer("quantity").notNull().default(1),
+    acquiredAt: timestamp("acquiredAt", { mode: "date" }).notNull().defaultNow(),
+  },
+  item => [primaryKey({ columns: [item.userId, item.cardId] })],
+);

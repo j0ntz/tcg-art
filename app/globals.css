@@ -173,6 +173,33 @@
   background-image: var(--gradient-brand);
 }
 
+/* Binder page turn (/binder): the sheet swings in from the spine when the page
+   changes. Applied behind motion-safe: only, so reduced-motion users get an
+   instant page swap; pair with a [perspective:*] wrapper for 3D depth. */
+@keyframes page-turn {
+  from {
+    transform: rotateY(-24deg);
+    opacity: 0.4;
+  }
+  to {
+    transform: rotateY(0deg);
+    opacity: 1;
+  }
+}
+
+@utility animate-page-turn {
+  animation: page-turn 350ms ease-out;
+}
+
+/* Hide the carousel strip's horizontal scrollbar; scroll and snap behavior are
+   untouched. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* The marketing landing and search app are light-mode-first to match the clone
    target. The body just needs a sane light default; sections set their own roles. */
 body {

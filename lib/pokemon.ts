@@ -83,6 +83,47 @@ function toCard(card: ApiCard): Card {
   };
 }
 
+// Card ids as the API mints them: "<setId>-<number>", e.g. "base1-4", "swsh12pt5gg-GG35".
+// Collection rows and action inputs are validated against this so a malformed id
+// can never reach the Lucene query below.
+export const CARD_ID_PATTERN = /^[a-zA-Z0-9]+-[a-zA-Z0-9]+$/;
+
+// The API caps pageSize at 250; chunking at 50 also keeps each query string short.
+const IDS_PER_REQUEST = 50;
+
+async function fetchCardsByIdChunk(ids: string[]): Promise<Card[]> {
+  // Quote each id so its hyphen is not parsed as a Lucene operator.
+  const q = ids.map(id => `id:"${id}"`).join(" OR ");
+  const params = new URLSearchParams({
+    q,
+    pageSize: String(IDS_PER_REQUEST),
+    select: "id,name,number,rarity,artist,set,images",
+  });
+
+  const res = await fetch(`${API_URL}?${params.toString()}`, {
+    next: { revalidate: 86400 },
+  });
+  if (!res.ok) {
+    throw new Error(`Pokemon TCG API responded ${res.status}`);
+  }
+
+  const body: ApiResponse = await res.json();
+  return body.data.map(toCard);
+}
+
+// Batch-resolve stored card ids to display data (the /binder page). Returned
+// order is the API's, not the input's; callers re-order by mapping over their
+// own id list. Ids the API no longer knows are simply absent from the result.
+export async function getCardsByIds(rawIds: string[]): Promise<Map<string, Card>> {
+  const ids = [...new Set(rawIds)].filter(id => CARD_ID_PATTERN.test(id));
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += IDS_PER_REQUEST) {
+    chunks.push(ids.slice(i, i + IDS_PER_REQUEST));
+  }
+  const results = await Promise.all(chunks.map(fetchCardsByIdChunk));
+  return new Map(results.flat().map(card => [card.id, card]));
+}
+
 // A small, curated set of visually striking cards used to illustrate the landing
 // hero. Best-effort: callers should treat a thrown error (or empty result) as
 // "render the hero without art" rather than a failure.

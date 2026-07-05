@@ -1,5 +1,8 @@
 import Image from "next/image";
 import type { Metadata } from "next";
+import { getSessionUser } from "@/lib/auth";
+import { getOwnedQuantities } from "@/lib/collection";
+import { addCardToCollection } from "@/lib/collection/actions";
 import { searchCards, type Card } from "@/lib/pokemon";
 import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
@@ -28,6 +31,12 @@ const SearchPage = async ({ searchParams }: SearchProps) => {
   }
 
   const hasQuery = query.length > 0;
+
+  // Logged-in searchers get the add-to-binder path on every result, with
+  // already-collected cards marked. Logged-out search is unchanged.
+  const user = await getSessionUser();
+  const ownedQuantities =
+    user != null && cards.length > 0 ? await getOwnedQuantities(user.id) : new Map<string, number>();
 
   return (
     <main className="flex flex-1 flex-col">
@@ -80,30 +89,54 @@ const SearchPage = async ({ searchParams }: SearchProps) => {
           <section>
             <p className="mb-4 text-sm text-foreground-subtle">{cards.length} cards</p>
             <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-              {cards.map(card => (
-                <li key={card.id}>
-                  <a
-                    href={card.images.large}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group block"
-                  >
-                    <Image
-                      src={card.images.small}
-                      alt={card.name}
-                      width={245}
-                      height={342}
-                      className="h-auto w-full rounded-field shadow-card transition-transform group-hover:scale-[1.03]"
-                    />
-                    <div className="mt-2">
-                      <p className="truncate font-medium text-foreground">{card.name}</p>
-                      <p className="truncate text-sm text-foreground-subtle">
-                        {card.set.name} · {card.number}
-                      </p>
-                    </div>
-                  </a>
-                </li>
-              ))}
+              {cards.map(card => {
+                const owned = ownedQuantities.get(card.id);
+                return (
+                  <li key={card.id} className="flex flex-col">
+                    <a
+                      href={card.images.large}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group block"
+                    >
+                      <Image
+                        src={card.images.small}
+                        alt={card.name}
+                        width={245}
+                        height={342}
+                        className="h-auto w-full rounded-field shadow-card transition-transform group-hover:scale-[1.03]"
+                      />
+                      <div className="mt-2">
+                        <p className="truncate font-medium text-foreground">{card.name}</p>
+                        <p className="truncate text-sm text-foreground-subtle">
+                          {card.set.name} · {card.number}
+                        </p>
+                      </div>
+                    </a>
+                    {user != null ? (
+                      <div className="mt-2 flex items-center gap-2">
+                        <form action={addCardToCollection} className="flex-1">
+                          <input type="hidden" name="cardId" value={card.id} />
+                          <Button
+                            type="submit"
+                            variant="secondary"
+                            size="sm"
+                            className="w-full whitespace-nowrap px-2"
+                            data-testid={`add-${card.id}`}
+                          >
+                            {owned != null ? "+ Add another" : "+ Add to binder"}
+                          </Button>
+                        </form>
+                        {owned != null ? (
+                          <Badge variant="solid" size="sm" data-testid={`owned-${card.id}`}>
+                            ×{owned}
+                          </Badge>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </li>
+                );
+              })}
             </ul>
           </section>
         ) : null}
