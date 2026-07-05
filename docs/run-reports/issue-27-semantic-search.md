@@ -52,3 +52,13 @@ The PARTIAL rows are exactly the scene/weather semantics the stub cannot honestl
 - Human: provision `ANTHROPIC_API_KEY` (console key `tcg-art-index` -> `.env.local` + Vercel), re-run `npm run art:index`, commit the snapshot. Everything upgrades in place.
 - Grow the index past 686 cards by extending `DEFAULT_SETS` (cost table in the design doc).
 - Once a hosted Postgres exists: pgvector embeddings + Haiku rerank are the natural quality upgrades.
+
+## Cold verification (verify-code, 2026-07-05)
+
+Independent check against the HEAD preview (`e8f633c`, https://tcg-4p8g3tcae-jontz.vercel.app):
+
+- `verify-preview.sh 28`: RESULT=pass, HTTP 200, mobile 390px overflowBy=0.
+- Re-ran the committed e2e suite against that preview: all 8 MUST and all 4 SOFT queries HIT, nonsense/empty guardrails return 0 results.
+- Fresh pixel captures spot-checked: "pikachu surfing" (Surfing Pikachu fills the top row), "sad ghost in the rain" (all-ghost top-12, Charmander flavor-text tail exactly as the honesty table states), "red dragon over a volcano" mobile (dragons + Charizard top-5, clean 2-col grid).
+- Blocker-claim audit: navigated the connected Chrome to console.anthropic.com/settings/keys; it redirects to the platform sign-in page, confirming the logged-out state the human-gate comment reported. The stub fallback was legitimate.
+- Diff review (correctness, security, web TS standards, spec adherence): no change requests. No secrets in the diff.
