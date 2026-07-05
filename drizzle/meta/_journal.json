@@ -15,6 +15,13 @@
       "when": 1783051833263,
       "tag": "0001_binder-collection",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783239541360,
+      "tag": "0002_semantic-art-index",
+      "breakpoints": true
     }
   ]
 }
