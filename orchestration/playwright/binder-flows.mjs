@@ -98,7 +98,9 @@ const run = async () => {
   await page.setViewportSize({ width: 1440, height: 900 });
 
   // Add cards from search results (the DB write half of the round-trip).
-  await page.goto(`${BASE_URL}/search?q=charizard`, { waitUntil: "networkidle" });
+  // mode=name: the binder flow wants the exhaustive name-match list (semantic
+  // art mode only returns cards present in the committed art index).
+  await page.goto(`${BASE_URL}/search?mode=name&q=charizard`, { waitUntil: "networkidle" });
   const addButtons = page.locator('[data-testid^="add-"]');
   await addButtons.first().waitFor();
   const buttonCount = await addButtons.count();

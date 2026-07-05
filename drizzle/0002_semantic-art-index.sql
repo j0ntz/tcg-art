@@ -1,0 +1,21 @@
+CREATE TABLE "card_art_index" (
+	"cardId" text PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"setId" text NOT NULL,
+	"setName" text NOT NULL,
+	"number" text NOT NULL,
+	"rarity" text,
+	"artist" text,
+	"imageSmall" text NOT NULL,
+	"imageLarge" text NOT NULL,
+	"scene" text NOT NULL,
+	"subjects" jsonb NOT NULL,
+	"action" text,
+	"mood" jsonb NOT NULL,
+	"palette" jsonb NOT NULL,
+	"setting" text,
+	"style" text,
+	"searchText" text NOT NULL,
+	"model" text NOT NULL,
+	"indexedAt" timestamp DEFAULT now() NOT NULL
+);
