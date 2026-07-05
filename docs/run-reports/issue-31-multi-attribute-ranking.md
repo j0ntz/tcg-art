@@ -85,3 +85,29 @@ Screenshots (desktop 1440px + mobile 390px) for every query including the new pr
 
 - The "blue turtle with a shell" ordering improves for free once real vision rows tag turtle shells as "shell"; no ranker change needed.
 - IDF is computed per query over the in-memory index; if the index moves to Postgres at scale, precompute per-token document frequencies once per index build rather than per query.
+
+## Independent verification (verify-code)
+
+Cold verification against the real Vercel preview, not the author's local numbers.
+
+| field | value |
+|---|---|
+| Task | #31 · https://github.com/j0ntz/tcg-art/issues/31 |
+| PR | https://github.com/j0ntz/tcg-art/pull/32 |
+| Preview | https://tcg-p8340p1ml-jontz.vercel.app |
+| Branch | jon/task-31 |
+| Verified | preview live (HTTP 200), all MUST cases green |
+| Date | 2026-07-05 |
+
+- `verify-preview.sh 32` → RESULT=pass (HTTP 200, mobile 390px no horizontal overflow).
+- `BASE_URL=<preview> art:flows` API assertions: all 11 MUST cases HIT in `mode=lexical` (confirms no Anthropic API at query time), both guardrails return 0 results. The q13 outrank assertion passed live: `outranks:OK (Spearow@1 vs Pidgeot@11)`. The three new probes (q13 tiny yellow bird, q14 angry orange dragon, q15 sad ghost on a train) and all 8 pre-existing MUST cases are green.
+- Before/after ranking tables above reproduced independently from the shipped `rankEntries` against `HEAD` and this branch: exact match (Pidgeot 13.3 → Spearow 6.84 for q13; Blastoise line intact at #5 for the turtle MUST).
+- Ranking latency measured ~9-17 ms per query over the full 686-row index (single-digit-to-teens ms, no measurable p50 impact; ranking-only change, no new services).
+
+The strict `waitUntil: "networkidle"` in the shared art-search screenshot harness does not settle against this preview (the results grid streams 24 card images from the pokemontcg.io CDN, so network never idles for 500 ms); that is pre-existing harness behavior unrelated to this PR's diff. The multi-attribute probe screenshots below were captured with a load + explicit image-settle wait instead.
+
+### Probe screenshots (live preview)
+
+- q13 "tiny yellow bird in a snowstorm": [desktop](https://github.com/j0ntz/tcg-art/blob/jon/task-31/docs/screenshots/issue-27-q13-tiny-yellow-bird-snow.jpg) · [mobile](https://github.com/j0ntz/tcg-art/blob/jon/task-31/docs/screenshots/issue-27-q13-tiny-yellow-bird-snow-mobile.jpg) — Spearow/Zapdos/Articuno lead; Pidgeot/Fearow/Moltres demoted far down.
+- q14 "angry orange dragon breathing fire": [desktop](https://github.com/j0ntz/tcg-art/blob/jon/task-31/docs/screenshots/issue-27-q14-angry-orange-dragon-fire.jpg) · [mobile](https://github.com/j0ntz/tcg-art/blob/jon/task-31/docs/screenshots/issue-27-q14-angry-orange-dragon-fire-mobile.jpg) — Charizard line stays top.
+- q15 "sad ghost on a train": [desktop](https://github.com/j0ntz/tcg-art/blob/jon/task-31/docs/screenshots/issue-27-q15-sad-ghost-train.jpg) · [mobile](https://github.com/j0ntz/tcg-art/blob/jon/task-31/docs/screenshots/issue-27-q15-sad-ghost-train-mobile.jpg) — ghost line only, no train-adjacent garbage.
