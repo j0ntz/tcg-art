@@ -86,6 +86,52 @@ effort_for() {
   case "$sel" in low|medium|high|xhigh|max) printf '%s' "$sel" ;; esac
 }
 
+# --- Sub-issue (parent/child) helpers. All REST, zero GraphQL. docs/orch-subtasks-design.md. ---
+
+# sub_issues_json <issue#> -> the issue's children as a JSON array ("[]" if none or on failure).
+# per_page=100 covers the platform max (100 children), so one page is always the whole list.
+# gh api prints the error BODY to stdout on an HTTP error, so capture and discard on failure.
+sub_issues_json() {
+  local out
+  out="$(gh api "repos/$REPO/issues/$1/sub_issues?per_page=100" 2>/dev/null)" || { echo '[]'; return; }
+  printf '%s' "$out"
+}
+
+# parent_of <issue#> -> the parent issue number ("" if the issue has no parent; the endpoint 404s).
+parent_of() {
+  local out
+  out="$(gh api "repos/$REPO/issues/$1/parent" --jq '.number' 2>/dev/null)" || return 0
+  printf '%s' "$out"
+}
+
+# children_gate <issue#> -> "none" (not a parent) | "ready" (every child complete) |
+# "waiting:<done>/<total>". A child is complete when its issue is CLOSED or its board status is
+# Done (a no-PR research/ops child goes board-Done with its issue still open). Child issue states
+# come from ONE REST call; board statuses from the tick snapshot when present. Deliberately never
+# reads sub_issues_summary: it is eventually consistent and counts only closed children.
+# Fails OPEN ("none" -> normal spawn): a premature parent spawn is caught by work-task's own
+# gate re-check, which routes it back to Pending.
+children_gate() {
+  local subs
+  subs="$(sub_issues_json "$1")"
+  if [ -z "$subs" ] || [ "$subs" = "[]" ]; then echo none; return; fi
+  board_items_json 2>/dev/null | SUBS="$subs" node -e '
+    const subs=JSON.parse(process.env.SUBS||"[]");
+    if(!subs.length){console.log("none");process.exit(0)}
+    const board={};
+    try{
+      const d=JSON.parse(require("fs").readFileSync(0,"utf8"));
+      for(const it of d.items||[]){
+        if(!it.content||!it.content.number)continue;
+        const e=Object.entries(it).find(([k])=>/agent ?status/i.test(k));
+        board[it.content.number]=e?e[1]:"";
+      }
+    }catch(e){}
+    const done=subs.filter(s=>s.state==="closed"||board[s.number]==="Done").length;
+    console.log(done===subs.length?"ready":("waiting:"+done+"/"+subs.length));
+  ' 2>/dev/null || echo none
+}
+
 # first_item_in_state <Status> -> issue number of the first board item in that state ("" if none).
 # Shared by the pipeline handlers (test/review/address/land) to find their one task per tick.
 first_item_in_state() {
@@ -152,6 +198,10 @@ spawn_agent() {
   [ -n "$model" ] && model_flag="--model \"$model\" "
   effort="$(effort_for "$num")"
   [ -n "$effort" ] && effort_flag="--effort $effort "
+  if [ -n "${ORCH_DRY_RUN:-}" ]; then
+    echo "[dry-run] would spawn $session (model='${model}' effort='${effort}') in $wt: $cmd"
+    return 0
+  fi
   tmux new-session -d -s "$session"
   tmux send-keys -t "$session" "cd \"$wt\" && claude ${model_flag}${effort_flag}${rc_flag}--dangerously-skip-permissions \"$cmd\"" C-m
 }

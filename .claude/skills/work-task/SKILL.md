@@ -14,10 +14,11 @@ description: Take ONE board task (a GitHub issue) from Pending to its deliverabl
 <rule id="feedback-comments">ANY issue comment whose body does NOT start with `<!--` is human feedback, no prefix needed. UNCONSUMED = it has no +1 reaction yet (the reaction is the orch's receipt; check the `reactions` field when listing comments). Treat each unconsumed one as a requirement equal to a review thread; when directives conflict, the NEWEST comment wins. A comment with no actionable ask (e.g. praise): consume it with a +1 and move on. After acting on one: `gh api -X POST repos/j0ntz/tcg-art/issues/comments/<id>/reactions -f content='+1'` and list it in your round summary.</rule>
 </rules>
 
-<step id="1" name="Read the task + pick the mode">
+<step id="1" name="Read the task + pick the mode + detect the sub-issue role">
 Parse `<n>`. `gh issue view <n> --repo j0ntz/tcg-art --json title,body,labels,comments` (comments matter: unmarked ones are human directives; on INITIAL they refine the spec). The FLAVOR is in the labels: `research` / `design` / `instructions` / `chore` (any present = doc/ops kind; none = code). Resolve any PR: `pr=$(gh pr list --repo j0ntz/tcg-art --head jon/task-<n> --state open --json number -q '.[0].number')`.
 - If (`pr` exists AND it has UNRESOLVED review threads (`gh api repos/j0ntz/tcg-art/pulls/<pr>/comments`)) OR the issue has UNCONSUMED human comments (unmarked + un-reacted) -> **ADDRESS** mode.
 - Else -> **INITIAL** mode (unconsumed human comments, if any exist pre-PR, are part of the spec: consume + react to them as in ADDRESS).
+Detect the sub-issue role (`docs/orch-subtasks-design.md`): `bash orchestration/board.sh gate <n>` -> `none` = a normal task; `ready`/`waiting` = a **PARENT** (INITIAL work follows step 2-parent instead of 2-initial). `bash orchestration/board.sh parent <n>` prints a parent number = this is a **CHILD**: work it as a normal task, but read the parent issue first for umbrella context.
 `bash orchestration/board.sh status <n> Running` (idempotent).
 </step>
 
@@ -25,6 +26,13 @@ Parse `<n>`. `gh issue view <n> --repo j0ntz/tcg-art --json title,body,labels,co
 - **code** (no flavor): implement to the issue's definition of done following CLAUDE.md; `git commit`; `npm run build` (sfw if needed) MUST pass; push; open a PR (`gh pr create --repo j0ntz/tcg-art --base main --head jon/task-<n> --title "<concise>" --body "Closes #<n> ..."`).
 - **doc** (`research`/`design`/`instructions`): research (web + codebase) and write the deliverable doc(s) under `docs/` per the issue's deliverables; `git commit`; push; open a PR.
 - **ops/`chore` that operates on the board** (no artifact of its own): do the operational work directly per the issue (e.g. fix other tasks' branches and drive them through their states). Do NOT open a PR for THIS task. A research-only investigation: post the findings as an issue comment (starting with `<!-- orch -->`); no PR.
+</step>
+
+<step id="2-parent" name="INITIAL, parent task: fan-in">
+Applies when step 1 detected a PARENT (replaces 2-initial). First re-check the gate: `bash orchestration/board.sh gate <n>`. If it prints `waiting:<k>/<t>`, this spawn was premature (the watch gate holds parents until every child is complete): `bash orchestration/board.sh status <n> Pending`, print one line saying so, stop; do NOT work it. On `ready`, do the parent's OWN fan-in deliverable per its issue body:
+- Fan-in that changes the repo (an integration, a comparison doc): treat it as the matching flavor in 2-initial (commit, build gate for code, push, PR).
+- Pure coordination (nothing to commit): post ONE issue comment summarizing each child (`bash orchestration/board.sh children <n>` for the list): number, title, outcome, PR/merge link. No PR.
+Then route to Verifying (step 3) as normal.
 </step>
 
 <step id="2-address" name="ADDRESS: resolve the review threads + feedback">
