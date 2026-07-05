@@ -1,9 +1,9 @@
 import SectionHeading from "./ui/SectionHeading";
-import { cardVariants } from "./ui/Card";
-import { cn } from "@/lib/utils";
+import Reveal from "./motion/Reveal";
 
-// Mirrors the clone target's 3-step "How It Works" section (see the scrape in
-// docs / ~/pokemon-artfinder-scrape-and-spec.md).
+// Mirrors the clone target's 3-step "How It Works" content, restyled as a
+// vertical timeline: a connecting line with gradient number stops, each step
+// sliding in from the left as it scrolls into view.
 const STEPS = [
   {
     title: "Tell Us What You See",
@@ -21,22 +21,34 @@ const STEPS = [
 
 const HowItWorks: React.FC = () => {
   return (
-    <section className="mx-auto w-full max-w-content px-gutter py-16 sm:py-20">
-      <SectionHeading
-        className="mb-12"
-        title="How It Works"
-        subtitle="Three steps from a vague memory of the art to the exact card."
-      />
+    // overflow-x-clip: the from-left pre-reveal offset (globals.css) must not
+    // widen the page on mobile before the steps reveal.
+    <section className="mx-auto w-full max-w-content overflow-x-clip px-gutter py-16 sm:py-20">
+      <Reveal>
+        <SectionHeading
+          className="mb-12"
+          title="How It Works"
+          subtitle="Three steps from a vague memory of the art to the exact card."
+        />
+      </Reveal>
 
-      <ol className="grid gap-6 md:grid-cols-3">
+      <ol className="relative mx-auto flex w-full max-w-2xl flex-col gap-10 before:absolute before:top-2 before:bottom-2 before:left-5 before:w-px before:bg-primary-border before:content-['']">
         {STEPS.map((step, index) => (
-          <li key={step.title} className={cn(cardVariants(), "flex flex-col gap-3 p-6")}>
-            <span className="flex h-10 w-10 items-center justify-center rounded-pill bg-primary-subtle text-base font-bold text-primary-subtle-foreground">
+          <Reveal
+            key={step.title}
+            as="li"
+            from="left"
+            delayMs={index * 120}
+            className="relative grid grid-cols-[2.5rem_1fr] gap-x-5"
+          >
+            <span className="z-10 flex h-10 w-10 items-center justify-center rounded-pill bg-brand-gradient text-base font-bold text-primary-foreground shadow-card">
               {index + 1}
             </span>
-            <h3 className="text-lg font-semibold text-foreground">{step.title}</h3>
-            <p className="text-sm leading-relaxed text-foreground-muted">{step.body}</p>
-          </li>
+            <div className="pt-1.5">
+              <h3 className="text-lg font-semibold text-foreground">{step.title}</h3>
+              <p className="mt-1 text-sm leading-relaxed text-foreground-muted">{step.body}</p>
+            </div>
+          </Reveal>
         ))}
       </ol>
     </section>

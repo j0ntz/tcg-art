@@ -144,6 +144,17 @@
   /* accent (brand gradient's second stop) */
   --color-accent: var(--color-accent-600);
 
+  /* midnight hero roles: the near-black cinema surface, saturated glow fills
+     for its backdrop, bright brand steps that stay legible on that surface,
+     and inverse copy tiers for text sitting on it */
+  --color-surface-night: var(--color-ink-950);
+  --color-primary-glow: var(--color-brand-500);
+  --color-accent-glow: var(--color-accent-500);
+  --color-primary-bright: var(--color-brand-400);
+  --color-accent-bright: var(--color-accent-400);
+  --color-foreground-inverse-muted: var(--color-ink-300);
+  --color-foreground-inverse-subtle: var(--color-ink-400);
+
   /* focus ring */
   --color-ring: var(--color-brand-500);
 
@@ -204,4 +215,68 @@
    target. The body just needs a sane light default; sections set their own roles. */
 body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* =============================================================================
+   Scroll-driven animation
+   Two mechanisms, both progressive enhancements:
+   1. Reveal-on-scroll: app/components/motion/Reveal.tsx flips `data-revealed`
+      via IntersectionObserver; the transition lives here. The hidden state is
+      gated on BOTH no-reduced-motion AND scripting, so reduced-motion visitors
+      and no-JS visitors always see the full static page.
+   2. Scroll-linked hero fan parallax: CSS scroll timelines where supported
+      (Chrome/Edge/Safari 26+); other browsers keep the static fan. Animating
+      the independent `translate` property lets the drift compose with the fan
+      geometry `transform` already on each card.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: no-preference) and (scripting: enabled) {
+  [data-reveal] {
+    opacity: 0;
+    transition:
+      opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  [data-reveal="up"] {
+    transform: translateY(28px);
+  }
+  [data-reveal="left"] {
+    transform: translateX(-28px);
+  }
+  [data-reveal="right"] {
+    transform: translateX(28px);
+  }
+  [data-reveal="scale"] {
+    transform: scale(0.95);
+  }
+  [data-reveal][data-revealed] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-fan-card {
+      animation: hero-fan-open linear both;
+      animation-timeline: scroll(root);
+      /* The opening completes within the first ~700px of page scroll, i.e.
+         while the hero is actually leaving the viewport. */
+      animation-range: 0 700px;
+    }
+  }
+}
+
+/* The fan swings open as the page scrolls: --i (signed index from the fan
+   center) spreads the cards apart horizontally, --ai (absolute index) lifts
+   the outer cards, like a hand of cards being fanned under a spotlight. The
+   card's resting `translate` is `0 -50%` (Tailwind -translate-y-1/2 centers
+   it), so the keyframe must keep that -50% baseline and only add the opening
+   motion; dropping it would sink the fan instead of lifting it. The hero
+   section is overflow-hidden, so the spread cannot widen the page. */
+@keyframes hero-fan-open {
+  to {
+    translate: calc(var(--i) * 34px) calc(-50% - 12px - var(--ai) * 14px);
+  }
 }
