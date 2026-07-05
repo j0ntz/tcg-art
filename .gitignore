@@ -15,6 +15,9 @@ build/
 .env
 .env*.local
 
+# local dev database (PGlite)
+.pglite/
+
 # claude (machine-local settings/secrets)
 .claude/settings.local.json
 
