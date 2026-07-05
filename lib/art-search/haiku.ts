@@ -1,4 +1,4 @@
-import type { QueryTerm } from "./types";
+import type { QueryConcept, QueryTerm } from "./types";
 
 // Query-time semantic layer: when ANTHROPIC_API_KEY is set, Haiku translates
 // the user's free text into the SAME structured tag space the index rows use
@@ -41,7 +41,7 @@ const asStrings = (value: unknown, max: number): string[] =>
         .slice(0, max)
     : [];
 
-export const parseQueryWithHaiku = async (query: string): Promise<QueryTerm[] | null> => {
+export const parseQueryWithHaiku = async (query: string): Promise<QueryConcept[] | null> => {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (apiKey == null || apiKey === "") return null;
 
@@ -80,7 +80,11 @@ export const parseQueryWithHaiku = async (query: string): Promise<QueryTerm[] | 
       ...asStrings(parsed.style, 8).map(term => ({ term, weight: 1, field: "style" as const })),
       ...asStrings(parsed.expansions, 8).map(term => ({ term, weight: 0.7 })),
     ];
-    return terms.length > 0 ? terms : null;
+    // Each parsed attribute is its own concept keyed by its word, so the ranker
+    // counts every distinct attribute Haiku extracts toward multi-attribute
+    // coverage and damps each by IDF independently.
+    const concepts: QueryConcept[] = terms.map(term => ({ key: term.term, terms: [term] }));
+    return concepts.length > 0 ? concepts : null;
   } catch (e: unknown) {
     // Search must degrade to lexical rather than fail; log for observability.
     console.error("art-search: Haiku query parse failed", e);

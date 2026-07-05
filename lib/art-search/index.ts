@@ -3,7 +3,7 @@ import { getDb } from "@/lib/db";
 import snapshot from "@/data/art-index.json";
 import { parseQueryWithHaiku } from "./haiku";
 import { expandQuery, rankEntries } from "./scoring";
-import type { ArtIndexEntry, ArtSearchResponse, QueryTerm } from "./types";
+import type { ArtIndexEntry, ArtSearchResponse, QueryConcept } from "./types";
 
 export type { ArtIndexEntry, ArtSearchResult, ArtSearchResponse } from "./types";
 
@@ -51,14 +51,14 @@ export const searchArt = async (rawQuery: string): Promise<ArtSearchResponse> =>
     return { query, mode: "lexical", indexSize: entries.length, results: [] };
   }
 
-  const lexicalTerms = expandQuery(query);
-  const haikuTerms: QueryTerm[] | null = await parseQueryWithHaiku(query);
-  const termGroups = haikuTerms != null ? [lexicalTerms, haikuTerms] : [lexicalTerms];
+  const lexicalConcepts = expandQuery(query);
+  const haikuConcepts: QueryConcept[] | null = await parseQueryWithHaiku(query);
+  const conceptGroups = haikuConcepts != null ? [lexicalConcepts, haikuConcepts] : [lexicalConcepts];
 
   return {
     query,
-    mode: haikuTerms != null ? "haiku" : "lexical",
+    mode: haikuConcepts != null ? "haiku" : "lexical",
     indexSize: entries.length,
-    results: rankEntries(entries, termGroups, RESULT_LIMIT),
+    results: rankEntries(entries, conceptGroups, RESULT_LIMIT),
   };
 };

@@ -36,6 +36,7 @@ export const VOCAB: Record<string, string[]> = {
 
   // Colors and palettes.
   red: ["crimson", "scarlet", "ruby"],
+  orange: ["amber", "tangerine", "copper", "rust"],
   blue: ["azure", "navy", "teal", "cobalt"],
   purple: ["violet", "lavender", "magenta"],
   green: ["emerald", "verdant", "leafy"],
@@ -44,6 +45,19 @@ export const VOCAB: Record<string, string[]> = {
   white: ["pale", "ivory", "snowy"],
   pink: ["rosy", "magenta", "pastel"],
   fiery: ["flame", "flames", "fire", "burning", "blazing"],
+
+  // Size and scale canonicalization: the index rows carry "small"/"little"/
+  // "large" far more often than a user's chosen synonym, so bridge them.
+  tiny: ["small", "little", "miniature", "petite"],
+  small: ["little", "tiny", "petite"],
+  big: ["large", "huge", "giant", "massive"],
+  large: ["big", "huge", "giant", "massive"],
+
+  // Weather canonicalization: "snowstorm"/"blizzard" collapse onto the snow/
+  // storm families the rows describe.
+  snowstorm: ["snow", "snowy", "blizzard", "storm", "ice", "icy", "frozen", "winter"],
+  blizzard: ["snow", "snowy", "snowstorm", "storm", "ice", "winter"],
+  breathing: ["breathes", "exhaling", "spewing", "belching"],
 
   // Actions.
   surfing: ["surf", "surfboard", "wave", "riding a wave"],
