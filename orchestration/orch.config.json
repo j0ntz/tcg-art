@@ -46,11 +46,11 @@
       "Sonnet 4.6": "6b72c87c"
     },
     "models": {
-      "Fable 5": "claude-fable-5[1m]",
-      "Opus 4.8": "claude-opus-4-8[1m]",
-      "Opus 4.7": "claude-opus-4-7[1m]",
-      "Sonnet 5": "claude-sonnet-5[1m]",
-      "Sonnet 4.6": "claude-sonnet-4-6[1m]"
+      "Fable 5": "claude-fable-5",
+      "Opus 4.8": "claude-opus-4-8",
+      "Opus 4.7": "claude-opus-4-7",
+      "Sonnet 5": "claude-sonnet-5",
+      "Sonnet 4.6": "claude-sonnet-4-6"
     },
     "defaultModel": "",
     "_effortDoc": "Reasoning effort spawned agents start on (claude --effort <level>). Same resolution as model: the task's Agent Effort board field -> defaultEffort -> no flag. The option label IS the CLI value (low|medium|high|xhigh|max), validated against that set, mirroring Edge's agent_effort.",
