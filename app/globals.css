@@ -144,9 +144,16 @@
   /* accent (brand gradient's second stop) */
   --color-accent: var(--color-accent-600);
 
-  /* decorative glow fills (blurred hero backdrop blobs) */
-  --color-primary-glow: var(--color-brand-200);
-  --color-accent-glow: var(--color-accent-200);
+  /* midnight hero roles: the near-black cinema surface, saturated glow fills
+     for its backdrop, bright brand steps that stay legible on that surface,
+     and inverse copy tiers for text sitting on it */
+  --color-surface-night: var(--color-ink-950);
+  --color-primary-glow: var(--color-brand-500);
+  --color-accent-glow: var(--color-accent-500);
+  --color-primary-bright: var(--color-brand-400);
+  --color-accent-bright: var(--color-accent-400);
+  --color-foreground-inverse-muted: var(--color-ink-300);
+  --color-foreground-inverse-subtle: var(--color-ink-400);
 
   /* focus ring */
   --color-ring: var(--color-brand-500);
@@ -225,24 +232,21 @@ body {
 @supports (animation-timeline: scroll()) {
   @media (prefers-reduced-motion: no-preference) {
     .hero-fan-card {
-      animation: hero-fan-drift linear both;
+      animation: hero-fan-open linear both;
       animation-timeline: scroll(root);
-      /* The drift completes within the first ~640px of page scroll, i.e. while
-         the hero is actually leaving the viewport. */
-      animation-range: 0 640px;
+      /* The opening completes within the first ~700px of page scroll, i.e.
+         while the hero is actually leaving the viewport. */
+      animation-range: 0 700px;
     }
   }
 }
 
-/* Each card drifts up and outward as the page scrolls: --i (signed index from
-   the fan center) spreads horizontally, --ai (absolute index) lifts the outer
-   cards more, so the fan opens rather than sliding as one block. The card's
-   resting `translate` is `0 -50%` (Tailwind -translate-y-1/2 centers it), so
-   the keyframe must keep that -50% baseline and only add the drift; dropping
-   it would sink the fan instead of lifting it. The hero section is
-   overflow-hidden, so the outward spread cannot widen the page. */
-@keyframes hero-fan-drift {
+/* The fan swings open as the page scrolls: --i (signed index from the fan
+   center) spreads the cards apart horizontally, --ai (absolute index) lifts
+   the outer cards, like a hand of cards being fanned under a spotlight. The
+   hero section is overflow-hidden, so the spread cannot widen the page. */
+@keyframes hero-fan-open {
   to {
-    translate: calc(var(--i) * 16px) calc(-50% - 24px - var(--ai) * 18px);
+    translate: calc(var(--i) * 34px) calc(var(--ai) * -14px - 12px);
   }
 }
