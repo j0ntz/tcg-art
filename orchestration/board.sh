@@ -31,7 +31,7 @@ case "${1:-}" in
   status)
     issue="$2"; status="$3"
     oid="$(opt_id "$status")"
-    [ -z "$oid" ] && { echo "unknown status: $status (use Pending|Running|Verifying|Verified|Landing|Done)"; exit 2; }
+    [ -z "$oid" ] && { echo "unknown status: $status (use Backlog|Pending|Running|Verifying|Verified|Landing|Done)"; exit 2; }
     iid="$("$0" item-id "$issue")"
     gh project item-edit --id "$iid" --field-id "$FIELD_ID" --project-id "$PROJECT_ID" --single-select-option-id "$oid" >/dev/null
     # `blocked` is managed explicitly (validate-block / watchdog / human via add-label|remove-label);
@@ -96,5 +96,5 @@ case "${1:-}" in
     echo "sub-issue: #$3 -> parent #$2"
     ;;
   *)
-    echo "usage: board.sh {list-pending | item-id <issue#> | status <issue#> <Pending|Running|Verifying|Verified|Landing|Done> | model <issue#> \"<Fable 5|Opus 4.8|Opus 4.7|Sonnet 5|Sonnet 4.6>\" | effort <issue#> <low|medium|high|xhigh|max> | has-label <issue#> <label> | add-label <issue#> <label> | remove-label <issue#> <label> | children <issue#> | parent <issue#> | gate <issue#> | add-child <parent#> <child#>}"; exit 2 ;;
+    echo "usage: board.sh {list-pending | item-id <issue#> | status <issue#> <Backlog|Pending|Running|Verifying|Verified|Landing|Done> | model <issue#> \"<Fable 5|Opus 4.8|Opus 4.7|Sonnet 5|Sonnet 4.6>\" | effort <issue#> <low|medium|high|xhigh|max> | has-label <issue#> <label> | add-label <issue#> <label> | remove-label <issue#> <label> | children <issue#> | parent <issue#> | gate <issue#> | add-child <parent#> <child#>}"; exit 2 ;;
 esac

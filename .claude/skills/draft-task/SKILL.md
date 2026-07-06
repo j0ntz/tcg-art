@@ -20,7 +20,7 @@ description: Front door for the orchestration — turn a task intent (free text 
 <step id="3" name="Queue">On confirmation:
 - `url=$(gh issue create --repo j0ntz/tcg-art --title "<concise>" --body-file <file> [--label <flavor> ...])` (the flavor labels must exist: research / design / instructions / chore).
 - `gh project item-add 1 --owner j0ntz --url "$url"`.
-- `bash orchestration/board.sh status <n> Pending`.
+- `bash orchestration/board.sh status <n> Pending` (or `Backlog` if the caller wants it parked, not armed; Pending is picked up on the next tick).
 - if warranted: `bash orchestration/board.sh add-label <n> auto-land`.
 - if a model/effort was chosen: `bash orchestration/board.sh model <n> "<label>"`, `bash orchestration/board.sh effort <n> <level>`.
 For a SPLIT (per the `split` rule): create every child issue first, then the parent; link each child with `bash orchestration/board.sh add-child <parent#> <child#>`; queue ALL of them (children + parent) on the board as Pending per the commands above (batch the board.sh calls under one `ORCH_BOARD_SNAPSHOT`, the GraphQL-budget gotcha); `bash orchestration/board.sh add-label <parent#> parent` (visibility only; the gate keys off the native sub-issue links). The watch gate works the children first and releases the parent when they are all complete.

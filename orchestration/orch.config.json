@@ -1,11 +1,9 @@
 {
   "_doc": "Single source of truth for the tcg-art agent orchestration. Switching the Vercel account/scope/project, the board, or the repo later = edit this file only; the scripts read from here.",
-
   "github": {
     "owner": "j0ntz",
     "repo": "tcg-art"
   },
-
   "board": {
     "_doc": "GitHub Projects board the watcher polls and the agent writes. ids from `gh project` / field-create.",
     "owner": "j0ntz",
@@ -13,15 +11,15 @@
     "projectId": "PVT_kwHOD6Er384BbyER",
     "statusFieldId": "PVTSSF_lAHOD6Er384BbyERzhWgFFU",
     "statusOptions": {
-      "Pending": "5dec8eed",
-      "Running": "fabe00dd",
-      "Verifying": "e6de2edd",
-      "Verified": "48d2e479",
-      "Landing": "ee0391cd",
-      "Done": "aa4d9ccf"
+      "Backlog": "55f65bf5",
+      "Pending": "067666ad",
+      "Running": "2d6f70b8",
+      "Verifying": "d0ceaa92",
+      "Verified": "ec3c40de",
+      "Landing": "8d75b6b9",
+      "Done": "8eb8a571"
     }
   },
-
   "vercel": {
     "_doc": "SWAP THIS BLOCK to move to a different Vercel account/scope/project (e.g. a future j0ntz-owned Vercel). scope = the team/account slug from the dashboard URL. bypassSecret = Vercel Protection Bypass for Automation token (set once deployment protection is configured; empty disables the protected-preview drive).",
     "scope": "jontz",
@@ -29,12 +27,10 @@
     "bypassSecret": "",
     "enabled": true
   },
-
   "land": {
     "_doc": "How the lander merges PRs from Land-state tasks. mergeMethod: squash | merge | rebase.",
     "mergeMethod": "squash"
   },
-
   "agent": {
     "_doc": "What model spawned agents START on (claude --model <value>); a human can still flip a LIVE session per-turn via the RC/desktop picker. Resolution order: the task's Agent Model board field (its option label maps to a CLI string via models{}) -> defaultModel -> no --model flag (the server-side default alias). modelFieldId/modelOptions are only needed to WRITE the field (board.sh model); reads come free from the tick's board snapshot. GOTCHA: editing this field's options via the API recreates all option IDs and clears items' selections, same as Agent Status.",
     "modelFieldId": "PVTSSF_lAHOD6Er384BbyERzhW-zdA",
@@ -64,9 +60,10 @@
     },
     "defaultEffort": "",
     "_remoteControlDoc": "Which agent stages spawn with --remote-control (viewable/controllable from claude.ai). Every RC spawn adds a session to the claude.ai list and fires one notification, so keep this tight: verify/land agents are short-lived and already transparent via their artifacts (PR review comments, issue run reports, tick.log, tmux attach). [] = no RC anywhere.",
-    "remoteControlStages": ["work"]
+    "remoteControlStages": [
+      "work"
+    ]
   },
-
   "worktreesRoot": "~/git/.tcg-art-worktrees",
   "maxConcurrent": 1
 }
