@@ -1,4 +1,26 @@
-# Run report: issue #47 — site overhaul (anti-slop design system + gap closure)
+<!-- orch -->
+# Agent run report: site overhaul (anti-slop design system + gap closure)
+
+**▶ Live preview: https://tcg-art-git-jon-task-47-jontz.vercel.app**  ·  **PR: https://github.com/j0ntz/tcg-art/pull/48**
+
+| field | value |
+|---|---|
+| Task | #47 · https://github.com/j0ntz/tcg-art/issues/47 |
+| PR | https://github.com/j0ntz/tcg-art/pull/48 |
+| Preview | https://tcg-art-git-jon-task-47-jontz.vercel.app |
+| Branch | jon/task-47 |
+| Verified | pass (`verify-preview.sh 48`, HTTP 200, mobile overflowBy 0) |
+| Date | 2026-07-19 |
+
+## Summary
+
+Site-wide overhaul per `docs/research/anti-slop-ui.md`: a two-tier OKLCH token
+system (warm ink dominant + budgeted ember accent, Fraunces + IBM Plex Sans),
+every surface restyled to it, and the functional gaps closed (card detail with
+zoom, loading/empty/error states, 404, pagination, a11y, SEO). Independently
+verified cold on the Vercel preview: landing, search (name/artist modes with
+pagination), card detail with artist link, login, and 404 all render correctly
+on desktop and mobile.
 
 Contract: `docs/research/anti-slop-ui.md`. Written system: `docs/design-system.md`
 (new). Inherited by future agents via the "Design system" section added to
@@ -102,6 +124,28 @@ Final screenshot set (docs/screenshots/):
 | outline:none without :focus-visible | ABSENT — global :focus-visible ring; outline-none instances removed |
 
 ## Verification
+
+Independent cold verification (verify agent, 2026-07-19):
+
+- `verify-preview.sh 48 "in the art"` → RESULT=pass against
+  https://tcg-art-git-jon-task-47-jontz.vercel.app (HTTP 200, expected hero
+  copy present, mobile 390px overflowBy 0).
+- Verifier screenshots (committed under `docs/screenshots/`):
+  - Desktop: [issue-47-verify-landing-desktop.png](https://github.com/j0ntz/tcg-art/blob/jon/task-47/docs/screenshots/issue-47-verify-landing-desktop.png)
+  - Mobile (390px): [issue-47-verify-landing-mobile.png](https://github.com/j0ntz/tcg-art/blob/jon/task-47/docs/screenshots/issue-47-verify-landing-mobile.png)
+- Preview route probes: `/card/base1-4` 200 (metadata ledger + artist link),
+  `/search?mode=name&q=charizard` 200 (108 cards, pagination, page 1 of 5),
+  `/search?mode=artist&q=Mitsuhiro Arita` 200 (722 cards), `/login` 200,
+  `/definitely-not-a-page` 404 (designed page). `/card/<malformed-id>` renders
+  the designed 404 UI with a `noindex` meta; HTTP status is 200 because the
+  route streams through `loading.tsx` before `notFound()` throws (standard
+  Next.js streaming tradeoff, accepted).
+- Cold diff review: no change requests. Web TS standards hold (no `any`,
+  `??` defaults, effect cleanup in ArtZoom, stable list keys); no banned
+  design patterns found on the audited surfaces; the one prior review thread
+  (focus-ring radius) is fixed in 522e240 and resolved.
+
+Work-agent verification (original run):
 
 - `npm run build`: green (Turbopack + TypeScript). `npm run lint`: clean.
   Note for future agents: this worktree's `node_modules` was a symlink into
