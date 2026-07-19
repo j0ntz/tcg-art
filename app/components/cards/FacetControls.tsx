@@ -60,6 +60,10 @@ const FacetControls: React.FC<FacetControlsProps> = ({
   // debounced behind it, and fresh server props re-sync it (covers
   // back/forward navigation).
   const [filters, setFilters] = useState<LocalFilters>(() => selectionsOf(groups));
+  // Sort gets the same local-state treatment as filters: committing from the
+  // `appliedSort` server prop would drop a just-picked sort if a filter is
+  // toggled before the post-sort server render lands.
+  const [sort, setSort] = useState<SortKey | null>(appliedSort);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<ReadonlySet<FacetGroupKey>>(new Set());
   const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -71,6 +75,11 @@ const FacetControls: React.FC<FacetControlsProps> = ({
   if (syncedKey !== groupsKey) {
     setSyncedKey(groupsKey);
     setFilters(JSON.parse(groupsKey) as LocalFilters);
+  }
+  const [syncedSort, setSyncedSort] = useState(appliedSort);
+  if (syncedSort !== appliedSort) {
+    setSyncedSort(appliedSort);
+    setSort(appliedSort);
   }
 
   useEffect(() => {
@@ -125,15 +134,16 @@ const FacetControls: React.FC<FacetControlsProps> = ({
         : [...current, value],
     };
     setFilters(next);
-    commitToUrl(next, appliedSort);
+    commitToUrl(next, sort);
   };
 
   const clearAll = (): void => {
     setFilters({});
-    commitToUrl({}, appliedSort, true);
+    commitToUrl({}, sort, true);
   };
 
   const onSortChange = (value: string): void => {
+    setSort(value as SortKey);
     commitToUrl(filters, value as SortKey, true);
   };
 
@@ -202,7 +212,7 @@ const FacetControls: React.FC<FacetControlsProps> = ({
     <label className="flex items-center gap-2 text-sm text-foreground-muted">
       Sort
       <select
-        value={appliedSort ?? defaultSort}
+        value={sort ?? defaultSort}
         onChange={event => onSortChange(event.target.value)}
         data-testid={`${idPrefix}sort-select`}
         className="rounded-field border border-border-strong bg-surface px-2.5 py-1.5 text-sm text-foreground"
