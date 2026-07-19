@@ -18,7 +18,7 @@ const RouteError: React.FC<ErrorProps> = ({ error, reset }) => {
 
   return (
     <main className="mx-auto flex w-full max-w-content flex-1 flex-col items-start justify-center gap-6 px-gutter py-24">
-      <h1 className="font-display text-title font-semibold tracking-tight text-foreground">
+      <h1 className="font-display text-title font-bold tracking-tight text-foreground">
         Something went wrong.
       </h1>
       <p className="max-w-md text-lead text-foreground-muted">

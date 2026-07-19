@@ -34,14 +34,20 @@ Apply to every `.ts`/`.tsx` edit:
 token source of truth; `docs/research/anti-slop-ui.md` lists the banned
 patterns, which are merge gates. The short version every UI edit must honor:
 
-- Two typefaces only: Fraunces (display, `font-display`) + IBM Plex Sans
-  (body). Never add a family; never reintroduce Inter/Roboto/Geist/system
-  stacks.
-- One dominant (warm "ink" neutrals) + one accent ("ember" orange), OKLCH
-  tokens only. The ember accent has a hard budget of 5 placements site-wide
-  (listed in globals.css); do not spend it without removing a placement.
-  Components consume semantic tokens (`surface`, `foreground-*`, `border`,
-  `primary`), never primitives or hex.
+- Two typefaces only: Bricolage Grotesque (display, `font-display`) + IBM
+  Plex Sans (body). Never add a family; never reintroduce
+  Inter/Roboto/Geist/system stacks. NO SERIFS anywhere (product decision:
+  the serif/editorial flavor is rejected); no italics either — the contrast
+  axis is weight (light vs bold/extrabold), not slant.
+- One dominant (cool "ink" gallery neutrals) + one accent ("ember" orange),
+  OKLCH tokens only. The ember accent has a hard budget of 5 placements
+  site-wide (listed in globals.css); do not spend it without removing a
+  placement. Components consume semantic tokens (`surface`, `foreground-*`,
+  `border`, `primary`), never primitives or hex.
+- Energy-type colors (`--color-type-*`) are FUNCTIONAL data ink: they may
+  appear only on elements naming that energy type (the `TypeBadge`
+  primitive, future type facets), never as decoration or theming. Psychic
+  purple is a functional exception to the no-purple rule, not a brand color.
 - No gradients, glows, colored shadows, badges/kickers above H1s, icon-grid
   feature cards, emoji-as-icons, cards-in-cards, ALL-CAPS letter-spaced
   labels, or centered-everything. Layout voice is the left-aligned hairline

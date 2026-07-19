@@ -18,7 +18,7 @@ const NightGallery: React.FC<NightGalleryProps> = ({ entries }) => (
     data-testid="night-gallery"
   >
     <header className="mb-10 flex flex-col gap-1">
-      <p className="font-display text-lg font-semibold text-foreground-inverse">
+      <p className="font-display text-lg font-bold text-foreground-inverse">
         The Night Gallery
       </p>
       <p className="text-sm text-foreground-inverse-subtle">
@@ -48,16 +48,16 @@ const NightGallery: React.FC<NightGalleryProps> = ({ entries }) => (
             </Link>
             <figcaption className="mt-4 w-fit max-w-full rounded-field bg-surface px-4 py-2.5 text-left shadow-card">
               <p className="text-sm text-foreground">
-                <span className="font-display font-medium italic">{entry.card.name}</span>
+                <span className="font-display font-semibold">{entry.card.name}</span>
                 <span className="text-foreground-subtle">, {entry.card.set.name}</span>
               </p>
               <p className="mt-0.5 text-xs text-foreground-subtle">
-                {entry.card.artist != null ? `Illus. ${entry.card.artist}` : "Artist unknown"}
+                {entry.card.artist != null ? `Art by ${entry.card.artist}` : "Artist unknown"}
                 {entry.card.rarity != null ? ` · ${entry.card.rarity}` : ""}
               </p>
               <p className="tnum mt-0.5 text-xs text-foreground-faint">
-                Acquired {entry.acquiredLabel}
-                {entry.quantity > 1 ? ` · edition of ${entry.quantity}` : ""}
+                Added {entry.acquiredLabel}
+                {entry.quantity > 1 ? ` · ×${entry.quantity}` : ""}
               </p>
             </figcaption>
           </figure>

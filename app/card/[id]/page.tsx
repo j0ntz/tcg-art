@@ -8,6 +8,7 @@ import { addCardToCollection } from "@/lib/collection/actions";
 import { getCardById } from "@/lib/pokemon";
 import Badge from "../../components/ui/Badge";
 import Button from "../../components/ui/Button";
+import TypeBadge from "../../components/ui/TypeBadge";
 import ArtZoom from "./ArtZoom";
 
 interface CardPageProps {
@@ -64,11 +65,11 @@ const CardDetailPage = async ({ params }: CardPageProps) => {
 
         <div className="flex max-w-2xl flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="font-display text-title font-semibold tracking-tight text-foreground">
+            <h1 className="font-display text-title font-bold tracking-tight text-foreground">
               {card.name}
             </h1>
             {card.flavorText != null ? (
-              <p className="max-w-prose font-display text-lead font-light italic text-foreground-muted">
+              <p className="max-w-prose border-l-2 border-border pl-4 text-lead font-light text-foreground-muted">
                 &ldquo;{card.flavorText}&rdquo;
               </p>
             ) : null}
@@ -84,8 +85,14 @@ const CardDetailPage = async ({ params }: CardPageProps) => {
             {card.rarity != null ? <MetaRow label="Rarity">{card.rarity}</MetaRow> : null}
             {card.supertype != null ? (
               <MetaRow label="Type">
-                {[card.supertype, ...card.subtypes].join(" · ")}
-                {card.types.length > 0 ? ` · ${card.types.join(", ")}` : ""}
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span>{[card.supertype, ...card.subtypes].join(" · ")}</span>
+                  {/* Energy types speak in their own color; everything else in
+                      the ledger stays neutral. */}
+                  {card.types.map(type => (
+                    <TypeBadge key={type} type={type} />
+                  ))}
+                </span>
               </MetaRow>
             ) : null}
             {card.hp != null ? (
