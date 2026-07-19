@@ -17,9 +17,9 @@ const Hero: React.FC<HeroProps> = ({ showcase }) => {
     <section className="relative overflow-hidden bg-surface-night">
       <div className="relative mx-auto grid w-full max-w-content gap-12 px-gutter py-16 sm:py-24 lg:grid-cols-2 lg:items-center">
         <div className="flex flex-col gap-6">
-          <h1 className="font-display text-title font-semibold tracking-tight text-foreground-inverse sm:text-display">
+          <h1 className="font-display text-title font-extrabold tracking-tight text-foreground-inverse sm:text-display">
             Find Pokémon cards by{" "}
-            <em className="font-light text-primary-bright">what&apos;s in the art</em>
+            <em className="not-italic text-primary-bright">what&apos;s in the art</em>
           </h1>
 
           <p className="max-w-xl text-lead text-foreground-inverse-muted">

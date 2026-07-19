@@ -165,7 +165,7 @@ const SearchPage = async ({ searchParams }: SearchProps) => {
       <section className="border-b border-border">
         <div className="mx-auto flex w-full max-w-content flex-col gap-6 px-gutter py-10 sm:py-14">
           <div className="flex flex-col gap-3">
-            <h1 className="font-display text-heading font-semibold tracking-tight text-foreground sm:text-title">
+            <h1 className="font-display text-heading font-extrabold tracking-tight text-foreground sm:text-title">
               {heading}
             </h1>
             <p className="max-w-xl text-lead text-foreground-muted">

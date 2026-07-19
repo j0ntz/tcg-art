@@ -64,11 +64,11 @@ const CardDetailPage = async ({ params }: CardPageProps) => {
 
         <div className="flex max-w-2xl flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="font-display text-title font-semibold tracking-tight text-foreground">
+            <h1 className="font-display text-title font-extrabold tracking-tight text-foreground">
               {card.name}
             </h1>
             {card.flavorText != null ? (
-              <p className="max-w-prose font-display text-lead font-light italic text-foreground-muted">
+              <p className="max-w-prose text-lead font-medium text-foreground-muted">
                 &ldquo;{card.flavorText}&rdquo;
               </p>
             ) : null}

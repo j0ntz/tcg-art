@@ -8,8 +8,8 @@ const SiteFooter: React.FC = () => {
       <div className="mx-auto flex w-full max-w-content flex-col gap-6 px-gutter py-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-baseline gap-0.5">
-            <span className="font-display font-semibold tracking-tight text-foreground">TCG</span>
-            <span className="font-display font-light italic text-foreground-subtle">·Art</span>
+            <span className="font-display font-extrabold tracking-tight text-foreground">TCG</span>
+            <span className="font-display font-extrabold tracking-tight text-foreground-subtle">·Art</span>
           </div>
           <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-foreground-subtle">
             <Link href="/search" className="transition-colors hover:text-foreground">

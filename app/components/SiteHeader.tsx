@@ -15,10 +15,10 @@ const SiteHeader: React.FC = async () => {
     <header className="sticky top-0 z-20 border-b border-border bg-surface/80 backdrop-blur">
       <div className="mx-auto flex w-full max-w-content items-center justify-between px-gutter py-3">
         <Link href="/" className="flex items-baseline gap-0.5">
-          <span className="font-display text-xl font-semibold tracking-tight text-foreground">
+          <span className="font-display text-xl font-extrabold tracking-tight text-foreground">
             TCG
           </span>
-          <span className="font-display text-xl font-light italic text-foreground-subtle">
+          <span className="font-display text-xl font-extrabold tracking-tight text-foreground-subtle">
             ·Art
           </span>
         </Link>

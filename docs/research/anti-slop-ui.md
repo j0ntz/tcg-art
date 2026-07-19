@@ -5,6 +5,13 @@ frontend-aesthetics guidance, agent design systems (ui-craft, superdesign), and 
 references. Source of truth for the site-overhaul task and future UI work. Summary here; the
 distilled hard rules are the contract.
 
+## Product-level addition (tcg-art)
+
+- Serif/editorial flavor is REJECTED for this product (operator decision,
+  task #53 brief): no serif families anywhere, no italic-serif emphasis, no
+  literary-magazine tone. Display type is a characterful sans/grotesque from
+  the allowed families.
+
 ## Distilled hard rules
 
 - Max 2 typefaces: 1 display + 1 body. Banned: Inter, Roboto, Open Sans, Lato, Arial, system

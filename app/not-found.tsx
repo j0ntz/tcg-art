@@ -6,7 +6,7 @@ import { buttonVariants } from "./components/ui/Button";
 const NotFound: React.FC = () => (
   <main className="mx-auto flex w-full max-w-content flex-1 flex-col items-start justify-center gap-6 px-gutter py-24">
     <p className="tnum text-sm text-foreground-subtle">404</p>
-    <h1 className="font-display text-title font-semibold tracking-tight text-foreground">
+    <h1 className="font-display text-title font-extrabold tracking-tight text-foreground">
       This card isn&apos;t in the binder.
     </h1>
     <p className="max-w-md text-lead text-foreground-muted">

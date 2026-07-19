@@ -9,11 +9,16 @@
    consume the SEMANTIC role tokens (and the shared CVA primitives in
    app/components/ui/*). Change a role here and every page follows.
 
+   The skin is Direction C: playful pop / sticker-bold. Chunky display type,
+   flat bright surfaces, confident borders, hard sticker shadows; playful-adult,
+   never childish. Serif/editorial flavor is REJECTED for this product.
+
    The palette is ONE dominant + ONE accent:
-   - Dominant: "ink", a warm near-neutral ramp (hue ~50-80, whisper of chroma)
-     that carries every surface, text tier, and the default dark action color.
-   - Accent: "ember", a flame orange drawn from the Charizard showcase art that
-     anchors the landing hero. Budgeted to <= 5 placements site-wide:
+   - Dominant: "ink", a warm near-neutral ramp (whisper of chroma) with a
+     punchy near-black deep end that carries every surface, text tier, sticker
+     outline, and the default dark action color.
+   - Accent: "ember", a hot tangerine drawn from the Charizard showcase art
+     that anchors the landing hero. Budgeted to <= 5 placements site-wide:
      1) the hero headline emphasis, 2) the primary CTA fill, 3) the focus ring,
      4) the pricing "Most popular" marker, 5) inline text links on hover.
      Do NOT spend it anywhere else without removing a placement first.
@@ -24,7 +29,8 @@
      by what they DO. Pages consume THESE.
 
    Radius is a deliberate SCALE, not one value everywhere:
-     field (6px, inputs/chips/card images) / card (12px, panels) / pill (full).
+     field (8px, inputs/chips/card images) / card (16px, panels) / pill (full).
+     Chunkier than the old editorial skin on purpose: sticker geometry.
 
    `@theme static` forces every token to emit as a CSS variable even when only
    the semantic tier references it, so the primitive -> semantic var() chain
@@ -32,39 +38,43 @@
    ========================================================================== */
 
 @theme inline {
-  /* Body: IBM Plex Sans. Display: Fraunces. Two families total, both loaded
+  /* Body: IBM Plex Sans. Display: Bricolage Grotesque (chunky characterful
+     grotesque; NO serifs in this product). Two families total, both loaded
      self-hosted via next/font in app/layout.tsx. */
   --font-sans: var(--font-plex-sans);
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-bricolage);
 }
 
 @theme static {
   /* ---- Tier 1: primitive palette ramps ---------------------------------- */
 
-  /* ink: warm near-neutral ramp for text, surfaces, and borders */
-  --color-ink-50: oklch(97.6% 0.004 84);
-  --color-ink-100: oklch(95.6% 0.005 84);
-  --color-ink-200: oklch(91.2% 0.006 80);
-  --color-ink-300: oklch(86.2% 0.007 78);
-  --color-ink-400: oklch(70.4% 0.01 72);
-  --color-ink-500: oklch(55.2% 0.012 66);
-  --color-ink-600: oklch(44.4% 0.013 60);
-  --color-ink-700: oklch(37% 0.012 56);
-  --color-ink-800: oklch(27.6% 0.01 52);
-  --color-ink-900: oklch(21.4% 0.009 48);
-  --color-ink-950: oklch(15.2% 0.008 48);
+  /* ink: warm near-neutral ramp for text, surfaces, and borders. The deep end
+     is darker than the old editorial skin: sticker outlines want near-black
+     punch, and the crisper mid steps keep flat surfaces from going mushy. */
+  --color-ink-50: oklch(97.8% 0.005 85);
+  --color-ink-100: oklch(95.8% 0.006 85);
+  --color-ink-200: oklch(90.6% 0.008 82);
+  --color-ink-300: oklch(83.6% 0.01 80);
+  --color-ink-400: oklch(66% 0.012 75);
+  --color-ink-500: oklch(52% 0.014 70);
+  --color-ink-600: oklch(42% 0.015 65);
+  --color-ink-700: oklch(34% 0.014 60);
+  --color-ink-800: oklch(25% 0.012 55);
+  --color-ink-900: oklch(18.5% 0.01 50);
+  --color-ink-950: oklch(12.5% 0.008 50);
 
-  /* ember: the accent ramp, sampled from flame-orange card art */
-  --color-ember-50: oklch(96.4% 0.02 62);
-  --color-ember-100: oklch(92.8% 0.046 58);
-  --color-ember-200: oklch(86.8% 0.082 54);
-  --color-ember-300: oklch(79.6% 0.122 50);
-  --color-ember-400: oklch(72.6% 0.158 45);
-  --color-ember-500: oklch(66% 0.187 41);
-  --color-ember-600: oklch(58.2% 0.191 37);
-  --color-ember-700: oklch(50% 0.168 35);
-  --color-ember-800: oklch(42% 0.138 33);
-  --color-ember-900: oklch(35.8% 0.108 33);
+  /* ember: the accent ramp, sampled from flame-orange card art and pushed
+     hotter/brighter for the pop skin (higher chroma at the working steps) */
+  --color-ember-50: oklch(96.8% 0.026 60);
+  --color-ember-100: oklch(93% 0.06 56);
+  --color-ember-200: oklch(87% 0.1 52);
+  --color-ember-300: oklch(80% 0.145 48);
+  --color-ember-400: oklch(73.5% 0.185 44);
+  --color-ember-500: oklch(67.5% 0.215 40);
+  --color-ember-600: oklch(59.5% 0.21 36);
+  --color-ember-700: oklch(51% 0.18 34);
+  --color-ember-800: oklch(43% 0.15 33);
+  --color-ember-900: oklch(36% 0.115 33);
 
   /* state ramps (only the steps the UI uses) */
   --color-danger-500: oklch(63.7% 0.237 25.331);
@@ -72,15 +82,18 @@
   --color-success-100: oklch(96.2% 0.044 156.743);
 
   /* ---- Tier 1: primitive radius scale (2 values + full) ------------------ */
-  --radius-field: 0.375rem; /* inputs, chips, card images */
-  --radius-control: 0.375rem; /* logo mark, small controls */
-  --radius-card: 0.75rem; /* cards, panels */
+  --radius-field: 0.5rem; /* inputs, chips, card images */
+  --radius-control: 0.5rem; /* logo mark, small controls */
+  --radius-card: 1rem; /* cards, panels */
   --radius-pill: 9999px; /* pill buttons, badges, avatars */
 
-  /* ---- Tier 1: primitive shadow scale (neutral only; never colored) ------ */
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-card-lifted: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-float: 0 20px 25px -5px rgb(0 0 0 / 0.18), 0 8px 10px -6px rgb(0 0 0 / 0.12);
+  /* ---- Tier 1: primitive shadow scale (neutral only; never colored) ------
+     Sticker shadows: hard-edged, zero-blur offsets in neutral black alpha, the
+     drop-shadow of a die-cut sticker sitting on the page. Float keeps a soft
+     tail so the hero fan still reads as depth, not a printing error. */
+  --shadow-card: 0 2px 0 0 rgb(0 0 0 / 0.55);
+  --shadow-card-lifted: 0 5px 0 0 rgb(0 0 0 / 0.55);
+  --shadow-float: 0 10px 0 0 rgb(0 0 0 / 0.35), 0 22px 34px -14px rgb(0 0 0 / 0.3);
 
   /* ---- Tier 1: primitive type scale (ratio >= 1.25 between steps) -------- */
   --text-display: 4rem; /* hero headline (large breakpoint) */
@@ -99,7 +112,7 @@
   /* ---- Tier 2: semantic role tokens (pages consume THESE) ---------------- */
 
   /* surfaces */
-  --color-background: oklch(98.6% 0.003 84); /* warm paper page background */
+  --color-background: oklch(97.6% 0.014 90); /* sunny cream page background */
   --color-surface: #ffffff; /* cards, inputs, raised panels */
   --color-surface-muted: var(--color-ink-50); /* footer, subtle fills */
   --color-surface-hover: var(--color-ink-100); /* hover fill on quiet surfaces */
@@ -117,9 +130,10 @@
   --color-foreground-inverse-muted: var(--color-ink-300);
   --color-foreground-inverse-subtle: var(--color-ink-400);
 
-  /* borders */
-  --color-border: var(--color-ink-200); /* default hairline */
-  --color-border-strong: var(--color-ink-300); /* inputs, outline buttons */
+  /* borders: one step darker than the editorial skin; sticker-bold wants
+     confident edges, not whispers */
+  --color-border: var(--color-ink-300); /* default rule */
+  --color-border-strong: var(--color-ink-400); /* inputs, outline buttons */
   --color-border-inverse: oklch(100% 0 0 / 0.16); /* hairlines on the night stage */
 
   /* accent / primary action (the ember budget lives here) */
@@ -194,7 +208,8 @@ h3 {
 }
 
 @utility animate-page-turn {
-  animation: page-turn 350ms ease-out;
+  /* Snappy pop timing: fast-out, settled quickly, no bounce. */
+  animation: page-turn 280ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* =============================================================================

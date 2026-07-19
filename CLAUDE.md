@@ -34,21 +34,26 @@ Apply to every `.ts`/`.tsx` edit:
 token source of truth; `docs/research/anti-slop-ui.md` lists the banned
 patterns, which are merge gates. The short version every UI edit must honor:
 
-- Two typefaces only: Fraunces (display, `font-display`) + IBM Plex Sans
-  (body). Never add a family; never reintroduce Inter/Roboto/Geist/system
-  stacks.
-- One dominant (warm "ink" neutrals) + one accent ("ember" orange), OKLCH
-  tokens only. The ember accent has a hard budget of 5 placements site-wide
-  (listed in globals.css); do not spend it without removing a placement.
-  Components consume semantic tokens (`surface`, `foreground-*`, `border`,
-  `primary`), never primitives or hex.
+- The skin is playful pop / sticker-bold (Direction C): chunky extrabold
+  display type, flat bright surfaces, confident borders, hard sticker
+  shadows, snappy motion. Playful-adult, never childish. Serif/editorial
+  flavor is REJECTED for this product: no serif family, no italic emphasis.
+- Two typefaces only: Bricolage Grotesque (display, `font-display`, always
+  extrabold) + IBM Plex Sans (body). Never add a family; never reintroduce
+  serifs (Fraunces included) or Inter/Roboto/Geist/system stacks.
+- One dominant (warm "ink" neutrals, punchy near-black deep end) + one accent
+  ("ember" hot tangerine), OKLCH tokens only. The ember accent has a hard
+  budget of 5 placements site-wide (listed in globals.css); do not spend it
+  without removing a placement. Components consume semantic tokens
+  (`surface`, `foreground-*`, `border`, `primary`), never primitives or hex.
 - No gradients, glows, colored shadows, badges/kickers above H1s, icon-grid
   feature cards, emoji-as-icons, cards-in-cards, ALL-CAPS letter-spaced
-  labels, or centered-everything. Layout voice is the left-aligned hairline
-  ledger.
-- Radius scale is exactly field (6px) / card (12px) / pill; shadows neutral.
+  labels, or centered-everything. Layout voice is the left-aligned ledger.
+- Radius scale is exactly field (8px) / card (16px) / pill. Shadows are
+  neutral hard-offset sticker shadows (zero blur on card/lifted).
 - Motion: interaction-tied micro-transitions plus the one scroll-linked hero
-  fan; no load/scroll-in reveals or staggers; respect reduced motion.
+  fan; snappy fast-out easing, no bounce; no load/scroll-in reveals or
+  staggers; respect reduced motion.
 - States first: any new data surface ships loading/empty/error designs and
   keeps the global `:focus-visible` ring (no `outline-none`).
 - Vision loop: screenshot desktop+mobile (plus states), audit against the

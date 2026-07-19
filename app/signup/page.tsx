@@ -27,7 +27,7 @@ const SignupPage: React.FC = async () => {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-gutter py-12 font-sans">
       <header className="flex flex-col gap-2 text-center">
-        <h1 className="font-display text-2xl font-semibold text-foreground">Create your free account</h1>
+        <h1 className="font-display text-2xl font-extrabold text-foreground">Create your free account</h1>
         <p className="text-foreground-subtle">Unlimited art search starts here.</p>
       </header>
 

@@ -24,7 +24,7 @@ const AccountPage: React.FC = async () => {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-gutter py-12 font-sans">
       <header className="flex flex-col gap-2 text-center">
-        <h1 className="font-display text-2xl font-semibold text-foreground">Your account</h1>
+        <h1 className="font-display text-2xl font-extrabold text-foreground">Your account</h1>
         <p className="text-foreground-subtle">You are logged in.</p>
       </header>
 
@@ -41,7 +41,7 @@ const AccountPage: React.FC = async () => {
             className="rounded-pill"
           />
         ) : (
-          <span className="flex h-16 w-16 items-center justify-center rounded-pill bg-surface-inverse font-display text-2xl font-semibold text-primary-foreground">
+          <span className="flex h-16 w-16 items-center justify-center rounded-pill bg-surface-inverse font-display text-2xl font-extrabold text-primary-foreground">
             {displayName.charAt(0).toUpperCase()}
           </span>
         )}
