@@ -29,8 +29,11 @@ const SiteHeader: React.FC = async () => {
           </Link>
           {user != null ? (
             <>
-              <Link href="/binder" className={buttonVariants({ variant: "ghost", size: "nav" })}>
-                Binder
+              <Link href="/saves" className={buttonVariants({ variant: "ghost", size: "nav" })}>
+                Saves
+              </Link>
+              <Link href="/decks" className={buttonVariants({ variant: "ghost", size: "nav" })}>
+                Decks
               </Link>
               <Link href="/account" className={buttonVariants({ variant: "secondary", size: "sm" })}>
                 Account

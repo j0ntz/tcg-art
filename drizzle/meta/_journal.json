@@ -22,6 +22,20 @@
       "when": 1783239541360,
       "tag": "0002_semantic-art-index",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784487997209,
+      "tag": "0003_favorites-decks-facets",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784488005614,
+      "tag": "0004_retire-binder-collection",
+      "breakpoints": true
     }
   ]
 }

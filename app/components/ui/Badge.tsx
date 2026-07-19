@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 // Small status / label chip. Both variants are neutral ink: badges are metadata,
 // not accent placements (the ember budget lives in globals.css). `soft` is the
-// quiet outline chip; `solid` is the filled counter (e.g. binder ×quantity).
+// quiet outline chip; `solid` is the filled counter (e.g. a deck card count).
 export const badgeVariants = cva(
   "inline-flex w-fit items-center rounded-pill text-xs font-medium tnum",
   {

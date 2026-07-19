@@ -1,17 +1,31 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+
+import { searchArt } from "@/lib/art-search";
 import { getSessionUser } from "@/lib/auth";
-import { getOwnedQuantities } from "@/lib/collection";
-import { addCardToCollection } from "@/lib/collection/actions";
-import { searchArt, type ArtSearchResult } from "@/lib/art-search";
+import { getDecks } from "@/lib/decks";
+import {
+  apiOrderByFor,
+  applyFacetFilters,
+  buildFacetGroups,
+  facetCardFromApiCard,
+  facetCardFromIndexEntry,
+  facetLuceneClauses,
+  hasActiveFilters,
+  applyFacetStateToParams,
+  parseFacetState,
+  sortFacetCards,
+  type FacetCard,
+  type FacetState,
+} from "@/lib/facets";
+import { getFavoriteCardIds } from "@/lib/favorites";
 import {
   searchCards,
   searchCardsByArtist,
   SEARCH_PAGE_SIZE,
-  type Card,
 } from "@/lib/pokemon";
-import Badge from "../components/ui/Badge";
+import CardGrid from "../components/cards/CardGrid";
+import FacetControls, { type SortOption } from "../components/cards/FacetControls";
 import Button, { buttonVariants } from "../components/ui/Button";
 
 export const metadata: Metadata = {
@@ -20,17 +34,7 @@ export const metadata: Metadata = {
 };
 
 interface SearchProps {
-  searchParams: Promise<{ q?: string; mode?: string; page?: string; n?: string }>;
-}
-
-// A row the results grid can render regardless of which engine produced it.
-interface GridCard {
-  cardId: string;
-  name: string;
-  setName: string;
-  number: string;
-  artist: string | null;
-  imageSmall: string;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 // Real queries the empty state offers as starting points; each is a known-good
@@ -43,69 +47,95 @@ const EXAMPLE_QUERIES = [
 ];
 
 // Art mode serves a ranked list; "Show more" deepens the slice instead of
-// paginating. Capped so a single request can't ask for the whole index.
+// paginating. The full ranked set (the cap) is always fetched so facet counts
+// describe the query's whole result set, not the visible slice.
 const ART_LIMIT_DEFAULT = 24;
 const ART_LIMIT_MAX = 96;
 
-const fromArtResult = ({ entry }: ArtSearchResult): GridCard => ({
-  cardId: entry.cardId,
-  name: entry.name,
-  setName: entry.setName,
-  number: entry.number,
-  artist: entry.artist,
-  imageSmall: entry.imageSmall,
-});
-
-const fromCard = (card: Card): GridCard => ({
-  cardId: card.id,
-  name: card.name,
-  setName: card.set.name,
-  number: card.number,
-  artist: card.artist,
-  imageSmall: card.images.small,
-});
+// Sorts per engine: relevance is the art ranker's own order; hue needs the
+// vision palette, so it is art-only. Name/artist mode sorts map to the API's
+// orderBy and default to alphabetical.
+const ART_SORTS: SortOption[] = [
+  { key: "relevance", label: "Best match" },
+  { key: "newest", label: "Newest era" },
+  { key: "oldest", label: "Oldest era" },
+  { key: "dex", label: "Pokédex order" },
+  { key: "az", label: "Alphabetical" },
+  { key: "hue", label: "By color" },
+];
+const NAME_SORTS: SortOption[] = [
+  { key: "az", label: "Alphabetical" },
+  { key: "newest", label: "Newest era" },
+  { key: "oldest", label: "Oldest era" },
+  { key: "dex", label: "Pokédex order" },
+];
 
 type SearchMode = "art" | "name" | "artist";
 
-const searchHref = (mode: SearchMode, query: string, page?: number): string => {
+const firstOf = (value: string | string[] | undefined): string | undefined =>
+  Array.isArray(value) ? value[0] : value;
+
+// Rebuilds the current URL with overrides, preserving facet/sort state so
+// mode switches, pagination, and show-more never drop applied filters.
+const searchHref = (
+  mode: SearchMode,
+  query: string,
+  state: FacetState,
+  overrides: Record<string, string | null> = {},
+): string => {
   const params = new URLSearchParams();
   if (mode !== "art") params.set("mode", mode);
   if (query.length > 0) params.set("q", query);
-  if (page != null && page > 1) params.set("page", String(page));
+  applyFacetStateToParams(state, params);
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value == null) params.delete(key);
+    else params.set(key, value);
+  }
   const qs = params.toString();
   return qs.length > 0 ? `/search?${qs}` : "/search";
 };
 
 const SearchPage = async ({ searchParams }: SearchProps) => {
-  const { q, mode: rawMode, page: rawPage, n: rawN } = await searchParams;
-  const query = (q ?? "").trim();
+  const params = await searchParams;
+  const query = (firstOf(params.q) ?? "").trim();
   // Semantic art search is the primary mode; exact-name search stays available
   // as the fallback/filter mode via ?mode=name. ?mode=artist is reached from
   // the artist attribution link on a card detail page.
+  const rawMode = firstOf(params.mode);
   const mode: SearchMode = rawMode === "name" ? "name" : rawMode === "artist" ? "artist" : "art";
-  const page = Math.max(1, Number.parseInt(rawPage ?? "1", 10) || 1);
+  const page = Math.max(1, Number.parseInt(firstOf(params.page) ?? "1", 10) || 1);
   const artLimit = Math.min(
     ART_LIMIT_MAX,
-    Math.max(ART_LIMIT_DEFAULT, Number.parseInt(rawN ?? "0", 10) || 0),
+    Math.max(ART_LIMIT_DEFAULT, Number.parseInt(firstOf(params.n) ?? "0", 10) || 0),
   );
+  const state = parseFacetState(params);
 
-  let cards: GridCard[] = [];
+  let cards: FacetCard[] = [];
+  // Art mode's full ranked set: facet counts are computed over it so they
+  // describe the query's whole result set, not the visible slice.
+  let artRanked: FacetCard[] = [];
   let engineNote: string | null = null;
   let error: string | null = null;
   let totalCount: number | null = null;
+  let artMatchTotal = 0;
   if (query.length > 0) {
     try {
-      if (mode === "name") {
-        const result = await searchCards(query, page);
-        cards = result.cards.map(fromCard);
-        totalCount = result.totalCount;
-      } else if (mode === "artist") {
-        const result = await searchCardsByArtist(query, page);
-        cards = result.cards.map(fromCard);
+      if (mode === "name" || mode === "artist") {
+        // Facet selections filter API-side as Lucene clauses; the chosen sort
+        // maps to the API's orderBy.
+        const options = { clauses: facetLuceneClauses(state), orderBy: apiOrderByFor(state.sort) };
+        const result =
+          mode === "name"
+            ? await searchCards(query, page, options)
+            : await searchCardsByArtist(query, page, options);
+        cards = result.cards.map(facetCardFromApiCard);
         totalCount = result.totalCount;
       } else {
-        const response = await searchArt(query, artLimit);
-        cards = response.results.map(fromArtResult);
+        const response = await searchArt(query, ART_LIMIT_MAX);
+        artRanked = response.results.map(result => facetCardFromIndexEntry(result.entry));
+        const filtered = applyFacetFilters(artRanked, state);
+        artMatchTotal = filtered.length;
+        cards = sortFacetCards(filtered, state.sort ?? "relevance").slice(0, artLimit);
         engineNote =
           response.mode === "haiku"
             ? `semantic match over ${response.indexSize.toLocaleString()} indexed cards`
@@ -117,19 +147,27 @@ const SearchPage = async ({ searchParams }: SearchProps) => {
   }
 
   const hasQuery = query.length > 0;
+  const filtersActive = hasActiveFilters(state);
   const totalPages =
     totalCount != null ? Math.max(1, Math.ceil(totalCount / SEARCH_PAGE_SIZE)) : null;
 
-  // Logged-in searchers get the add-to-binder path on every result, with
-  // already-collected cards marked. Logged-out search is unchanged.
+  // Facet option lists: art mode counts over the query's full ranked set; API
+  // modes derive options from the current page (no local data to count), so
+  // counts are hidden there.
+  const groups = buildFacetGroups(mode === "art" ? artRanked : cards, state);
+
+  // Logged-in searchers get the save heart and deck menu on every result;
+  // logged-out searchers get a sign-in prompt on the heart.
   const user = await getSessionUser();
-  const ownedQuantities =
-    user != null && cards.length > 0 ? await getOwnedQuantities(user.id) : new Map<string, number>();
+  const [savedIds, decks] =
+    user != null
+      ? await Promise.all([getFavoriteCardIds(user.id), getDecks(user.id)])
+      : [new Set<string>(), null];
 
   const modeToggle = (
     <div className="flex items-center gap-2 text-sm" data-testid="search-mode-toggle">
       <Link
-        href={searchHref("art", query)}
+        href={searchHref("art", query, state, { sort: null })}
         aria-current={mode === "art" ? "page" : undefined}
         className={
           mode === "art"
@@ -140,7 +178,7 @@ const SearchPage = async ({ searchParams }: SearchProps) => {
         Describe the art
       </Link>
       <Link
-        href={searchHref("name", query)}
+        href={searchHref("name", query, state, { sort: null })}
         aria-current={mode === "name" ? "page" : undefined}
         className={
           mode === "name"
@@ -159,6 +197,8 @@ const SearchPage = async ({ searchParams }: SearchProps) => {
       : mode === "name"
         ? "Find by card name"
         : "Describe the art";
+
+  const resultCount = mode === "art" ? artMatchTotal : totalCount ?? cards.length;
 
   return (
     <main className="flex flex-1 flex-col">
@@ -231,7 +271,7 @@ const SearchPage = async ({ searchParams }: SearchProps) => {
                 {EXAMPLE_QUERIES.map(example => (
                   <li key={example}>
                     <Link
-                      href={searchHref("art", example)}
+                      href={`/search?q=${encodeURIComponent(example)}`}
                       className="inline-block rounded-pill border border-border px-4 py-1.5 text-sm text-foreground-secondary transition-colors hover:border-border-strong hover:text-foreground"
                     >
                       {example}
@@ -243,120 +283,100 @@ const SearchPage = async ({ searchParams }: SearchProps) => {
           </div>
         ) : null}
 
-        {hasQuery && error == null && cards.length === 0 ? (
-          <div className="flex max-w-xl flex-col gap-3" data-testid="search-empty">
-            <p className="font-medium text-foreground">
-              No cards found for &ldquo;{query}&rdquo;.
-            </p>
-            <p className="text-sm text-foreground-muted">
-              {mode === "art"
-                ? "Try fewer or different words, or switch to exact-name search above."
-                : mode === "artist"
-                  ? "This illustrator has no cards in the database."
-                  : "Check the spelling, or try describing the artwork instead."}
-            </p>
-          </div>
-        ) : null}
-
-        {cards.length > 0 ? (
-          <section>
-            <p className="tnum mb-4 text-sm text-foreground-subtle" data-testid="result-summary">
-              {totalCount != null ? `${totalCount.toLocaleString()} cards` : `${cards.length} cards`}
-              {engineNote != null ? ` · ${engineNote}` : ""}
-              {totalPages != null && totalPages > 1 ? ` · page ${page} of ${totalPages}` : ""}
-            </p>
-            <ul className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {cards.map(card => {
-                const owned = ownedQuantities.get(card.cardId);
-                return (
-                  <li key={card.cardId} className="flex flex-col" data-testid={`art-result-${card.cardId}`}>
-                    <Link href={`/card/${card.cardId}`} className="group block">
-                      <Image
-                        src={card.imageSmall}
-                        alt={`${card.name} card art`}
-                        width={245}
-                        height={342}
-                        className="h-auto w-full rounded-field shadow-card transition-transform motion-safe:group-hover:-translate-y-1"
-                      />
-                      <div className="mt-2">
-                        <p className="truncate text-sm font-medium text-foreground">{card.name}</p>
-                        <p className="truncate text-xs text-foreground-subtle">
-                          {card.setName} · {card.number}
-                        </p>
-                        {card.artist != null ? (
-                          <p className="truncate text-xs text-foreground-faint">{card.artist}</p>
-                        ) : null}
-                      </div>
-                    </Link>
-                    {user != null ? (
-                      <div className="mt-2 flex items-center gap-2">
-                        <form action={addCardToCollection} className="flex-1">
-                          <input type="hidden" name="cardId" value={card.cardId} />
-                          <Button
-                            type="submit"
-                            variant="secondary"
-                            size="sm"
-                            className="w-full whitespace-nowrap px-2"
-                            data-testid={`add-${card.cardId}`}
-                          >
-                            {owned != null ? "+ Add another" : "+ Add to binder"}
-                          </Button>
-                        </form>
-                        {owned != null ? (
-                          <Badge variant="solid" size="sm" data-testid={`owned-${card.cardId}`}>
-                            ×{owned}
-                          </Badge>
-                        ) : null}
-                      </div>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
-
-            {mode === "art" && cards.length >= artLimit && artLimit < ART_LIMIT_MAX ? (
-              <div className="mt-8 flex justify-center">
-                <Link
-                  href={`/search?q=${encodeURIComponent(query)}&n=${Math.min(ART_LIMIT_MAX, artLimit * 2)}`}
-                  className={buttonVariants({ variant: "secondary", size: "md" })}
-                  data-testid="show-more"
-                >
-                  Show more matches
-                </Link>
-              </div>
+        {hasQuery && error == null ? (
+          <section className="flex flex-col gap-4">
+            {engineNote != null ? (
+              <p className="tnum text-sm text-foreground-subtle" data-testid="result-summary">
+                {engineNote}
+                {totalPages != null && totalPages > 1 ? ` · page ${page} of ${totalPages}` : ""}
+              </p>
+            ) : totalPages != null && totalPages > 1 ? (
+              <p className="tnum text-sm text-foreground-subtle" data-testid="result-summary">
+                page {page} of {totalPages}
+              </p>
             ) : null}
 
-            {totalPages != null && totalPages > 1 ? (
-              <nav
-                className="mt-8 flex items-center justify-between"
-                aria-label="Search result pages"
-                data-testid="pagination"
-              >
-                {page > 1 ? (
-                  <Link
-                    href={searchHref(mode, query, page - 1)}
-                    className={buttonVariants({ variant: "secondary", size: "sm" })}
-                  >
-                    ← Previous
-                  </Link>
-                ) : (
-                  <span />
-                )}
-                <p className="tnum text-sm text-foreground-subtle">
-                  Page {page} of {totalPages}
-                </p>
-                {page < totalPages ? (
-                  <Link
-                    href={searchHref(mode, query, page + 1)}
-                    className={buttonVariants({ variant: "secondary", size: "sm" })}
-                  >
-                    Next →
-                  </Link>
-                ) : (
-                  <span />
-                )}
-              </nav>
-            ) : null}
+            <FacetControls
+              groups={groups}
+              sortOptions={mode === "art" ? ART_SORTS : NAME_SORTS}
+              appliedSort={state.sort}
+              defaultSort={mode === "art" ? "relevance" : "az"}
+              resultCount={resultCount}
+              showCounts={mode === "art"}
+            >
+              {cards.length === 0 ? (
+                <div className="flex max-w-xl flex-col gap-3" data-testid="search-empty">
+                  <p className="font-medium text-foreground">
+                    No cards found for &ldquo;{query}&rdquo;
+                    {filtersActive ? " with these filters" : ""}.
+                  </p>
+                  <p className="text-sm text-foreground-muted">
+                    {filtersActive
+                      ? "Remove a filter above, or clear all to see every match."
+                      : mode === "art"
+                        ? "Try fewer or different words, or switch to exact-name search above."
+                        : mode === "artist"
+                          ? "This illustrator has no cards in the database."
+                          : "Check the spelling, or try describing the artwork instead."}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <CardGrid
+                    cards={cards}
+                    signedIn={user != null}
+                    savedIds={savedIds}
+                    decks={decks ?? []}
+                  />
+
+                  {mode === "art" && artMatchTotal > artLimit ? (
+                    <div className="mt-8 flex justify-center">
+                      <Link
+                        href={searchHref("art", query, state, {
+                          n: String(Math.min(ART_LIMIT_MAX, artLimit * 2)),
+                        })}
+                        className={buttonVariants({ variant: "secondary", size: "md" })}
+                        data-testid="show-more"
+                      >
+                        Show more matches
+                      </Link>
+                    </div>
+                  ) : null}
+
+                  {totalPages != null && totalPages > 1 ? (
+                    <nav
+                      className="mt-8 flex items-center justify-between"
+                      aria-label="Search result pages"
+                      data-testid="pagination"
+                    >
+                      {page > 1 ? (
+                        <Link
+                          href={searchHref(mode, query, state, { page: String(page - 1) })}
+                          className={buttonVariants({ variant: "secondary", size: "sm" })}
+                        >
+                          ← Previous
+                        </Link>
+                      ) : (
+                        <span />
+                      )}
+                      <p className="tnum text-sm text-foreground-subtle">
+                        Page {page} of {totalPages}
+                      </p>
+                      {page < totalPages ? (
+                        <Link
+                          href={searchHref(mode, query, state, { page: String(page + 1) })}
+                          className={buttonVariants({ variant: "secondary", size: "sm" })}
+                        >
+                          Next →
+                        </Link>
+                      ) : (
+                        <span />
+                      )}
+                    </nav>
+                  ) : null}
+                </>
+              )}
+            </FacetControls>
           </section>
         ) : null}
       </div>
