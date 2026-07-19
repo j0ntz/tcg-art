@@ -48,7 +48,7 @@ const NightGallery: React.FC<NightGalleryProps> = ({ entries }) => (
             </Link>
             <figcaption className="mt-4 w-fit max-w-full rounded-field bg-surface px-4 py-2.5 text-left shadow-card">
               <p className="text-sm text-foreground">
-                <span className="font-display font-medium italic">{entry.card.name}</span>
+                <span className="font-display font-semibold">{entry.card.name}</span>
                 <span className="text-foreground-subtle">, {entry.card.set.name}</span>
               </p>
               <p className="mt-0.5 text-xs text-foreground-subtle">

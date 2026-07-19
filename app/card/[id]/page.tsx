@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getOwnedQuantities } from "@/lib/collection";
 import { addCardToCollection } from "@/lib/collection/actions";
+import { artTint } from "@/lib/art-tint";
 import { getCardById } from "@/lib/pokemon";
 import Badge from "../../components/ui/Badge";
 import Button from "../../components/ui/Button";
@@ -41,12 +42,14 @@ const MetaRow: React.FC<{ label: string; children: React.ReactNode }> = ({ label
 
 // Card detail: the art as the biggest thing on the page (with zoom), the full
 // metadata as a hairline ledger, and the artist as a first-class link into an
-// artist-filtered search.
+// artist-filtered search. The mat behind the art wears the card's own tint
+// (the art-tint channel, lib/art-tint.ts): the artwork colors its page.
 const CardDetailPage = async ({ params }: CardPageProps) => {
   const { id } = await params;
   const card = await getCardById(id);
   if (card == null) notFound();
 
+  const tint = artTint([], card.types);
   const user = await getSessionUser();
   const owned = user != null ? (await getOwnedQuantities(user.id)).get(card.id) : undefined;
 
@@ -60,15 +63,20 @@ const CardDetailPage = async ({ params }: CardPageProps) => {
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-[minmax(0,26rem)_1fr] lg:items-start">
-        <ArtZoom name={card.name} imageLarge={card.images.large} />
+        <div
+          className="rounded-panel bg-surface-muted p-4 sm:p-6"
+          style={tint != null ? { backgroundColor: tint.wash } : undefined}
+        >
+          <ArtZoom name={card.name} imageLarge={card.images.large} />
+        </div>
 
         <div className="flex max-w-2xl flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="font-display text-title font-semibold tracking-tight text-foreground">
+            <h1 className="font-display text-title font-bold tracking-tight text-foreground">
               {card.name}
             </h1>
             {card.flavorText != null ? (
-              <p className="max-w-prose font-display text-lead font-light italic text-foreground-muted">
+              <p className="max-w-prose font-display text-lead font-light text-foreground-muted">
                 &ldquo;{card.flavorText}&rdquo;
               </p>
             ) : null}

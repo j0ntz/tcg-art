@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 // A section's <h2> + supporting paragraph. Left-aligned editorial by default
 // (the site's one layout voice); `tone` switches between dark-on-light and
 // light-on-dark (sections on the night surface). Titles wear the display face.
-const titleVariants = cva("font-display text-heading font-semibold tracking-tight", {
+const titleVariants = cva("font-display text-heading font-bold tracking-tight", {
   variants: {
     tone: {
       default: "text-foreground",

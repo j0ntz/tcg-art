@@ -9,14 +9,23 @@
    consume the SEMANTIC role tokens (and the shared CVA primitives in
    app/components/ui/*). Change a role here and every page follows.
 
-   The palette is ONE dominant + ONE accent:
-   - Dominant: "ink", a warm near-neutral ramp (hue ~50-80, whisper of chroma)
+   Flavor: VIBRANT GALLERY / COLLECTOR-POP. Neutral near-white gallery chrome;
+   the card art supplies the color. Serif/editorial flavor is rejected for this
+   product (product-level rule; see docs/design-system.md).
+
+   The chrome palette is ONE dominant + ONE accent:
+   - Dominant: "ink", a cool achromatic-leaning neutral ramp (gallery gray)
      that carries every surface, text tier, and the default dark action color.
-   - Accent: "ember", a flame orange drawn from the Charizard showcase art that
-     anchors the landing hero. Budgeted to <= 5 placements site-wide:
+   - Accent: "ember", a saturated pop orange drawn from flame card art.
+     Budgeted to <= 5 placements site-wide:
      1) the hero headline emphasis, 2) the primary CTA fill, 3) the focus ring,
      4) the pricing "Most popular" marker, 5) inline text links on hover.
      Do NOT spend it anywhere else without removing a placement first.
+
+   Separate from the chrome budget is the ART-TINT channel (lib/art-tint.ts):
+   per-card tints derived from the card's own palette/type data, allowed ONLY
+   as a low-chroma wash behind detail art and the hover ring on result cards.
+   That channel is the art speaking, not the brand; it never colors chrome.
 
    Tier 1 — PRIMITIVES (ramps, spacing, radius, shadow, type scale). Named by
      what they ARE (ember-600, ink-900). Pages should NOT consume these.
@@ -24,7 +33,7 @@
      by what they DO. Pages consume THESE.
 
    Radius is a deliberate SCALE, not one value everywhere:
-     field (6px, inputs/chips/card images) / card (12px, panels) / pill (full).
+     field (8px, inputs/chips/card images) / card (16px, panels) / pill (full).
 
    `@theme static` forces every token to emit as a CSS variable even when only
    the semantic tier references it, so the primitive -> semantic var() chain
@@ -32,39 +41,39 @@
    ========================================================================== */
 
 @theme inline {
-  /* Body: IBM Plex Sans. Display: Fraunces. Two families total, both loaded
-     self-hosted via next/font in app/layout.tsx. */
+  /* Body: IBM Plex Sans. Display: Bricolage Grotesque. Two families total,
+     both self-hosted via next/font in app/layout.tsx. No serifs anywhere. */
   --font-sans: var(--font-plex-sans);
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-bricolage);
 }
 
 @theme static {
   /* ---- Tier 1: primitive palette ramps ---------------------------------- */
 
-  /* ink: warm near-neutral ramp for text, surfaces, and borders */
-  --color-ink-50: oklch(97.6% 0.004 84);
-  --color-ink-100: oklch(95.6% 0.005 84);
-  --color-ink-200: oklch(91.2% 0.006 80);
-  --color-ink-300: oklch(86.2% 0.007 78);
-  --color-ink-400: oklch(70.4% 0.01 72);
-  --color-ink-500: oklch(55.2% 0.012 66);
-  --color-ink-600: oklch(44.4% 0.013 60);
-  --color-ink-700: oklch(37% 0.012 56);
-  --color-ink-800: oklch(27.6% 0.01 52);
-  --color-ink-900: oklch(21.4% 0.009 48);
-  --color-ink-950: oklch(15.2% 0.008 48);
+  /* ink: cool neutral gallery ramp for text, surfaces, and borders */
+  --color-ink-50: oklch(97.8% 0.002 260);
+  --color-ink-100: oklch(95.8% 0.003 260);
+  --color-ink-200: oklch(91.5% 0.003 258);
+  --color-ink-300: oklch(86.5% 0.004 256);
+  --color-ink-400: oklch(70.5% 0.005 254);
+  --color-ink-500: oklch(55% 0.006 252);
+  --color-ink-600: oklch(44.5% 0.006 252);
+  --color-ink-700: oklch(37% 0.006 252);
+  --color-ink-800: oklch(27.5% 0.005 252);
+  --color-ink-900: oklch(20.5% 0.005 252);
+  --color-ink-950: oklch(14.5% 0.004 252);
 
-  /* ember: the accent ramp, sampled from flame-orange card art */
-  --color-ember-50: oklch(96.4% 0.02 62);
-  --color-ember-100: oklch(92.8% 0.046 58);
-  --color-ember-200: oklch(86.8% 0.082 54);
-  --color-ember-300: oklch(79.6% 0.122 50);
-  --color-ember-400: oklch(72.6% 0.158 45);
-  --color-ember-500: oklch(66% 0.187 41);
-  --color-ember-600: oklch(58.2% 0.191 37);
-  --color-ember-700: oklch(50% 0.168 35);
-  --color-ember-800: oklch(42% 0.138 33);
-  --color-ember-900: oklch(35.8% 0.108 33);
+  /* ember: the accent ramp, a saturated pop orange sampled from flame art */
+  --color-ember-50: oklch(96.8% 0.024 55);
+  --color-ember-100: oklch(93% 0.055 52);
+  --color-ember-200: oklch(87% 0.095 48);
+  --color-ember-300: oklch(80% 0.14 45);
+  --color-ember-400: oklch(73% 0.175 42);
+  --color-ember-500: oklch(67% 0.205 39);
+  --color-ember-600: oklch(59.5% 0.21 36);
+  --color-ember-700: oklch(51% 0.18 34);
+  --color-ember-800: oklch(42.5% 0.145 33);
+  --color-ember-900: oklch(36% 0.11 33);
 
   /* state ramps (only the steps the UI uses) */
   --color-danger-500: oklch(63.7% 0.237 25.331);
@@ -72,23 +81,23 @@
   --color-success-100: oklch(96.2% 0.044 156.743);
 
   /* ---- Tier 1: primitive radius scale (2 values + full) ------------------ */
-  --radius-field: 0.375rem; /* inputs, chips, card images */
-  --radius-control: 0.375rem; /* logo mark, small controls */
-  --radius-card: 0.75rem; /* cards, panels */
+  --radius-field: 0.5rem; /* inputs, chips, card images */
+  --radius-control: 0.5rem; /* logo mark, small controls */
+  --radius-card: 1rem; /* cards, panels */
   --radius-pill: 9999px; /* pill buttons, badges, avatars */
 
   /* ---- Tier 1: primitive shadow scale (neutral only; never colored) ------ */
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-card-lifted: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-float: 0 20px 25px -5px rgb(0 0 0 / 0.18), 0 8px 10px -6px rgb(0 0 0 / 0.12);
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.08), 0 2px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-card-lifted: 0 6px 12px -2px rgb(0 0 0 / 0.14), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-float: 0 24px 32px -8px rgb(0 0 0 / 0.22), 0 8px 12px -6px rgb(0 0 0 / 0.14);
 
   /* ---- Tier 1: primitive type scale (ratio >= 1.25 between steps) -------- */
   --text-display: 4rem; /* hero headline (large breakpoint) */
-  --text-display--line-height: 1.05;
+  --text-display--line-height: 1.02;
   --text-title: 2.75rem; /* hero headline (base breakpoint), page titles */
-  --text-title--line-height: 1.08;
+  --text-title--line-height: 1.05;
   --text-heading: 2rem; /* section <h2> */
-  --text-heading--line-height: 1.15;
+  --text-heading--line-height: 1.12;
   --text-lead: 1.125rem; /* lead paragraph under a headline */
   --text-lead--line-height: calc(1.75 / 1.125);
 
@@ -99,13 +108,13 @@
   /* ---- Tier 2: semantic role tokens (pages consume THESE) ---------------- */
 
   /* surfaces */
-  --color-background: oklch(98.6% 0.003 84); /* warm paper page background */
+  --color-background: oklch(99.2% 0 0); /* near-white gallery wall */
   --color-surface: #ffffff; /* cards, inputs, raised panels */
   --color-surface-muted: var(--color-ink-50); /* footer, subtle fills */
   --color-surface-hover: var(--color-ink-100); /* hover fill on quiet surfaces */
   --color-surface-inverse: var(--color-ink-900); /* dark solid buttons */
   --color-surface-inverse-hover: var(--color-ink-700);
-  --color-surface-night: var(--color-ink-950); /* the midnight hero stage */
+  --color-surface-night: var(--color-ink-950); /* darkened-room stage: zoom lightbox, night gallery */
 
   /* foreground text, ordered most -> least prominent */
   --color-foreground: var(--color-ink-900); /* headings, primary text */
@@ -113,7 +122,7 @@
   --color-foreground-muted: var(--color-ink-600); /* body copy */
   --color-foreground-subtle: var(--color-ink-500); /* captions, metadata */
   --color-foreground-faint: var(--color-ink-400); /* legal fine print */
-  --color-foreground-inverse: oklch(98% 0.004 84); /* text on dark surfaces */
+  --color-foreground-inverse: oklch(98% 0.002 260); /* text on dark surfaces */
   --color-foreground-inverse-muted: var(--color-ink-300);
   --color-foreground-inverse-subtle: var(--color-ink-400);
 

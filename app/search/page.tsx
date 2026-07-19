@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { getSessionUser } from "@/lib/auth";
 import { getOwnedQuantities } from "@/lib/collection";
 import { addCardToCollection } from "@/lib/collection/actions";
+import { artTint } from "@/lib/art-tint";
 import { searchArt, type ArtSearchResult } from "@/lib/art-search";
 import {
   searchCards,
@@ -31,6 +32,8 @@ interface GridCard {
   number: string;
   artist: string | null;
   imageSmall: string;
+  // Art-tint hover ring color (lib/art-tint.ts); null keeps the neutral ring.
+  tintRing: string | null;
 }
 
 // Real queries the empty state offers as starting points; each is a known-good
@@ -54,6 +57,7 @@ const fromArtResult = ({ entry }: ArtSearchResult): GridCard => ({
   number: entry.number,
   artist: entry.artist,
   imageSmall: entry.imageSmall,
+  tintRing: artTint(entry.palette, [])?.ring ?? null,
 });
 
 const fromCard = (card: Card): GridCard => ({
@@ -63,6 +67,8 @@ const fromCard = (card: Card): GridCard => ({
   number: card.number,
   artist: card.artist,
   imageSmall: card.images.small,
+  // List-mode API cards carry no palette/type data; they keep the neutral ring.
+  tintRing: null,
 });
 
 type SearchMode = "art" | "name" | "artist";
@@ -165,7 +171,7 @@ const SearchPage = async ({ searchParams }: SearchProps) => {
       <section className="border-b border-border">
         <div className="mx-auto flex w-full max-w-content flex-col gap-6 px-gutter py-10 sm:py-14">
           <div className="flex flex-col gap-3">
-            <h1 className="font-display text-heading font-semibold tracking-tight text-foreground sm:text-title">
+            <h1 className="font-display text-heading font-bold tracking-tight text-foreground sm:text-title">
               {heading}
             </h1>
             <p className="max-w-xl text-lead text-foreground-muted">
@@ -269,14 +275,25 @@ const SearchPage = async ({ searchParams }: SearchProps) => {
               {cards.map(card => {
                 const owned = ownedQuantities.get(card.cardId);
                 return (
-                  <li key={card.cardId} className="flex flex-col" data-testid={`art-result-${card.cardId}`}>
+                  <li
+                    key={card.cardId}
+                    className="flex flex-col"
+                    data-testid={`art-result-${card.cardId}`}
+                    // Each result hovers in its own art-derived ring color; the
+                    // fallback is the neutral strong border.
+                    style={
+                      {
+                        "--art-ring": card.tintRing ?? "var(--color-border-strong)",
+                      } as React.CSSProperties
+                    }
+                  >
                     <Link href={`/card/${card.cardId}`} className="group block">
                       <Image
                         src={card.imageSmall}
                         alt={`${card.name} card art`}
                         width={245}
                         height={342}
-                        className="h-auto w-full rounded-field shadow-card transition-transform motion-safe:group-hover:-translate-y-1"
+                        className="h-auto w-full rounded-field shadow-card transition group-hover:ring-2 group-hover:ring-(--art-ring) motion-safe:group-hover:-translate-y-1"
                       />
                       <div className="mt-2">
                         <p className="truncate text-sm font-medium text-foreground">{card.name}</p>

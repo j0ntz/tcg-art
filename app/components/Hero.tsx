@@ -8,21 +8,22 @@ interface HeroProps {
   showcase: Card[];
 }
 
-// Midnight cinema hero: a flat near-black stage where the card art is the only
-// color. No glows, no gradients, no badge above the H1; the ember accent is
-// spent on the headline emphasis and the CTA (two of the five budgeted
-// placements, see globals.css).
+// Gallery-wall hero: a flat near-white stage where the fanned card art is the
+// only color on the page. No glows, no gradients, no badge above the H1; the
+// ember accent is spent on the headline emphasis and the CTA (two of the five
+// budgeted placements, see globals.css). Emphasis comes from the display
+// face's weight extremes, never from italics or a serif.
 const Hero: React.FC<HeroProps> = ({ showcase }) => {
   return (
-    <section className="relative overflow-hidden bg-surface-night">
+    <section className="relative overflow-hidden border-b border-border bg-background">
       <div className="relative mx-auto grid w-full max-w-content gap-12 px-gutter py-16 sm:py-24 lg:grid-cols-2 lg:items-center">
         <div className="flex flex-col gap-6">
-          <h1 className="font-display text-title font-semibold tracking-tight text-foreground-inverse sm:text-display">
+          <h1 className="font-display text-title font-bold tracking-tight text-foreground sm:text-display">
             Find Pokémon cards by{" "}
-            <em className="font-light text-primary-bright">what&apos;s in the art</em>
+            <em className="font-extrabold not-italic text-primary">what&apos;s in the art</em>
           </h1>
 
-          <p className="max-w-xl text-lead text-foreground-inverse-muted">
+          <p className="max-w-xl text-lead text-foreground-muted">
             Describe a scene, a mood, or a color and search across 20,000+ Pokémon TCG
             illustrations. Remember the art, not the name? Start there.
           </p>
@@ -33,14 +34,14 @@ const Hero: React.FC<HeroProps> = ({ showcase }) => {
               name="q"
               placeholder="Try: surfing pikachu, on the beach, mewtwo…"
               aria-label="Search Pokémon cards"
-              className="flex-1 rounded-pill border border-border-inverse bg-white/10 px-5 py-3 text-foreground-inverse placeholder:text-foreground-inverse-subtle focus:border-border-inverse"
+              className="flex-1 rounded-pill border border-border-strong bg-surface px-5 py-3 text-foreground placeholder:text-foreground-subtle focus:border-foreground-subtle"
             />
             <Button type="submit" variant="accent" size="lg">
               Search Free
             </Button>
           </form>
 
-          <p className="text-sm text-foreground-inverse-subtle">No credit card required.</p>
+          <p className="text-sm text-foreground-subtle">No credit card required.</p>
         </div>
 
         {showcase.length > 0 ? (
@@ -58,7 +59,7 @@ const Hero: React.FC<HeroProps> = ({ showcase }) => {
                 key={card.id}
                 // hero-fan-card adds the scroll-linked fan opening (globals.css);
                 // it animates `translate`, which composes with this transform.
-                className="hero-fan-card absolute top-1/2 left-1/2 w-28 -translate-y-1/2 rounded-field shadow-float ring-1 ring-white/15 sm:w-32 lg:w-44"
+                className="hero-fan-card absolute top-1/2 left-1/2 w-28 -translate-y-1/2 rounded-field shadow-float ring-1 ring-black/10 sm:w-32 lg:w-44"
                 style={
                   {
                     "--i": index - 2,
