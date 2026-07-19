@@ -14,11 +14,13 @@ const SiteHeader: React.FC = async () => {
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-surface/80 backdrop-blur">
       <div className="mx-auto flex w-full max-w-content items-center justify-between px-gutter py-3">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-control bg-brand-gradient text-sm font-bold text-primary-foreground">
-            T
+        <Link href="/" className="flex items-baseline gap-0.5">
+          <span className="font-display text-xl font-semibold tracking-tight text-foreground">
+            TCG
           </span>
-          <span className="text-lg font-semibold tracking-tight text-foreground">TCG-Art</span>
+          <span className="font-display text-xl font-light italic text-foreground-subtle">
+            ·Art
+          </span>
         </Link>
 
         <nav className="flex items-center gap-2 sm:gap-4">

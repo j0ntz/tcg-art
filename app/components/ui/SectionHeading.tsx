@@ -1,20 +1,10 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-// A section's <h2> + supporting paragraph. `align` switches between the centered
-// marketing-section style and the left-aligned in-column style; `tone` switches
-// between dark-on-light and light-on-dark (the brand-colored binder section).
-const wrapperVariants = cva("flex flex-col", {
-  variants: {
-    align: {
-      center: "gap-3 text-center",
-      left: "gap-4",
-    },
-  },
-  defaultVariants: { align: "center" },
-});
-
-const titleVariants = cva("text-heading font-bold tracking-tight", {
+// A section's <h2> + supporting paragraph. Left-aligned editorial by default
+// (the site's one layout voice); `tone` switches between dark-on-light and
+// light-on-dark (sections on the night surface). Titles wear the display face.
+const titleVariants = cva("font-display text-heading font-semibold tracking-tight", {
   variants: {
     tone: {
       default: "text-foreground",
@@ -24,23 +14,17 @@ const titleVariants = cva("text-heading font-bold tracking-tight", {
   defaultVariants: { tone: "default" },
 });
 
-const subtitleVariants = cva("", {
+const subtitleVariants = cva("max-w-xl text-lead", {
   variants: {
-    align: {
-      center: "mx-auto max-w-2xl",
-      left: "max-w-lg",
-    },
     tone: {
       default: "text-foreground-muted",
-      inverse: "text-primary-foreground-muted",
+      inverse: "text-foreground-inverse-muted",
     },
   },
-  defaultVariants: { align: "center", tone: "default" },
+  defaultVariants: { tone: "default" },
 });
 
-interface SectionHeadingProps
-  extends VariantProps<typeof wrapperVariants>,
-    VariantProps<typeof titleVariants> {
+interface SectionHeadingProps extends VariantProps<typeof titleVariants> {
   title: string;
   subtitle: string;
   className?: string;
@@ -49,13 +33,12 @@ interface SectionHeadingProps
 const SectionHeading: React.FC<SectionHeadingProps> = ({
   title,
   subtitle,
-  align,
   tone,
   className,
 }) => (
-  <div className={cn(wrapperVariants({ align }), className)}>
+  <div className={cn("flex flex-col gap-3", className)}>
     <h2 className={titleVariants({ tone })}>{title}</h2>
-    <p className={subtitleVariants({ align, tone })}>{subtitle}</p>
+    <p className={subtitleVariants({ tone })}>{subtitle}</p>
   </div>
 );
 

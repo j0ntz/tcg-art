@@ -5,12 +5,13 @@ import { cn } from "@/lib/utils";
 // (a pricing <li>, the signup <form>) can wear the styling; Card is the <div>
 // convenience. Padding and inner layout (flex, gap) are the caller's via
 // className, since those vary per use while the surface treatment does not.
+// `highlight` is a neutral emphasis (stronger border + lift), never a colored
+// edge or tinted fill.
 export const cardVariants = cva("rounded-panel border", {
   variants: {
     variant: {
       default: "border-border bg-surface shadow-card",
-      highlight:
-        "border-primary-border-strong bg-primary-muted shadow-card-lifted ring-1 ring-primary-border",
+      highlight: "border-border-strong bg-surface shadow-card-lifted",
     },
   },
   defaultVariants: {

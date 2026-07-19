@@ -1,54 +1,44 @@
 import SectionHeading from "./ui/SectionHeading";
-import Reveal from "./motion/Reveal";
 
-// Mirrors the clone target's 3-step "How It Works" content, restyled as a
-// vertical timeline: a connecting line with gradient number stops, each step
-// sliding in from the left as it scrolls into view.
+// Three steps from a vague memory to the exact card, set as an editorial
+// ledger: hairline-divided rows, step number as quiet tabular text, content
+// left-aligned. No timelines, no numbered medallions, no per-item reveals.
 const STEPS = [
   {
-    title: "Tell Us What You See",
+    title: "Tell us what you see",
     body: "Describe the card from memory: a Pikachu surfing on a wave, a fiery Charizard, a quiet forest scene.",
   },
   {
-    title: "We Do the Heavy Lifting",
+    title: "We do the heavy lifting",
     body: "Your description is compared against thousands of artworks to surface the cards that match what you pictured.",
   },
   {
-    title: "Uncover Hidden Gems",
+    title: "Uncover hidden gems",
     body: "Browse the matches and discover alt-arts and illustrations you didn't even know existed.",
   },
 ] as const;
 
 const HowItWorks: React.FC = () => {
   return (
-    // overflow-x-clip: the from-left pre-reveal offset (globals.css) must not
-    // widen the page on mobile before the steps reveal.
-    <section className="mx-auto w-full max-w-content overflow-x-clip px-gutter py-16 sm:py-20">
-      <Reveal>
-        <SectionHeading
-          className="mb-12"
-          title="How It Works"
-          subtitle="Three steps from a vague memory of the art to the exact card."
-        />
-      </Reveal>
+    <section className="mx-auto w-full max-w-content px-gutter py-16 sm:py-20">
+      <SectionHeading
+        className="mb-10"
+        title="How it works"
+        subtitle="Three steps from a vague memory of the art to the exact card."
+      />
 
-      <ol className="relative mx-auto flex w-full max-w-2xl flex-col gap-10 before:absolute before:top-2 before:bottom-2 before:left-5 before:w-px before:bg-primary-border before:content-['']">
+      <ol className="border-t border-border">
         {STEPS.map((step, index) => (
-          <Reveal
+          <li
             key={step.title}
-            as="li"
-            from="left"
-            delayMs={index * 120}
-            className="relative grid grid-cols-[2.5rem_1fr] gap-x-5"
+            className="grid grid-cols-[3rem_1fr] gap-x-4 border-b border-border py-6 sm:grid-cols-[5rem_1fr] sm:gap-x-8"
           >
-            <span className="z-10 flex h-10 w-10 items-center justify-center rounded-pill bg-brand-gradient text-base font-bold text-primary-foreground shadow-card">
-              {index + 1}
-            </span>
-            <div className="pt-1.5">
+            <span className="tnum pt-0.5 text-sm text-foreground-faint">{index + 1}</span>
+            <div className="max-w-2xl">
               <h3 className="text-lg font-semibold text-foreground">{step.title}</h3>
               <p className="mt-1 text-sm leading-relaxed text-foreground-muted">{step.body}</p>
             </div>
-          </Reveal>
+          </li>
         ))}
       </ol>
     </section>

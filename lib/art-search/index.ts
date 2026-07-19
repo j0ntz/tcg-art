@@ -44,7 +44,9 @@ const loadIndex = async (): Promise<ArtIndexEntry[]> => {
   return entries;
 };
 
-export const searchArt = async (rawQuery: string): Promise<ArtSearchResponse> => {
+// `limit` lets the search page serve its "Show more" affordance; the default
+// stays the classic top-24 ranked slice (the /api/art-search surface).
+export const searchArt = async (rawQuery: string, limit = RESULT_LIMIT): Promise<ArtSearchResponse> => {
   const query = rawQuery.trim();
   const entries = await loadIndex();
   if (query.length === 0) {
@@ -59,6 +61,6 @@ export const searchArt = async (rawQuery: string): Promise<ArtSearchResponse> =>
     query,
     mode: haikuConcepts != null ? "haiku" : "lexical",
     indexSize: entries.length,
-    results: rankEntries(entries, conceptGroups, RESULT_LIMIT),
+    results: rankEntries(entries, conceptGroups, limit),
   };
 };

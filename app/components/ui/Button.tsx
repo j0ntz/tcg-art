@@ -9,16 +9,16 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // dark neutral fill: the default app action (header CTA, search, signup)
+        // dark ink fill: the default app action (header CTA, form submits)
         primary:
           "bg-surface-inverse font-medium text-primary-foreground transition-colors hover:bg-surface-inverse-hover",
-        // brand gradient: the marketing hero / pricing CTAs (callers add a shadow
-        // where the design calls for one)
-        gradient:
-          "bg-gradient-to-r from-primary to-accent font-semibold text-primary-foreground transition-opacity hover:opacity-90",
-        // outline: the secondary pricing CTA
+        // ember fill: THE primary CTA. Part of the accent budget (globals.css);
+        // at most one per view.
+        accent:
+          "bg-primary font-semibold text-primary-foreground transition-colors hover:bg-primary-hover",
+        // outline: secondary actions
         secondary:
-          "border border-border-strong font-semibold text-foreground transition-colors hover:bg-surface-hover",
+          "border border-border-strong font-medium text-foreground transition-colors hover:bg-surface-hover",
         // text link styled as a pill (nav)
         ghost:
           "font-medium text-foreground-muted transition-colors hover:text-foreground",

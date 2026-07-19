@@ -1,6 +1,5 @@
 import Image from "next/image";
 import type { Card } from "@/lib/pokemon";
-import Badge from "./ui/Badge";
 import Button from "./ui/Button";
 
 interface HeroProps {
@@ -9,30 +8,18 @@ interface HeroProps {
   showcase: Card[];
 }
 
-// Midnight cinema hero: the card art carries the section, so everything else
-// goes near-black and the fan sits under saturated brand glows like a lightbox.
-// The rest of the page stays light; the dark band reads as a deliberate stage.
+// Midnight cinema hero: a flat near-black stage where the card art is the only
+// color. No glows, no gradients, no badge above the H1; the ember accent is
+// spent on the headline emphasis and the CTA (two of the five budgeted
+// placements, see globals.css).
 const Hero: React.FC<HeroProps> = ({ showcase }) => {
   return (
     <section className="relative overflow-hidden bg-surface-night">
-      {/* Saturated glows double as the spotlight on the fan. Decorative only. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-48 left-1/2 h-[36rem] w-[36rem] -translate-x-1/4 rounded-full bg-primary-glow/25 blur-3xl" />
-        <div className="absolute top-24 right-[-14%] h-[28rem] w-[28rem] rounded-full bg-accent-glow/20 blur-3xl" />
-        <div className="absolute bottom-[-10rem] left-[-10%] h-80 w-80 rounded-full bg-primary-glow/15 blur-3xl" />
-      </div>
-
       <div className="relative mx-auto grid w-full max-w-content gap-12 px-gutter py-16 sm:py-24 lg:grid-cols-2 lg:items-center">
         <div className="flex flex-col gap-6">
-          <Badge variant="soft" className="border-white/15 bg-white/10 text-primary-bright">
-            Smart Trading Card Search
-          </Badge>
-
-          <h1 className="text-title font-bold leading-tight tracking-tight text-foreground-inverse sm:text-display">
-            Find Pokémon Cards by{" "}
-            <span className="bg-gradient-to-r from-primary-bright to-accent-bright bg-clip-text text-transparent">
-              What&apos;s In the Art
-            </span>
+          <h1 className="font-display text-title font-semibold tracking-tight text-foreground-inverse sm:text-display">
+            Find Pokémon cards by{" "}
+            <em className="font-light text-primary-bright">what&apos;s in the art</em>
           </h1>
 
           <p className="max-w-xl text-lead text-foreground-inverse-muted">
@@ -46,9 +33,9 @@ const Hero: React.FC<HeroProps> = ({ showcase }) => {
               name="q"
               placeholder="Try: surfing pikachu, on the beach, mewtwo…"
               aria-label="Search Pokémon cards"
-              className="flex-1 rounded-pill border border-white/15 bg-white/10 px-5 py-3 text-foreground-inverse placeholder:text-foreground-inverse-subtle backdrop-blur outline-none focus:border-primary-bright focus:ring-2 focus:ring-primary-bright/40"
+              className="flex-1 rounded-pill border border-border-inverse bg-white/10 px-5 py-3 text-foreground-inverse placeholder:text-foreground-inverse-subtle focus:border-border-inverse"
             />
-            <Button type="submit" variant="gradient" size="lg" className="shadow-card">
+            <Button type="submit" variant="accent" size="lg">
               Search Free
             </Button>
           </form>
@@ -71,8 +58,7 @@ const Hero: React.FC<HeroProps> = ({ showcase }) => {
                 key={card.id}
                 // hero-fan-card adds the scroll-linked fan opening (globals.css);
                 // it animates `translate`, which composes with this transform.
-                // The brand-tinted shadow reads as the spotlight's rim glow.
-                className="hero-fan-card absolute top-1/2 left-1/2 w-28 -translate-y-1/2 rounded-xl shadow-[0_0_50px_-8px_var(--color-primary-glow)] ring-1 ring-white/15 transition-transform duration-300 hover:scale-105 sm:w-32 lg:w-44"
+                className="hero-fan-card absolute top-1/2 left-1/2 w-28 -translate-y-1/2 rounded-field shadow-float ring-1 ring-white/15 sm:w-32 lg:w-44"
                 style={
                   {
                     "--i": index - 2,
@@ -85,10 +71,10 @@ const Hero: React.FC<HeroProps> = ({ showcase }) => {
               >
                 <Image
                   src={card.images.small}
-                  alt={card.name}
+                  alt=""
                   width={245}
                   height={342}
-                  className="h-auto w-full rounded-xl"
+                  className="h-auto w-full rounded-field"
                   priority={index === 2}
                 />
               </div>

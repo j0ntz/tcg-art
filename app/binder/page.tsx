@@ -6,7 +6,6 @@ import { getSessionUser } from "@/lib/auth";
 import { getCollectionItems } from "@/lib/collection";
 import { getCardsByIds } from "@/lib/pokemon";
 import { cn } from "@/lib/utils";
-import Badge from "../components/ui/Badge";
 import { buttonVariants } from "../components/ui/Button";
 import { cardVariants } from "../components/ui/Card";
 import BinderView from "../components/binder/BinderView";
@@ -64,19 +63,16 @@ const BinderPage = async ({ searchParams }: BinderPageProps) => {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-gutter py-10">
-      <header className="flex flex-col gap-3">
-        <Badge variant="soft">Your Collection</Badge>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <h1 className="text-heading font-bold leading-tight tracking-tight text-foreground">
-            Your Binder
-          </h1>
-          {items != null && items.length > 0 ? (
-            <p className="text-sm text-foreground-subtle" data-testid="binder-count">
-              {items.length} {items.length === 1 ? "card" : "cards"}
-              {totalCards !== items.length ? ` · ${totalCards} copies` : ""}
-            </p>
-          ) : null}
-        </div>
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="font-display text-heading font-semibold tracking-tight text-foreground">
+          Your Binder
+        </h1>
+        {items != null && items.length > 0 ? (
+          <p className="tnum text-sm text-foreground-subtle" data-testid="binder-count">
+            {items.length} {items.length === 1 ? "card" : "cards"}
+            {totalCards !== items.length ? ` · ${totalCards} copies` : ""}
+          </p>
+        ) : null}
       </header>
 
       {items == null ? (
@@ -89,17 +85,25 @@ const BinderPage = async ({ searchParams }: BinderPageProps) => {
           className={cn(cardVariants(), "flex flex-col items-center gap-4 p-10 text-center sm:p-16")}
           data-testid="binder-empty"
         >
-          <span className="flex h-16 w-16 items-center justify-center rounded-pill bg-primary-muted text-3xl">
-            🗂️
-          </span>
+          {/* An empty 3-pocket sleeve row: the binder's own vocabulary for "nothing here yet". */}
+          <div aria-hidden className="grid w-full max-w-60 grid-cols-3 gap-2">
+            {[0, 1, 2].map(slot => (
+              <span
+                key={slot}
+                className="aspect-[245/342] rounded-field border-2 border-dashed border-border"
+              />
+            ))}
+          </div>
           <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold text-foreground">Your binder is empty</h2>
+            <h2 className="font-display text-lg font-semibold text-foreground">
+              Your binder is empty
+            </h2>
             <p className="max-w-sm text-foreground-muted">
               Find cards you love and add them straight from the search results. They will show
               up here in all three display modes.
             </p>
           </div>
-          <Link href="/search" className={buttonVariants({ variant: "gradient", size: "md" })}>
+          <Link href="/search" className={buttonVariants({ variant: "primary", size: "md" })}>
             Search cards
           </Link>
         </div>

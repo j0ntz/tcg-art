@@ -1,23 +1,44 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 import SiteHeader from "./components/SiteHeader";
 import SiteFooter from "./components/SiteFooter";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// The two-family type system (docs/design-system.md): Fraunces carries display
+// headings, IBM Plex Sans carries everything else. Both self-hosted via
+// next/font; no third family may be added.
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
+  axes: ["opsz"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const plexSans = IBM_Plex_Sans({
+  variable: "--font-plex-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
+
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL != null ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
 export const metadata: Metadata = {
-  title: "TCG-Art — Find Pokémon Cards by What's In the Art",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "TCG-Art — Find Pokémon Cards by What's In the Art",
+    template: "%s — TCG-Art",
+  },
   description:
     "Search 20,000+ Pokémon TCG cards by what their art shows. Describe a scene, a mood, or a color and find the card.",
+  openGraph: {
+    siteName: "TCG-Art",
+    type: "website",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "TCG-Art — search cards by their art" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({
@@ -28,7 +49,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${fraunces.variable} ${plexSans.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <SiteHeader />
