@@ -39,7 +39,7 @@ const LoginPage: React.FC<Props> = async ({ searchParams }) => {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-gutter py-12 font-sans">
       <header className="flex flex-col gap-2 text-center">
-        <h1 className="text-xl font-semibold text-foreground">Welcome back</h1>
+        <h1 className="font-display text-2xl font-semibold text-foreground">Welcome back</h1>
         <p className="text-foreground-subtle">Log in to keep searching card art.</p>
       </header>
 

@@ -1,9 +1,9 @@
 import SectionHeading from "./ui/SectionHeading";
-import Reveal from "./motion/Reveal";
 
-// "Build Your Binder" section, matching the clone target's feature pitch:
-// drag-and-drop grids, themes, and shareable links. These are roadmap features
-// (v3 in docs/spec.md), so this section is a display-only marketing tease.
+// "Build Your Binder" feature pitch (roadmap features, v3 in docs/spec.md; this
+// section is a display-only marketing tease). Same editorial ledger primitive
+// as How It Works: split heading + hairline-divided feature rows on the muted
+// surface. No gradient band, no glass cards.
 const FEATURES = [
   {
     title: "Drag-and-drop pages",
@@ -11,7 +11,7 @@ const FEATURES = [
   },
   {
     title: "18+ themes",
-    body: "Pokéball patterns, ocean gradients, solid colors, and card-sleeve looks to set the mood.",
+    body: "Pokéball patterns, ocean tones, solid colors, and card-sleeve looks to set the mood.",
   },
   {
     title: "Shareable links",
@@ -21,27 +21,19 @@ const FEATURES = [
 
 const BuildYourBinder: React.FC = () => {
   return (
-    // overflow-x-clip: the left/right pre-reveal offsets (globals.css) would
-    // otherwise widen the page horizontally on mobile before the items reveal.
-    <section className="overflow-x-clip border-y border-border bg-gradient-to-br from-accent to-primary-hover">
-      <div className="mx-auto grid w-full max-w-content gap-10 px-gutter py-16 sm:py-20 lg:grid-cols-2 lg:items-center">
-        <Reveal from="left">
-          <SectionHeading
-            align="left"
-            tone="inverse"
-            title="Build Your Binder"
-            subtitle="Collecting is half the fun. Save the cards you love and organize them into custom binder pages you can show off."
-          />
-        </Reveal>
+    <section className="border-y border-border bg-surface-muted">
+      <div className="mx-auto grid w-full max-w-content gap-10 px-gutter py-16 sm:py-20 lg:grid-cols-2 lg:items-start">
+        <SectionHeading
+          title="Build your binder"
+          subtitle="Collecting is half the fun. Save the cards you love and organize them into custom binder pages you can show off."
+        />
 
-        <ul className="grid gap-4">
-          {FEATURES.map((feature, index) => (
-            <Reveal key={feature.title} as="li" from="right" delayMs={index * 120}>
-              <div className="rounded-panel bg-white/10 p-5 ring-1 ring-white/20 backdrop-blur">
-                <h3 className="font-semibold text-foreground-inverse">{feature.title}</h3>
-                <p className="mt-1 text-sm text-primary-foreground-muted">{feature.body}</p>
-              </div>
-            </Reveal>
+        <ul className="border-t border-border">
+          {FEATURES.map(feature => (
+            <li key={feature.title} className="border-b border-border py-5">
+              <h3 className="font-semibold text-foreground">{feature.title}</h3>
+              <p className="mt-1 text-sm text-foreground-muted">{feature.body}</p>
+            </li>
           ))}
         </ul>
       </div>

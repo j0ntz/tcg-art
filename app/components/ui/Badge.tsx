@@ -1,15 +1,16 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-// Small status / label pill. `soft` is the brand-tinted outline chip; `solid` is
-// the filled emphasis badge (e.g. "Most popular").
+// Small status / label chip. Both variants are neutral ink: badges are metadata,
+// not accent placements (the ember budget lives in globals.css). `soft` is the
+// quiet outline chip; `solid` is the filled counter (e.g. binder ×quantity).
 export const badgeVariants = cva(
-  "inline-flex w-fit items-center rounded-pill text-xs font-medium",
+  "inline-flex w-fit items-center rounded-pill text-xs font-medium tnum",
   {
     variants: {
       variant: {
-        soft: "gap-2 border border-primary-border bg-primary-subtle text-primary-subtle-foreground",
-        solid: "bg-primary text-primary-foreground",
+        soft: "gap-2 border border-border bg-surface-muted text-foreground-secondary",
+        solid: "bg-surface-inverse text-primary-foreground",
       },
       size: {
         sm: "px-2.5 py-0.5",

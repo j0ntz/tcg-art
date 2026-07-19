@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
@@ -64,10 +65,8 @@ const BinderPages: React.FC<BinderPagesProps> = ({ entries }) => {
             {slots.map((entry, slotIndex) =>
               entry != null ? (
                 <li key={entry.card.id} className="group relative">
-                  <a
-                    href={entry.card.images.large}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    href={`/card/${entry.card.id}`}
                     className="block rounded-field bg-surface p-1 shadow-card transition-transform motion-safe:group-hover:scale-[1.02] sm:p-1.5"
                   >
                     <Image
@@ -77,7 +76,7 @@ const BinderPages: React.FC<BinderPagesProps> = ({ entries }) => {
                       height={342}
                       className="h-auto w-full rounded-[4px]"
                     />
-                  </a>
+                  </Link>
                   {entry.quantity > 1 ? (
                     <Badge
                       variant="solid"

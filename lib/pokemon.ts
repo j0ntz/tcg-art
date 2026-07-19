@@ -19,28 +19,79 @@ export interface Card {
   images: { small: string; large: string };
 }
 
+// The card detail page's superset of Card: full metadata for one card.
+export interface CardDetail extends Card {
+  supertype: string | null;
+  subtypes: string[];
+  hp: string | null;
+  types: string[];
+  flavorText: string | null;
+  releaseDate: string | null;
+}
+
+// One page of search results plus the API's total, so the UI can paginate.
+export interface CardPage {
+  cards: Card[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
 interface ApiCard {
   id: string;
   name: string;
   number: string;
   rarity?: string;
   artist?: string;
-  set: { id: string; name: string; series: string };
+  supertype?: string;
+  subtypes?: string[];
+  hp?: string;
+  types?: string[];
+  flavorText?: string;
+  set: { id: string; name: string; series: string; releaseDate?: string };
   images: { small: string; large: string };
 }
 
-interface ApiResponse {
+interface ApiListResponse {
   data: ApiCard[];
+  totalCount: number;
 }
+
+interface ApiSingleResponse {
+  data: ApiCard;
+}
+
+export const SEARCH_PAGE_SIZE = 24;
 
 // Lucene control characters the API query syntax reserves. We strip them from user
 // input so a stray character cannot break the query or inject operators.
 const LUCENE_CONTROL = /[+\-!(){}[\]^"~*?:\\/]/g;
 
-export async function searchCards(rawQuery: string): Promise<Card[]> {
+const sanitizePage = (page: number): number =>
+  Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1;
+
+async function fetchCardPage(params: URLSearchParams, revalidate: number): Promise<CardPage> {
+  const res = await fetch(`${API_URL}?${params.toString()}`, {
+    next: { revalidate },
+  });
+  if (!res.ok) {
+    throw new Error(`Pokemon TCG API responded ${res.status}`);
+  }
+  const body: ApiListResponse = await res.json();
+  return {
+    cards: body.data.map(toCard),
+    totalCount: body.totalCount,
+    page: Number(params.get("page") ?? "1"),
+    pageSize: SEARCH_PAGE_SIZE,
+  };
+}
+
+export async function searchCards(rawQuery: string, page = 1): Promise<CardPage> {
   const query = rawQuery.trim();
+  const safePage = sanitizePage(page);
+  const empty: CardPage = { cards: [], totalCount: 0, page: safePage, pageSize: SEARCH_PAGE_SIZE };
   if (query.length === 0) {
-    return [];
+    return empty;
   }
 
   const tokens = query
@@ -48,27 +99,38 @@ export async function searchCards(rawQuery: string): Promise<Card[]> {
     .split(/\s+/)
     .filter(token => token.length > 0);
   if (tokens.length === 0) {
-    return [];
+    return empty;
   }
 
   // Wildcard-match every token against the card name, e.g. "surfing pikachu" -> name:*surfing* name:*pikachu*.
   const q = tokens.map(token => `name:*${token}*`).join(" ");
   const params = new URLSearchParams({
     q,
-    pageSize: "24",
+    page: String(safePage),
+    pageSize: String(SEARCH_PAGE_SIZE),
     orderBy: "name",
     select: "id,name,number,rarity,artist,set,images",
   });
+  return fetchCardPage(params, 3600);
+}
 
-  const res = await fetch(`${API_URL}?${params.toString()}`, {
-    next: { revalidate: 3600 },
-  });
-  if (!res.ok) {
-    throw new Error(`Pokemon TCG API responded ${res.status}`);
+// All cards credited to one illustrator, newest set first. Reached from the
+// artist attribution link on the card detail page.
+export async function searchCardsByArtist(rawArtist: string, page = 1): Promise<CardPage> {
+  const artist = rawArtist.trim().replace(/"/g, "");
+  const safePage = sanitizePage(page);
+  if (artist.length === 0) {
+    return { cards: [], totalCount: 0, page: safePage, pageSize: SEARCH_PAGE_SIZE };
   }
 
-  const body: ApiResponse = await res.json();
-  return body.data.map(toCard);
+  const params = new URLSearchParams({
+    q: `artist:"${artist}"`,
+    page: String(safePage),
+    pageSize: String(SEARCH_PAGE_SIZE),
+    orderBy: "-set.releaseDate",
+    select: "id,name,number,rarity,artist,set,images",
+  });
+  return fetchCardPage(params, 86400);
 }
 
 function toCard(card: ApiCard): Card {
@@ -87,6 +149,37 @@ function toCard(card: ApiCard): Card {
 // Collection rows and action inputs are validated against this so a malformed id
 // can never reach the Lucene query below.
 export const CARD_ID_PATTERN = /^[a-zA-Z0-9]+-[a-zA-Z0-9]+$/;
+
+// Full metadata for one card (the /card/[id] detail page). Returns null for an
+// id the API does not know, which the page maps to a 404.
+export async function getCardById(rawId: string): Promise<CardDetail | null> {
+  const id = rawId.trim();
+  if (!CARD_ID_PATTERN.test(id)) {
+    return null;
+  }
+
+  const res = await fetch(`${API_URL}/${encodeURIComponent(id)}`, {
+    next: { revalidate: 86400 },
+  });
+  if (res.status === 404) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error(`Pokemon TCG API responded ${res.status}`);
+  }
+
+  const body: ApiSingleResponse = await res.json();
+  const card = body.data;
+  return {
+    ...toCard(card),
+    supertype: card.supertype ?? null,
+    subtypes: card.subtypes ?? [],
+    hp: card.hp ?? null,
+    types: card.types ?? [],
+    flavorText: card.flavorText ?? null,
+    releaseDate: card.set.releaseDate ?? null,
+  };
+}
 
 // The API caps pageSize at 250; chunking at 50 also keeps each query string short.
 const IDS_PER_REQUEST = 50;
@@ -107,7 +200,7 @@ async function fetchCardsByIdChunk(ids: string[]): Promise<Card[]> {
     throw new Error(`Pokemon TCG API responded ${res.status}`);
   }
 
-  const body: ApiResponse = await res.json();
+  const body: ApiListResponse = await res.json();
   return body.data.map(toCard);
 }
 
@@ -144,6 +237,6 @@ export async function getShowcaseCards(count = 5): Promise<Card[]> {
     throw new Error(`Pokemon TCG API responded ${res.status}`);
   }
 
-  const body: ApiResponse = await res.json();
+  const body: ApiListResponse = await res.json();
   return body.data.slice(0, count).map(toCard);
 }

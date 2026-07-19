@@ -28,6 +28,32 @@ Apply to every `.ts`/`.tsx` edit:
 - Descriptive variable names. Comments explain why (not what) and document the current state, not change history.
 - Components: `const C: React.FC<Props> = props => {...}`.
 
+## Design system (binding for all UI work)
+
+`docs/design-system.md` is the design contract and `app/globals.css` is the
+token source of truth; `docs/research/anti-slop-ui.md` lists the banned
+patterns, which are merge gates. The short version every UI edit must honor:
+
+- Two typefaces only: Fraunces (display, `font-display`) + IBM Plex Sans
+  (body). Never add a family; never reintroduce Inter/Roboto/Geist/system
+  stacks.
+- One dominant (warm "ink" neutrals) + one accent ("ember" orange), OKLCH
+  tokens only. The ember accent has a hard budget of 5 placements site-wide
+  (listed in globals.css); do not spend it without removing a placement.
+  Components consume semantic tokens (`surface`, `foreground-*`, `border`,
+  `primary`), never primitives or hex.
+- No gradients, glows, colored shadows, badges/kickers above H1s, icon-grid
+  feature cards, emoji-as-icons, cards-in-cards, ALL-CAPS letter-spaced
+  labels, or centered-everything. Layout voice is the left-aligned hairline
+  ledger.
+- Radius scale is exactly field (6px) / card (12px) / pill; shadows neutral.
+- Motion: interaction-tied micro-transitions plus the one scroll-linked hero
+  fan; no load/scroll-in reveals or staggers; respect reduced motion.
+- States first: any new data surface ships loading/empty/error designs and
+  keeps the global `:focus-visible` ring (no `outline-none`).
+- Vision loop: screenshot desktop+mobile (plus states), audit against the
+  banned list, fix, re-screenshot, before calling UI work done.
+
 Stack conventions (locked in Phase 0; revisit as the app grows):
 
 - **Styling:** Tailwind CSS v4.

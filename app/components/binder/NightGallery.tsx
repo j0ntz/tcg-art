@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 import type { BinderEntry } from "./types";
 
@@ -6,48 +7,32 @@ interface NightGalleryProps {
   entries: BinderEntry[];
 }
 
-// Mode 3, "The Night Gallery" (the winning /drunk-claude idea): the collection
-// hung as a museum exhibition. Dark wall, a pooled spotlight per piece, a
-// brand-gradient frame with a white mat, and a placard crediting the artist,
-// which is the one thing the binder grid and the carousel never foreground.
-// Everything decorative is static CSS (gradients, shadows), so mobile and
-// prefers-reduced-motion get the full effect; the only motion is a
-// motion-safe hover lift. The white/amber alphas are decorative lighting
-// one-offs on the dark wall, not new palette roles.
+// Mode 3, "The Night Gallery": the collection hung as a museum exhibition on a
+// flat near-black wall. Each piece gets an ink frame with a white mat and a
+// placard crediting the artist, which is the one thing the binder grid and the
+// carousel never foreground. Decoration is material (frame, mat, shadow), not
+// lighting effects; the only motion is a motion-safe hover lift.
 const NightGallery: React.FC<NightGalleryProps> = ({ entries }) => (
   <section
-    className="relative overflow-hidden rounded-panel bg-surface-inverse px-5 pb-14 pt-10 sm:px-10"
+    className="rounded-panel bg-surface-night px-5 pb-14 pt-10 sm:px-10"
     data-testid="night-gallery"
   >
-    {/* Ambient house light along the ceiling. */}
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.10),transparent_70%)]"
-    />
-
-    <header className="relative mb-10 flex flex-col items-center gap-2 text-center">
-      <p className="text-xs uppercase tracking-[0.35em] text-primary-foreground-muted">
+    <header className="mb-10 flex flex-col gap-1">
+      <p className="font-display text-lg font-semibold text-foreground-inverse">
         The Night Gallery
       </p>
-      <p className="text-sm text-foreground-inverse/60">
+      <p className="text-sm text-foreground-inverse-subtle">
         Your collection, hung and lit. Open late.
       </p>
     </header>
 
-    <ul className="relative grid grid-cols-1 gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+    <ul className="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
       {entries.map(entry => (
         <li key={entry.card.id} className="flex flex-col items-center">
-          <figure
-            className={
-              "flex w-full max-w-[300px] flex-col items-center " +
-              "bg-[radial-gradient(ellipse_at_top,rgba(255,236,179,0.13),transparent_65%)] px-4 pb-2 pt-6"
-            }
-          >
-            <a
-              href={entry.card.images.large}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full rounded-[6px] bg-brand-gradient p-1 shadow-float transition-transform motion-safe:hover:-translate-y-1"
+          <figure className="flex w-full max-w-[300px] flex-col items-center">
+            <Link
+              href={`/card/${entry.card.id}`}
+              className="block w-full rounded-field bg-surface-inverse p-1 shadow-float transition-transform motion-safe:hover:-translate-y-1"
             >
               {/* White mat between frame and art, like a real print. */}
               <span className="block rounded-[4px] bg-surface p-2">
@@ -60,17 +45,17 @@ const NightGallery: React.FC<NightGalleryProps> = ({ entries }) => (
                   className="h-auto w-full rounded-[2px]"
                 />
               </span>
-            </a>
-            <figcaption className="mt-5 w-fit max-w-full rounded-field bg-surface px-4 py-2.5 text-left shadow-card">
+            </Link>
+            <figcaption className="mt-4 w-fit max-w-full rounded-field bg-surface px-4 py-2.5 text-left shadow-card">
               <p className="text-sm text-foreground">
-                <span className="font-medium italic">{entry.card.name}</span>
+                <span className="font-display font-medium italic">{entry.card.name}</span>
                 <span className="text-foreground-subtle">, {entry.card.set.name}</span>
               </p>
               <p className="mt-0.5 text-xs text-foreground-subtle">
                 {entry.card.artist != null ? `Illus. ${entry.card.artist}` : "Artist unknown"}
                 {entry.card.rarity != null ? ` · ${entry.card.rarity}` : ""}
               </p>
-              <p className="mt-0.5 text-xs text-foreground-faint">
+              <p className="tnum mt-0.5 text-xs text-foreground-faint">
                 Acquired {entry.acquiredLabel}
                 {entry.quantity > 1 ? ` · edition of ${entry.quantity}` : ""}
               </p>

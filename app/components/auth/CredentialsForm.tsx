@@ -25,7 +25,7 @@ interface Props {
 
 const fieldClass = (hasError: boolean): string =>
   cn(
-    "w-full rounded-field border bg-surface px-4 py-3 text-foreground outline-none focus:border-foreground disabled:cursor-not-allowed disabled:opacity-50",
+    "w-full rounded-field border bg-surface px-4 py-3 text-foreground focus:border-foreground disabled:cursor-not-allowed disabled:opacity-50",
     hasError ? "border-danger-border" : "border-border-strong",
   );
 
