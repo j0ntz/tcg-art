@@ -320,6 +320,19 @@ export const applyFacetStateToParams = (state: FacetState, params: URLSearchPara
 export const hasActiveFilters = (state: FacetState): boolean =>
   Object.values(state.filters).some(values => values != null && values.length > 0);
 
+// Drops vision-facet selections (color/mood) from the state. Surfaces whose
+// data has no vision attributes (name/artist-mode search) must strip them:
+// their Lucene clauses skip vision groups, so a carried selection would render
+// a chip while filtering nothing.
+export const stripVisionFacets = (state: FacetState): FacetState => {
+  const filters: FacetState["filters"] = {};
+  for (const group of FACET_GROUPS) {
+    const selected = state.filters[group.key];
+    if (!group.vision && selected != null && selected.length > 0) filters[group.key] = selected;
+  }
+  return { filters, sort: state.sort };
+};
+
 // ---------- Applying filters, counting, sorting ----------
 
 const cardMatchesGroup = (card: FacetCard, group: FacetGroupDef, selected: string[]): boolean => {

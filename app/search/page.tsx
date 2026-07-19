@@ -15,6 +15,7 @@ import {
   applyFacetStateToParams,
   parseFacetState,
   sortFacetCards,
+  stripVisionFacets,
   type FacetCard,
   type FacetState,
 } from "@/lib/facets";
@@ -108,7 +109,11 @@ const SearchPage = async ({ searchParams }: SearchProps) => {
     ART_LIMIT_MAX,
     Math.max(ART_LIMIT_DEFAULT, Number.parseInt(firstOf(params.n) ?? "0", 10) || 0),
   );
-  const state = parseFacetState(params);
+  // Name/artist mode filters API-side via Lucene clauses, which have no field
+  // for the vision facets; strip them so a carried color/mood selection never
+  // renders a chip that filters nothing.
+  const parsedState = parseFacetState(params);
+  const state = mode === "art" ? parsedState : stripVisionFacets(parsedState);
 
   let cards: FacetCard[] = [];
   // Art mode's full ranked set: facet counts are computed over it so they
@@ -178,7 +183,7 @@ const SearchPage = async ({ searchParams }: SearchProps) => {
         Describe the art
       </Link>
       <Link
-        href={searchHref("name", query, state, { sort: null })}
+        href={searchHref("name", query, stripVisionFacets(state), { sort: null })}
         aria-current={mode === "name" ? "page" : undefined}
         className={
           mode === "name"

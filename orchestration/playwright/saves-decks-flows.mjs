@@ -197,6 +197,16 @@ const run = async () => {
     "clear-all removes every chip",
   );
 
+  // ---- Vision facets never leak into name mode (no chip that filters nothing) ----
+  await page.goto(`${BASE_URL}/search?mode=name&q=charizard&color=red`, {
+    waitUntil: "networkidle",
+  });
+  await page.locator('[data-testid^="card-tile-"]').first().waitFor();
+  assert(
+    (await page.getByTestId("chip-color-red").count()) === 0,
+    "name mode strips a carried color facet instead of rendering a dead chip",
+  );
+
   // ---- Favorite round-trip ----
   await page.goto(`${BASE_URL}/search?q=charizard`, { waitUntil: "networkidle" });
   const heartButtons = page.locator('[data-testid^="fav-"]');
