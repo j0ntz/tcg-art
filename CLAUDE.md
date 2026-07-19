@@ -52,7 +52,7 @@ patterns, which are merge gates. The short version every UI edit must honor:
   feature cards, emoji-as-icons, cards-in-cards, ALL-CAPS letter-spaced
   labels, or centered-everything. Layout voice is the left-aligned hairline
   ledger.
-- Radius scale is exactly field (6px) / card (12px) / pill; shadows neutral.
+- Radius scale is exactly field (8px) / card (16px) / pill; shadows neutral.
 - Motion: interaction-tied micro-transitions plus the one scroll-linked hero
   fan; no load/scroll-in reveals or staggers; respect reduced motion.
 - States first: any new data surface ships loading/empty/error designs and
