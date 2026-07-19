@@ -168,7 +168,6 @@ h3 {
 :focus-visible {
   outline: 2px solid var(--color-ring);
   outline-offset: 2px;
-  border-radius: var(--radius-field);
 }
 
 /* Hide the carousel strip's horizontal scrollbar; scroll and snap behavior are
