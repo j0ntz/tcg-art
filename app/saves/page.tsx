@@ -24,7 +24,7 @@ import { buttonVariants } from "../components/ui/Button";
 import { cardVariants } from "../components/ui/Card";
 
 export const metadata: Metadata = {
-  title: "Your Saves — TCG-Art",
+  title: "Your Saves",
   description: "Every card you have saved, with filters and sorts over the full set.",
 };
 

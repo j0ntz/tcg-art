@@ -26,7 +26,7 @@ import { buttonVariants } from "../../components/ui/Button";
 import { cardVariants } from "../../components/ui/Card";
 
 export const metadata: Metadata = {
-  title: "Deck — TCG-Art",
+  title: "Deck",
   description: "One deck's cards, with the full filter and sort set.",
 };
 
@@ -170,6 +170,11 @@ const DeckPage = async ({ params, searchParams }: DeckPageProps) => {
           )}
         </FacetControls>
       )}
+      {items.length > 0 && view === "carousel" && hasActiveFilters(state) && cards.length === 0 ? (
+        <p className="text-sm text-foreground-muted" data-testid="deck-no-match">
+          No cards in this deck match these filters.
+        </p>
+      ) : null}
 
       <section className="flex flex-col gap-4 border-t border-border pt-6" aria-label="Manage deck">
         <h2 className="font-display text-lg font-semibold text-foreground">Manage</h2>

@@ -11,7 +11,7 @@ import Button from "../components/ui/Button";
 import { cardVariants } from "../components/ui/Card";
 
 export const metadata: Metadata = {
-  title: "Your Decks — TCG-Art",
+  title: "Your Decks",
   description: "Named groupings of the cards you collect, each with the full filter set.",
 };
 

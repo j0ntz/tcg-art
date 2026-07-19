@@ -70,6 +70,14 @@ const NAME_SORTS: SortOption[] = [
   { key: "oldest", label: "Oldest era" },
   { key: "dex", label: "Pokédex order" },
 ];
+// Artist mode's API default is -set.releaseDate, so its dropdown defaults to
+// "Newest era"; listing it first keeps the dropdown honest about that order.
+const ARTIST_SORTS: SortOption[] = [
+  { key: "newest", label: "Newest era" },
+  { key: "oldest", label: "Oldest era" },
+  { key: "az", label: "Alphabetical" },
+  { key: "dex", label: "Pokédex order" },
+];
 
 type SearchMode = "art" | "name" | "artist";
 
@@ -303,9 +311,11 @@ const SearchPage = async ({ searchParams }: SearchProps) => {
 
             <FacetControls
               groups={groups}
-              sortOptions={mode === "art" ? ART_SORTS : NAME_SORTS}
+              sortOptions={
+                mode === "art" ? ART_SORTS : mode === "artist" ? ARTIST_SORTS : NAME_SORTS
+              }
               appliedSort={state.sort}
-              defaultSort={mode === "art" ? "relevance" : "az"}
+              defaultSort={mode === "art" ? "relevance" : mode === "artist" ? "newest" : "az"}
               resultCount={resultCount}
               showCounts={mode === "art"}
             >
