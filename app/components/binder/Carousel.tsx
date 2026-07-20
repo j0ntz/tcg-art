@@ -144,10 +144,10 @@ const Carousel: React.FC<CarouselProps> = ({ entries }) => {
             {active.card.rarity != null ? ` · ${active.card.rarity}` : ""}
           </p>
           <p className="text-sm text-foreground-subtle">
-            {active.card.artist != null ? `Illus. ${active.card.artist}` : "Artist unknown"}
+            {active.card.artist != null ? `Art by ${active.card.artist}` : "Artist unknown"}
           </p>
           <p className="text-xs text-foreground-faint">
-            Acquired {active.acquiredLabel}
+            Added {active.acquiredLabel}
             {active.quantity > 1 ? ` · ×${active.quantity}` : ""}
           </p>
           <RemoveCardForm

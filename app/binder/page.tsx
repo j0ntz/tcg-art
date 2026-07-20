@@ -64,7 +64,7 @@ const BinderPage = async ({ searchParams }: BinderPageProps) => {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-gutter py-10">
       <header className="flex flex-wrap items-end justify-between gap-3">
-        <h1 className="font-display text-heading font-semibold tracking-tight text-foreground">
+        <h1 className="font-display text-heading font-bold tracking-tight text-foreground">
           Your Binder
         </h1>
         {items != null && items.length > 0 ? (
@@ -95,7 +95,7 @@ const BinderPage = async ({ searchParams }: BinderPageProps) => {
             ))}
           </div>
           <div className="flex flex-col gap-1">
-            <h2 className="font-display text-lg font-semibold text-foreground">
+            <h2 className="font-display text-lg font-bold text-foreground">
               Your binder is empty
             </h2>
             <p className="max-w-sm text-foreground-muted">

@@ -165,12 +165,12 @@ const SearchPage = async ({ searchParams }: SearchProps) => {
       <section className="border-b border-border">
         <div className="mx-auto flex w-full max-w-content flex-col gap-6 px-gutter py-10 sm:py-14">
           <div className="flex flex-col gap-3">
-            <h1 className="font-display text-heading font-semibold tracking-tight text-foreground sm:text-title">
+            <h1 className="font-display text-heading font-bold tracking-tight text-foreground sm:text-title">
               {heading}
             </h1>
             <p className="max-w-xl text-lead text-foreground-muted">
               {mode === "artist"
-                ? "Every card in the database credited to this illustrator, newest first."
+                ? "Every card this artist has drawn, newest first."
                 : mode === "name"
                   ? "Search across 20,000+ Pokémon TCG cards by exact name."
                   : "Say what is IN the artwork — a scene, a mood, a color — and find the card."}

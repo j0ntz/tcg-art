@@ -10,13 +10,20 @@
    app/components/ui/*). Change a role here and every page follows.
 
    The palette is ONE dominant + ONE accent:
-   - Dominant: "ink", a warm near-neutral ramp (hue ~50-80, whisper of chroma)
-     that carries every surface, text tier, and the default dark action color.
+   - Dominant: "ink", a cool near-neutral gallery ramp (whisper of chroma) that
+     carries every surface, text tier, and the default dark action color: the
+     white-wall chrome the card art hangs on.
    - Accent: "ember", a flame orange drawn from the Charizard showcase art that
      anchors the landing hero. Budgeted to <= 5 placements site-wide:
      1) the hero headline emphasis, 2) the primary CTA fill, 3) the focus ring,
      4) the pricing "Most popular" marker, 5) inline text links on hover.
      Do NOT spend it anywhere else without removing a placement first.
+
+   FUNCTIONAL color, outside the brand budget: the "type" ramps below encode
+   the game's own energy-type language (Grass green, Fire red, Water blue...).
+   STRICT RULE: type colors appear ONLY on type-meaningful elements (a badge or
+   chip naming that energy type), NEVER as decoration, section theming, or
+   generic accents. They are data ink, like the danger/success states.
 
    Tier 1 — PRIMITIVES (ramps, spacing, radius, shadow, type scale). Named by
      what they ARE (ember-600, ink-900). Pages should NOT consume these.
@@ -24,7 +31,9 @@
      by what they DO. Pages consume THESE.
 
    Radius is a deliberate SCALE, not one value everywhere:
-     field (6px, inputs/chips/card images) / card (12px, panels) / pill (full).
+     field (8px, inputs/chips/card images) / card (16px, panels) / pill (full).
+     The rounder stops are the collector's-tool personality: closer to a card
+     sleeve than to a legal document.
 
    `@theme static` forces every token to emit as a CSS variable even when only
    the semantic tier references it, so the primitive -> semantic var() chain
@@ -32,27 +41,29 @@
    ========================================================================== */
 
 @theme inline {
-  /* Body: IBM Plex Sans. Display: Fraunces. Two families total, both loaded
-     self-hosted via next/font in app/layout.tsx. */
+  /* Body: IBM Plex Sans. Display: Bricolage Grotesque. Two families total,
+     both loaded self-hosted via next/font in app/layout.tsx. No serifs
+     anywhere: the serif/editorial flavor is rejected for this product. */
   --font-sans: var(--font-plex-sans);
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-bricolage);
 }
 
 @theme static {
   /* ---- Tier 1: primitive palette ramps ---------------------------------- */
 
-  /* ink: warm near-neutral ramp for text, surfaces, and borders */
-  --color-ink-50: oklch(97.6% 0.004 84);
-  --color-ink-100: oklch(95.6% 0.005 84);
-  --color-ink-200: oklch(91.2% 0.006 80);
-  --color-ink-300: oklch(86.2% 0.007 78);
-  --color-ink-400: oklch(70.4% 0.01 72);
-  --color-ink-500: oklch(55.2% 0.012 66);
-  --color-ink-600: oklch(44.4% 0.013 60);
-  --color-ink-700: oklch(37% 0.012 56);
-  --color-ink-800: oklch(27.6% 0.01 52);
-  --color-ink-900: oklch(21.4% 0.009 48);
-  --color-ink-950: oklch(15.2% 0.008 48);
+  /* ink: cool near-neutral gallery ramp for text, surfaces, and borders.
+     White-wall chrome, not warm paper; chroma stays a whisper (<= 0.006). */
+  --color-ink-50: oklch(97.7% 0.002 250);
+  --color-ink-100: oklch(95.7% 0.003 250);
+  --color-ink-200: oklch(91.3% 0.004 250);
+  --color-ink-300: oklch(86.3% 0.005 250);
+  --color-ink-400: oklch(70.5% 0.006 252);
+  --color-ink-500: oklch(55.3% 0.006 254);
+  --color-ink-600: oklch(44.5% 0.006 256);
+  --color-ink-700: oklch(37% 0.006 256);
+  --color-ink-800: oklch(27.7% 0.005 258);
+  --color-ink-900: oklch(21.5% 0.005 258);
+  --color-ink-950: oklch(15.3% 0.004 260);
 
   /* ember: the accent ramp, sampled from flame-orange card art */
   --color-ember-50: oklch(96.4% 0.02 62);
@@ -71,10 +82,50 @@
   --color-danger-600: oklch(57.7% 0.245 27.325);
   --color-success-100: oklch(96.2% 0.044 156.743);
 
+  /* Energy-type ramps: FUNCTIONAL color coding in the game's native language.
+     Three steps per type: -subtle (chip fill), -border (chip hairline),
+     -strong (chip text; contrast-safe on the -subtle fill). Consumed ONLY by
+     the TypeBadge primitive (app/components/ui/TypeBadge.tsx); never as
+     decoration. Psychic's purple is the game's color for that type, a
+     functional exception to the no-purple brand rule, not a brand color. */
+  --color-type-grass-subtle: oklch(95% 0.045 145);
+  --color-type-grass-border: oklch(86% 0.09 145);
+  --color-type-grass-strong: oklch(40% 0.11 145);
+  --color-type-fire-subtle: oklch(95% 0.035 30);
+  --color-type-fire-border: oklch(86% 0.08 30);
+  --color-type-fire-strong: oklch(44% 0.16 30);
+  --color-type-water-subtle: oklch(95% 0.03 245);
+  --color-type-water-border: oklch(86% 0.07 245);
+  --color-type-water-strong: oklch(42% 0.13 250);
+  --color-type-lightning-subtle: oklch(96% 0.05 95);
+  --color-type-lightning-border: oklch(88% 0.1 95);
+  --color-type-lightning-strong: oklch(45% 0.1 85);
+  --color-type-psychic-subtle: oklch(95% 0.03 310);
+  --color-type-psychic-border: oklch(87% 0.07 310);
+  --color-type-psychic-strong: oklch(42% 0.14 310);
+  --color-type-fighting-subtle: oklch(95% 0.03 55);
+  --color-type-fighting-border: oklch(86% 0.06 55);
+  --color-type-fighting-strong: oklch(41% 0.1 50);
+  --color-type-darkness-subtle: oklch(94% 0.005 280);
+  --color-type-darkness-border: oklch(84% 0.01 280);
+  --color-type-darkness-strong: oklch(28% 0.02 280);
+  --color-type-metal-subtle: oklch(95% 0.004 260);
+  --color-type-metal-border: oklch(85% 0.008 260);
+  --color-type-metal-strong: oklch(42% 0.02 260);
+  --color-type-fairy-subtle: oklch(95% 0.025 350);
+  --color-type-fairy-border: oklch(87% 0.06 350);
+  --color-type-fairy-strong: oklch(45% 0.14 350);
+  --color-type-dragon-subtle: oklch(95% 0.035 85);
+  --color-type-dragon-border: oklch(86% 0.07 85);
+  --color-type-dragon-strong: oklch(42% 0.09 75);
+  --color-type-colorless-subtle: oklch(96% 0.002 250);
+  --color-type-colorless-border: oklch(87% 0.004 250);
+  --color-type-colorless-strong: oklch(40% 0.006 256);
+
   /* ---- Tier 1: primitive radius scale (2 values + full) ------------------ */
-  --radius-field: 0.375rem; /* inputs, chips, card images */
-  --radius-control: 0.375rem; /* logo mark, small controls */
-  --radius-card: 0.75rem; /* cards, panels */
+  --radius-field: 0.5rem; /* inputs, chips, card images */
+  --radius-control: 0.5rem; /* logo mark, small controls */
+  --radius-card: 1rem; /* cards, panels */
   --radius-pill: 9999px; /* pill buttons, badges, avatars */
 
   /* ---- Tier 1: primitive shadow scale (neutral only; never colored) ------ */
@@ -99,7 +150,7 @@
   /* ---- Tier 2: semantic role tokens (pages consume THESE) ---------------- */
 
   /* surfaces */
-  --color-background: oklch(98.6% 0.003 84); /* warm paper page background */
+  --color-background: oklch(98.8% 0.002 250); /* gallery-white page background */
   --color-surface: #ffffff; /* cards, inputs, raised panels */
   --color-surface-muted: var(--color-ink-50); /* footer, subtle fills */
   --color-surface-hover: var(--color-ink-100); /* hover fill on quiet surfaces */
@@ -113,7 +164,7 @@
   --color-foreground-muted: var(--color-ink-600); /* body copy */
   --color-foreground-subtle: var(--color-ink-500); /* captions, metadata */
   --color-foreground-faint: var(--color-ink-400); /* legal fine print */
-  --color-foreground-inverse: oklch(98% 0.004 84); /* text on dark surfaces */
+  --color-foreground-inverse: oklch(98% 0.002 250); /* text on dark surfaces */
   --color-foreground-inverse-muted: var(--color-ink-300);
   --color-foreground-inverse-subtle: var(--color-ink-400);
 

@@ -8,42 +8,48 @@ it looks fine in isolation. Every future agent inherits this system via the
 
 ## Voice
 
-Art-forward gallery product. The card art is the biggest thing on any page;
-chrome is minimal and editorial. One layout primitive repeats across the site:
-the **hairline ledger** — left-aligned content rows separated by 1px
-`border-border` hairlines (How It Works steps, feature lists, pricing
-features, card-detail metadata). Hierarchy comes from spacing, type, and
-dividers, never from nesting boxes inside boxes.
+Art-forward collector's gallery. The card art is the biggest thing on any
+page; the chrome is a neutral gallery wall the art hangs on, and the product
+speaks the game's native color language where type matters (see Color). The
+feel is an energetic collector's tool, not a literary magazine. One layout
+primitive repeats across the site: the **hairline ledger** — left-aligned
+content rows separated by 1px `border-border` hairlines (How It Works steps,
+feature lists, pricing features, card-detail metadata). Hierarchy comes from
+spacing, type, and dividers, never from nesting boxes inside boxes.
 
 ## Type
 
 Two families, self-hosted via `next/font` in `app/layout.tsx`. Never add a
-third.
+third. **No serifs anywhere**: the serif/editorial flavor was evaluated
+(task #47) and rejected for this product; do not reintroduce Fraunces or any
+other serif. Grotesques have no true italic, so the system uses none — the
+contrast axis is weight, not slant.
 
 | Role | Family | Usage |
 | --- | --- | --- |
-| Display | Fraunces (variable, `--font-fraunces`, `font-display`) | H1/H2, wordmark, prices, editorial italic emphasis |
+| Display | Bricolage Grotesque (variable, `--font-bricolage`, `font-display`) | H1/H2, wordmark, prices |
 | Body | IBM Plex Sans (`--font-plex-sans`, `font-sans`, the body default) | Everything else |
 
 Scale (ratio ≥ 1.25 between display steps): `text-display` 4rem / `text-title`
 2.75rem / `text-heading` 2rem / `text-lead` 1.125rem / body 1rem. Headings get
-`text-wrap: balance` globally. Hierarchy inside a step uses weight and the
-display face's light/semibold + italic contrast, not size alone. Numbers that
-line up (counts, prices, page indicators, card numbers) use the `tnum`
-utility (tabular figures).
+`text-wrap: balance` globally. Display headings sit at bold/extrabold; the
+counter-voice is `font-light`, so hierarchy inside a step uses weight extremes
+(light vs extrabold), not size alone and never italics. Numbers that line up
+(counts, prices, page indicators, card numbers) use the `tnum` utility
+(tabular figures).
 
 Banned families stay banned: Inter, Roboto, Open Sans, Lato, Arial, raw
-system stacks, Space Grotesk, Geist.
+system stacks, Space Grotesk, Geist — and now every serif.
 
 ## Color
 
 One dominant + one accent, all OKLCH, defined as two primitive ramps in
 `app/globals.css`:
 
-- **ink** (dominant): a warm near-neutral ramp (hue ~48–84, chroma ≤ 0.013).
-  Carries every surface, all text tiers, borders, and the default dark action
-  (`bg-surface-inverse`). The near-black `ink-950` is the "midnight cinema"
-  stage the hero and Night Gallery sit on.
+- **ink** (dominant): a cool near-neutral gallery ramp (chroma ≤ 0.006), the
+  white-wall chrome the art hangs on. Carries every surface, all text tiers,
+  borders, and the default dark action (`bg-surface-inverse`). The near-black
+  `ink-950` is the "midnight cinema" stage the hero and Night Gallery sit on.
 - **ember** (accent): flame orange sampled from the Charizard showcase art
   that anchors the hero. **Budget: at most 5 placements site-wide**, currently
   1. hero headline emphasis (`text-primary-bright` on the night stage)
@@ -54,22 +60,40 @@ One dominant + one accent, all OKLCH, defined as two primitive ramps in
 
   Spending ember anywhere else requires removing one of these first.
 
+### Energy-type color coding (functional, outside the brand budget)
+
+The game's own color language — Grass green, Fire red, Water blue, Lightning
+yellow, Psychic purple, and the rest — is encoded as **functional** ramps in
+`app/globals.css`: `--color-type-<name>-{subtle,border,strong}` for the 11
+energy types. Strict rule:
+
+- Type colors appear **only** on type-meaningful elements: a badge or chip
+  that names that energy type. Today that is exactly one consumer, the
+  `TypeBadge` primitive (`app/components/ui/TypeBadge.tsx`) on the card-detail
+  ledger. Future type facets/filters may use it too.
+- Never as decoration, section theming, chart-of-the-day accents, hover
+  colors, or anything not literally naming the type. They are data ink, in
+  the same class as the danger/success states.
+- Psychic's purple is the game's color for that type — a functional exception
+  to the no-purple rule below, never a brand or decorative color.
+
 Pages consume only the semantic tier (`--color-surface`, `--color-foreground-*`,
 `--color-border*`, `--color-primary*`); primitives (`ink-600`, `ember-500`)
 never appear in a component. No hex in components, no pure `#000` text, no
-purple/indigo/violet, no gradients (backgrounds, text, or buttons), no
-gradient blobs/glows, no colored box-shadows (shadows are neutral black
-alphas only), no cyan-on-dark.
+purple/indigo/violet as brand or decoration, no gradients (backgrounds, text,
+or buttons), no gradient blobs/glows, no colored box-shadows (shadows are
+neutral black alphas only), no cyan-on-dark.
 
 ## Spacing, radius, shadow
 
 - Spacing: 4px base rhythm through Tailwind's scale; dense grids use tight
   4/8/12 gaps (`gap-x-3 gap-y-6` in the results grid). Page gutter is
   `--spacing-gutter`; content max width is `--container-content` (72rem).
-- Radius is a deliberate scale, exactly three stops: `rounded-field` (6px:
-  inputs, chips, card images), `rounded-card`/`rounded-panel` (12px: panels),
-  `rounded-pill` (full: pill buttons, badges, avatars). No per-component
-  one-off radii; never a thick colored border on one card edge.
+- Radius is a deliberate scale, exactly three stops: `rounded-field` (8px:
+  inputs, chips, card images), `rounded-card`/`rounded-panel` (16px: panels),
+  `rounded-pill` (full: pill buttons, badges, avatars). The rounder stops are
+  the collector's-tool personality (card sleeve, not legal document). No
+  per-component one-off radii; never a thick colored border on one card edge.
 - Shadows: `shadow-card` / `shadow-card-lifted` / `shadow-float`, all neutral.
 
 ## Motion

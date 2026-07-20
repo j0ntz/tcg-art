@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
-import { Fraunces, IBM_Plex_Sans } from "next/font/google";
+import { Bricolage_Grotesque, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 import SiteHeader from "./components/SiteHeader";
 import SiteFooter from "./components/SiteFooter";
 
-// The two-family type system (docs/design-system.md): Fraunces carries display
-// headings, IBM Plex Sans carries everything else. Both self-hosted via
-// next/font; no third family may be added.
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+// The two-family type system (docs/design-system.md): Bricolage Grotesque, a
+// characterful grotesque, carries display headings; IBM Plex Sans carries
+// everything else. No serifs anywhere (product decision, see design-system.md).
+// Both self-hosted via next/font; no third family may be added.
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
   subsets: ["latin"],
   axes: ["opsz"],
 });
@@ -49,7 +50,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fraunces.variable} ${plexSans.variable} h-full antialiased`}
+      className={`${bricolage.variable} ${plexSans.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <SiteHeader />
