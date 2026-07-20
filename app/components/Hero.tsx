@@ -14,12 +14,12 @@ interface HeroProps {
 // placements, see globals.css).
 const Hero: React.FC<HeroProps> = ({ showcase }) => {
   return (
-    <section className="relative overflow-hidden bg-surface-night">
+    <section className="relative overflow-hidden bg-surface-night" data-stage="night">
       <div className="relative mx-auto grid w-full max-w-content gap-12 px-gutter py-16 sm:py-24 lg:grid-cols-2 lg:items-center">
         <div className="flex flex-col gap-6">
-          <h1 className="font-display text-title font-semibold tracking-tight text-foreground-inverse sm:text-display">
+          <h1 className="font-display text-title font-extrabold tracking-tight text-foreground-inverse sm:text-display">
             Find Pokémon cards by{" "}
-            <em className="font-light text-primary-bright">what&apos;s in the art</em>
+            <em className="font-light not-italic text-primary-bright">what&apos;s in the art</em>
           </h1>
 
           <p className="max-w-xl text-lead text-foreground-inverse-muted">
@@ -33,7 +33,7 @@ const Hero: React.FC<HeroProps> = ({ showcase }) => {
               name="q"
               placeholder="Try: surfing pikachu, on the beach, mewtwo…"
               aria-label="Search Pokémon cards"
-              className="flex-1 rounded-pill border border-border-inverse bg-white/10 px-5 py-3 text-foreground-inverse placeholder:text-foreground-inverse-subtle focus:border-border-inverse"
+              className="flex-1 rounded-pill border border-border-inverse bg-surface-night-fill px-5 py-3 text-foreground-inverse placeholder:text-foreground-inverse-subtle focus:border-border-inverse"
             />
             <Button type="submit" variant="accent" size="lg">
               Search Free
@@ -58,7 +58,7 @@ const Hero: React.FC<HeroProps> = ({ showcase }) => {
                 key={card.id}
                 // hero-fan-card adds the scroll-linked fan opening (globals.css);
                 // it animates `translate`, which composes with this transform.
-                className="hero-fan-card absolute top-1/2 left-1/2 w-28 -translate-y-1/2 rounded-field shadow-float ring-1 ring-white/15 sm:w-32 lg:w-44"
+                className="hero-fan-card absolute top-1/2 left-1/2 w-28 -translate-y-1/2 rounded-field shadow-float ring-1 ring-border-inverse sm:w-32 lg:w-44"
                 style={
                   {
                     "--i": index - 2,

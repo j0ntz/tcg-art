@@ -69,13 +69,13 @@ const Pricing: React.FC = () => {
           >
             <div className="flex flex-col gap-1">
               <div className="flex items-baseline gap-3">
-                <h3 className="font-display text-xl font-semibold text-foreground">{tier.name}</h3>
+                <h3 className="font-display text-xl font-bold text-foreground">{tier.name}</h3>
                 {tier.highlight ? (
                   <span className="text-sm font-semibold text-primary">Most popular</span>
                 ) : null}
               </div>
               <p className="flex items-baseline gap-1">
-                <span className="tnum font-display text-4xl font-semibold text-foreground">
+                <span className="tnum font-display text-4xl font-bold text-foreground">
                   {tier.price}
                 </span>
                 <span className="tnum text-sm text-foreground-subtle">{tier.cadence}</span>

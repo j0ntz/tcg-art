@@ -10,21 +10,52 @@
    app/components/ui/*). Change a role here and every page follows.
 
    The palette is ONE dominant + ONE accent:
-   - Dominant: "ink", a warm near-neutral ramp (hue ~50-80, whisper of chroma)
-     that carries every surface, text tier, and the default dark action color.
+   - Dominant: "ink", a cool near-neutral gallery ramp (whisper of chroma) that
+     carries every surface, text tier, and the default dark action color: the
+     white-wall chrome the card art hangs on.
    - Accent: "ember", a flame orange drawn from the Charizard showcase art that
      anchors the landing hero. Budgeted to <= 5 placements site-wide:
      1) the hero headline emphasis, 2) the primary CTA fill, 3) the focus ring,
      4) the pricing "Most popular" marker, 5) inline text links on hover.
      Do NOT spend it anywhere else without removing a placement first.
 
+   FUNCTIONAL color, outside the brand budget: the "type" ramps below encode
+   the game's own energy-type language (Grass green, Fire red, Water blue...).
+   STRICT RULE: type colors appear ONLY on type-meaningful elements (a badge or
+   chip naming that energy type), NEVER as decoration, section theming, or
+   generic accents. They are data ink, like the danger/success states.
+
    Tier 1 — PRIMITIVES (ramps, spacing, radius, shadow, type scale). Named by
      what they ARE (ember-600, ink-900). Pages should NOT consume these.
    Tier 2 — SEMANTIC ROLES (primary, surface, border, foreground, ...). Named
      by what they DO. Pages consume THESE.
 
+   TWO THEMES, ONE SEMANTIC TIER. Every semantic role carries BOTH a light and
+   a dark value via the CSS `light-dark()` function; which one resolves is
+   decided purely by the `color-scheme` on <html> (set from the theme cookie in
+   app/layout.tsx, see the ":root theme switch" block near the bottom of this
+   file). Consequences worth knowing:
+   - Adding a semantic role means writing light-dark(light, dark). A one-value
+     semantic role is a bug unless it is a STAGE token (see below).
+   - Components stay theme-agnostic: there are no `dark:` utilities anywhere in
+     the app, and there must not be. If a component needs a different color in
+     dark, that difference belongs in a token here.
+   - Native chrome (form controls, scrollbars, caret) follows `color-scheme`
+     for free, so the dark theme is complete without extra CSS.
+   - Hardcoded colors in components are banned outright (no hex, no
+     bg-white/text-black, no Tailwind palette shades); they cannot theme.
+
+   STAGE tokens are the deliberate exception: the midnight hero and the Night
+   Gallery are a designed near-black *set* the card art hangs on, not a
+   consequence of the user's theme. They render identically in both themes, so
+   their tokens (`surface-night*`, `foreground-inverse*`, `border-inverse`,
+   `surface-mat`, `foreground-on-mat*`, `primary-bright`) are intentionally
+   single-valued. Do not "fix" them with light-dark().
+
    Radius is a deliberate SCALE, not one value everywhere:
-     field (6px, inputs/chips/card images) / card (12px, panels) / pill (full).
+     field (8px, inputs/chips/card images) / card (16px, panels) / pill (full).
+     The rounder stops are the collector's-tool personality: closer to a card
+     sleeve than to a legal document.
 
    `@theme static` forces every token to emit as a CSS variable even when only
    the semantic tier references it, so the primitive -> semantic var() chain
@@ -32,27 +63,29 @@
    ========================================================================== */
 
 @theme inline {
-  /* Body: IBM Plex Sans. Display: Fraunces. Two families total, both loaded
-     self-hosted via next/font in app/layout.tsx. */
+  /* Body: IBM Plex Sans. Display: Bricolage Grotesque. Two families total,
+     both loaded self-hosted via next/font in app/layout.tsx. No serifs
+     anywhere: the serif/editorial flavor is rejected for this product. */
   --font-sans: var(--font-plex-sans);
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-bricolage);
 }
 
 @theme static {
   /* ---- Tier 1: primitive palette ramps ---------------------------------- */
 
-  /* ink: warm near-neutral ramp for text, surfaces, and borders */
-  --color-ink-50: oklch(97.6% 0.004 84);
-  --color-ink-100: oklch(95.6% 0.005 84);
-  --color-ink-200: oklch(91.2% 0.006 80);
-  --color-ink-300: oklch(86.2% 0.007 78);
-  --color-ink-400: oklch(70.4% 0.01 72);
-  --color-ink-500: oklch(55.2% 0.012 66);
-  --color-ink-600: oklch(44.4% 0.013 60);
-  --color-ink-700: oklch(37% 0.012 56);
-  --color-ink-800: oklch(27.6% 0.01 52);
-  --color-ink-900: oklch(21.4% 0.009 48);
-  --color-ink-950: oklch(15.2% 0.008 48);
+  /* ink: cool near-neutral gallery ramp for text, surfaces, and borders.
+     White-wall chrome, not warm paper; chroma stays a whisper (<= 0.006). */
+  --color-ink-50: oklch(97.7% 0.002 250);
+  --color-ink-100: oklch(95.7% 0.003 250);
+  --color-ink-200: oklch(91.3% 0.004 250);
+  --color-ink-300: oklch(86.3% 0.005 250);
+  --color-ink-400: oklch(70.5% 0.006 252);
+  --color-ink-500: oklch(55.3% 0.006 254);
+  --color-ink-600: oklch(44.5% 0.006 256);
+  --color-ink-700: oklch(37% 0.006 256);
+  --color-ink-800: oklch(27.7% 0.005 258);
+  --color-ink-900: oklch(21.5% 0.005 258);
+  --color-ink-950: oklch(15.3% 0.004 260);
 
   /* ember: the accent ramp, sampled from flame-orange card art */
   --color-ember-50: oklch(96.4% 0.02 62);
@@ -66,21 +99,74 @@
   --color-ember-800: oklch(42% 0.138 33);
   --color-ember-900: oklch(35.8% 0.108 33);
 
-  /* state ramps (only the steps the UI uses) */
+  /* state ramps (only the steps the UI uses; the -dark steps are the dark
+     theme's counterparts, lifted so they read on a near-black surface) */
+  --color-danger-400: oklch(72% 0.16 25);
   --color-danger-500: oklch(63.7% 0.237 25.331);
   --color-danger-600: oklch(57.7% 0.245 27.325);
   --color-success-100: oklch(96.2% 0.044 156.743);
+  --color-success-900: oklch(30% 0.05 157);
+
+  /* Energy-type ramps: FUNCTIONAL color coding in the game's native language.
+     Three steps per type: -subtle (chip fill), -border (chip hairline),
+     -strong (chip text; contrast-safe on the -subtle fill). Consumed ONLY by
+     the TypeBadge primitive (app/components/ui/TypeBadge.tsx); never as
+     decoration. Psychic's purple is the game's color for that type, a
+     functional exception to the no-purple brand rule, not a brand color.
+
+     Both themes: the light triple is a pale wash with dark type-hued text; the
+     dark triple is a deep wash with light type-hued text. The hue is what
+     carries the meaning, so the hue is what stays constant across themes; only
+     lightness and chroma flip. Every -strong/-subtle pair clears 4.5:1. */
+  --color-type-grass-subtle: light-dark(oklch(95% 0.045 145), oklch(27% 0.045 145));
+  --color-type-grass-border: light-dark(oklch(86% 0.09 145), oklch(40% 0.09 145));
+  --color-type-grass-strong: light-dark(oklch(40% 0.11 145), oklch(87% 0.11 145));
+  --color-type-fire-subtle: light-dark(oklch(95% 0.035 30), oklch(27% 0.05 30));
+  --color-type-fire-border: light-dark(oklch(86% 0.08 30), oklch(41% 0.11 30));
+  --color-type-fire-strong: light-dark(oklch(44% 0.16 30), oklch(85% 0.08 40));
+  --color-type-water-subtle: light-dark(oklch(95% 0.03 245), oklch(27% 0.045 250));
+  --color-type-water-border: light-dark(oklch(86% 0.07 245), oklch(41% 0.09 248));
+  --color-type-water-strong: light-dark(oklch(42% 0.13 250), oklch(86% 0.06 240));
+  --color-type-lightning-subtle: light-dark(oklch(96% 0.05 95), oklch(28% 0.05 95));
+  --color-type-lightning-border: light-dark(oklch(88% 0.1 95), oklch(42% 0.09 92));
+  --color-type-lightning-strong: light-dark(oklch(45% 0.1 85), oklch(89% 0.12 95));
+  --color-type-psychic-subtle: light-dark(oklch(95% 0.03 310), oklch(27% 0.05 310));
+  --color-type-psychic-border: light-dark(oklch(87% 0.07 310), oklch(41% 0.1 310));
+  --color-type-psychic-strong: light-dark(oklch(42% 0.14 310), oklch(86% 0.08 310));
+  --color-type-fighting-subtle: light-dark(oklch(95% 0.03 55), oklch(27% 0.045 50));
+  --color-type-fighting-border: light-dark(oklch(86% 0.06 55), oklch(41% 0.08 50));
+  --color-type-fighting-strong: light-dark(oklch(41% 0.1 50), oklch(86% 0.07 55));
+  --color-type-darkness-subtle: light-dark(oklch(94% 0.005 280), oklch(26% 0.015 280));
+  --color-type-darkness-border: light-dark(oklch(84% 0.01 280), oklch(40% 0.025 280));
+  --color-type-darkness-strong: light-dark(oklch(28% 0.02 280), oklch(85% 0.02 280));
+  --color-type-metal-subtle: light-dark(oklch(95% 0.004 260), oklch(27% 0.008 260));
+  --color-type-metal-border: light-dark(oklch(85% 0.008 260), oklch(41% 0.012 260));
+  --color-type-metal-strong: light-dark(oklch(42% 0.02 260), oklch(86% 0.008 260));
+  --color-type-fairy-subtle: light-dark(oklch(95% 0.025 350), oklch(27% 0.045 350));
+  --color-type-fairy-border: light-dark(oklch(87% 0.06 350), oklch(41% 0.09 350));
+  --color-type-fairy-strong: light-dark(oklch(45% 0.14 350), oklch(87% 0.07 350));
+  --color-type-dragon-subtle: light-dark(oklch(95% 0.035 85), oklch(27% 0.04 80));
+  --color-type-dragon-border: light-dark(oklch(86% 0.07 85), oklch(41% 0.075 80));
+  --color-type-dragon-strong: light-dark(oklch(42% 0.09 75), oklch(86% 0.07 85));
+  --color-type-colorless-subtle: light-dark(oklch(96% 0.002 250), oklch(27% 0.004 256));
+  --color-type-colorless-border: light-dark(oklch(87% 0.004 250), oklch(41% 0.006 256));
+  --color-type-colorless-strong: light-dark(oklch(40% 0.006 256), oklch(86% 0.004 256));
 
   /* ---- Tier 1: primitive radius scale (2 values + full) ------------------ */
-  --radius-field: 0.375rem; /* inputs, chips, card images */
-  --radius-control: 0.375rem; /* logo mark, small controls */
-  --radius-card: 0.75rem; /* cards, panels */
+  --radius-field: 0.5rem; /* inputs, chips, card images */
+  --radius-control: 0.5rem; /* logo mark, small controls */
+  --radius-card: 1rem; /* cards, panels */
   --radius-pill: 9999px; /* pill buttons, badges, avatars */
 
-  /* ---- Tier 1: primitive shadow scale (neutral only; never colored) ------ */
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-card-lifted: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-float: 0 20px 25px -5px rgb(0 0 0 / 0.18), 0 8px 10px -6px rgb(0 0 0 / 0.12);
+  /* ---- Tier 1: primitive shadow scale (neutral only; never colored) ------
+     The scrims are plain custom properties declared on :root below, not theme
+     tokens, so they never generate a `shadow-scrim` utility. Dark deepens them:
+     a 10% black shadow is invisible against a near-black page, so the dark
+     theme leans on both a deeper scrim and the lighter `surface` step for
+     elevation. */
+  --shadow-card: 0 1px 3px 0 var(--scrim-soft), 0 1px 2px -1px var(--scrim-soft);
+  --shadow-card-lifted: 0 4px 6px -1px var(--scrim-soft), 0 2px 4px -2px var(--scrim-soft);
+  --shadow-float: 0 20px 25px -5px var(--scrim-deep), 0 8px 10px -6px var(--scrim-medium);
 
   /* ---- Tier 1: primitive type scale (ratio >= 1.25 between steps) -------- */
   --text-display: 4rem; /* hero headline (large breakpoint) */
@@ -96,54 +182,128 @@
   --spacing-gutter: 1rem; /* page horizontal padding (= px-4) */
   --container-content: 72rem; /* content max width (= max-w-6xl) */
 
-  /* ---- Tier 2: semantic role tokens (pages consume THESE) ---------------- */
+  /* ---- Tier 2: semantic role tokens (pages consume THESE) ----------------
+     Every role below is light-dark(LIGHT, DARK) unless it is a STAGE token
+     (see the header): stage tokens are single-valued on purpose.
+
+     The dark theme is designed, not inverted. Its ink is a lifted near-black
+     (never #000), `surface` sits a step ABOVE `background` so panels read as
+     elevated where shadows cannot, and every text tier was picked to clear
+     4.5:1 on `surface`. */
 
   /* surfaces */
-  --color-background: oklch(98.6% 0.003 84); /* warm paper page background */
-  --color-surface: #ffffff; /* cards, inputs, raised panels */
-  --color-surface-muted: var(--color-ink-50); /* footer, subtle fills */
-  --color-surface-hover: var(--color-ink-100); /* hover fill on quiet surfaces */
-  --color-surface-inverse: var(--color-ink-900); /* dark solid buttons */
-  --color-surface-inverse-hover: var(--color-ink-700);
-  --color-surface-night: var(--color-ink-950); /* the midnight hero stage */
+  --color-background: light-dark(oklch(98.8% 0.002 250), oklch(18% 0.005 260));
+  --color-surface: light-dark(oklch(100% 0 0), oklch(22.5% 0.005 258)); /* cards, inputs, panels */
+  --color-surface-muted: light-dark(var(--color-ink-50), oklch(20% 0.005 259)); /* footer, subtle fills */
+  --color-surface-hover: light-dark(var(--color-ink-100), oklch(28% 0.006 258)); /* hover on quiet surfaces */
+  /* The maximum-contrast solid action: dark ink on light chrome, light ink on
+     dark chrome. It flips with the theme, unlike the stage tokens. */
+  --color-surface-inverse: light-dark(var(--color-ink-900), var(--color-ink-100));
+  --color-surface-inverse-hover: light-dark(var(--color-ink-700), var(--color-ink-300));
+  --color-foreground-on-inverse: light-dark(oklch(98% 0.002 250), var(--color-ink-950));
 
   /* foreground text, ordered most -> least prominent */
-  --color-foreground: var(--color-ink-900); /* headings, primary text */
-  --color-foreground-secondary: var(--color-ink-700); /* labels, dense lists */
-  --color-foreground-muted: var(--color-ink-600); /* body copy */
-  --color-foreground-subtle: var(--color-ink-500); /* captions, metadata */
-  --color-foreground-faint: var(--color-ink-400); /* legal fine print */
-  --color-foreground-inverse: oklch(98% 0.004 84); /* text on dark surfaces */
-  --color-foreground-inverse-muted: var(--color-ink-300);
-  --color-foreground-inverse-subtle: var(--color-ink-400);
+  --color-foreground: light-dark(var(--color-ink-900), oklch(96% 0.003 250));
+  --color-foreground-secondary: light-dark(var(--color-ink-700), oklch(88% 0.004 252));
+  --color-foreground-muted: light-dark(var(--color-ink-600), oklch(78% 0.006 252));
+  --color-foreground-subtle: light-dark(oklch(50% 0.006 254), oklch(68% 0.006 254));
+  --color-foreground-faint: light-dark(oklch(56.5% 0.006 254), oklch(62% 0.006 254));
 
   /* borders */
-  --color-border: var(--color-ink-200); /* default hairline */
-  --color-border-strong: var(--color-ink-300); /* inputs, outline buttons */
-  --color-border-inverse: oklch(100% 0 0 / 0.16); /* hairlines on the night stage */
+  --color-border: light-dark(var(--color-ink-200), oklch(31% 0.006 258));
+  --color-border-strong: light-dark(var(--color-ink-300), oklch(40% 0.006 256));
 
-  /* accent / primary action (the ember budget lives here) */
-  --color-primary: var(--color-ember-600);
-  --color-primary-hover: var(--color-ember-700);
-  --color-primary-foreground: #ffffff; /* text on a solid primary fill */
-  --color-primary-muted: var(--color-ember-50); /* faint accent-tinted fill */
-  --color-primary-subtle: var(--color-ember-100); /* accent chip fill */
-  --color-primary-subtle-foreground: var(--color-ember-800);
-  --color-primary-border: var(--color-ember-200);
-  --color-primary-border-strong: var(--color-ember-300);
-  --color-primary-bright: var(--color-ember-400); /* accent text on the night stage */
+  /* accent / primary action (the ember budget lives here). Dark lifts the fill
+     one ramp step to ember-500 and pairs it with near-black text, which reads
+     better on a dark page than white-on-ember and clears 6:1. */
+  --color-primary: light-dark(var(--color-ember-600), var(--color-ember-500));
+  --color-primary-hover: light-dark(var(--color-ember-700), var(--color-ember-400));
+  --color-primary-foreground: light-dark(oklch(100% 0 0), var(--color-ink-950));
+  --color-primary-muted: light-dark(var(--color-ember-50), oklch(27% 0.048 40));
+  --color-primary-subtle: light-dark(var(--color-ember-100), oklch(32% 0.07 40));
+  --color-primary-subtle-foreground: light-dark(var(--color-ember-800), oklch(85% 0.09 55));
+  --color-primary-border: light-dark(var(--color-ember-200), oklch(38% 0.085 38));
+  --color-primary-border-strong: light-dark(var(--color-ember-300), oklch(47% 0.115 38));
 
-  /* focus ring */
-  --color-ring: var(--color-ember-500);
+  /* focus ring: brighter in dark so the 2px outline survives a dark surround */
+  --color-ring: light-dark(var(--color-ember-500), var(--color-ember-400));
 
   /* feedback states */
-  --color-danger: var(--color-danger-600); /* error text */
-  --color-danger-border: var(--color-danger-500); /* invalid field border */
-  --color-success-subtle: var(--color-success-100); /* success indicator fill */
+  --color-danger: light-dark(var(--color-danger-600), var(--color-danger-400));
+  --color-danger-border: light-dark(var(--color-danger-500), var(--color-danger-400));
+  --color-success-subtle: light-dark(var(--color-success-100), var(--color-success-900));
+
+  /* ---- STAGE tokens: the designed near-black set, identical in both themes.
+     The midnight hero and the Night Gallery are a fixed exhibition space, not a
+     reflection of the user's theme, so these deliberately have ONE value. */
+  --color-surface-night: var(--color-ink-950); /* the midnight stage itself */
+  --color-surface-night-fill: oklch(100% 0 0 / 0.1); /* quiet fill on the stage */
+  --color-surface-night-frame: var(--color-ink-900); /* the gallery picture frame */
+  --color-surface-mat: oklch(100% 0 0); /* the print mat / placard inside a frame */
+  --color-foreground-inverse: oklch(98% 0.002 250); /* text on the stage */
+  --color-foreground-inverse-muted: var(--color-ink-300);
+  --color-foreground-inverse-subtle: var(--color-ink-400);
+  --color-foreground-on-mat: var(--color-ink-900); /* placard text on the mat */
+  --color-foreground-on-mat-subtle: oklch(50% 0.006 254);
+  --color-foreground-on-mat-faint: oklch(56.5% 0.006 254);
+  --color-border-inverse: oklch(100% 0 0 / 0.16); /* hairlines on the stage */
+  --color-primary-bright: var(--color-ember-400); /* accent text on the stage */
 
   /* semantic radius aliases */
   --radius-input: var(--radius-field);
   --radius-panel: var(--radius-card);
+}
+
+/* =============================================================================
+   :root theme switch — the ONLY place a theme is selected.
+
+   `color-scheme` drives every light-dark() token above AND the browser's own
+   chrome (form controls, scrollbars, caret, the canvas behind the page), so
+   one property switches the whole app.
+
+   - No `data-theme` attribute = follow the system. `light dark` means the UA
+     resolves prefers-color-scheme for us, which is why switching the OS theme
+     re-themes the page live with zero JS listeners.
+   - `data-theme="light" | "dark"` = the user's explicit override, rendered
+     SERVER-SIDE from the `theme` cookie in app/layout.tsx. Because the
+     attribute is in the initial HTML, the first paint is already correct:
+     no flash of the wrong theme and no render-blocking inline script.
+
+   LOAD-BEARING BUILD CONFIG: the `browserslist` field in package.json is what
+   keeps light-dark() in the output. Tailwind v4 compiles this file with
+   Lightning CSS, whose default targets (Chrome 111 / Safari 16.4) predate
+   light-dark(); at those targets it silently DOWNLEVELS every token to its
+   light branch and strips these color-scheme rules, which ships a site with no
+   dark theme and no build error. Do not remove or widen that browserslist
+   below Chrome 123 / Safari 17.5 / Firefox 120.
+   ========================================================================== */
+:root {
+  color-scheme: light dark;
+
+  /* Shadow scrims (see --shadow-* above). Plain custom properties, not theme
+     tokens, so they stay out of the utility namespace. */
+  --scrim-soft: light-dark(rgb(0 0 0 / 0.1), rgb(0 0 0 / 0.55));
+  --scrim-medium: light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.6));
+  --scrim-deep: light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.7));
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* A theme switch must be INSTANT, never animated. Plenty of elements carry
+   `transition-colors` for their hover states; without this, flipping the theme
+   cross-fades every one of them over ~150ms while untransitioned backgrounds
+   snap immediately, so the page spends a beat as light-text-on-light-surface.
+   ThemeToggle sets this attribute for exactly one frame around the change. */
+:root[data-theme-switching] *,
+:root[data-theme-switching] *::before,
+:root[data-theme-switching] *::after {
+  transition: none !important;
 }
 
 body {

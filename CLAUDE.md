@@ -34,25 +34,47 @@ Apply to every `.ts`/`.tsx` edit:
 token source of truth; `docs/research/anti-slop-ui.md` lists the banned
 patterns, which are merge gates. The short version every UI edit must honor:
 
-- Two typefaces only: Fraunces (display, `font-display`) + IBM Plex Sans
-  (body). Never add a family; never reintroduce Inter/Roboto/Geist/system
-  stacks.
-- One dominant (warm "ink" neutrals) + one accent ("ember" orange), OKLCH
-  tokens only. The ember accent has a hard budget of 5 placements site-wide
-  (listed in globals.css); do not spend it without removing a placement.
-  Components consume semantic tokens (`surface`, `foreground-*`, `border`,
-  `primary`), never primitives or hex.
+- Two typefaces only: Bricolage Grotesque (display, `font-display`) + IBM
+  Plex Sans (body). Never add a family; never reintroduce
+  Inter/Roboto/Geist/system stacks. NO SERIFS anywhere (product decision:
+  the serif/editorial flavor is rejected); no italics either — the contrast
+  axis is weight (light vs bold/extrabold), not slant.
+- One dominant (cool "ink" gallery neutrals) + one accent ("ember" orange),
+  OKLCH tokens only. The ember accent has a hard budget of 5 placements
+  site-wide (listed in globals.css); do not spend it without removing a
+  placement. Components consume semantic tokens (`surface`, `foreground-*`,
+  `border`, `primary`), never primitives or hex.
+- **Light and dark are both first-class**, and the default is the user's
+  system preference. Every semantic token is `light-dark(light, dark)` in
+  `globals.css`, selected by `color-scheme` on `<html>` (no attribute =
+  system; `data-theme="light"|"dark"` = the cookie-backed override the server
+  stamps). Therefore: NO hardcoded colors in components (no hex, no
+  `bg-white`/`text-black`, no Tailwind palette shades), NO `dark:` utilities,
+  and a new semantic token needs BOTH values. The only single-valued tokens
+  are the fixed near-black STAGE set (`surface-night*`, `foreground-inverse*`,
+  `border-inverse`, `surface-mat`, `foreground-on-mat*`, `primary-bright`)
+  used by the hero, Night Gallery, and zoom lightbox. Card art is never
+  filtered or tinted by either theme.
+- `package.json`'s `browserslist` is load-bearing: below Chrome 123 / Safari
+  17.5 Lightning CSS silently downlevels every token to its light branch,
+  killing the dark theme with no build error. Do not remove or lower it.
+- Energy-type colors (`--color-type-*`) are FUNCTIONAL data ink: they may
+  appear only on elements naming that energy type (the `TypeBadge`
+  primitive, future type facets), never as decoration or theming. Psychic
+  purple is a functional exception to the no-purple rule, not a brand color.
 - No gradients, glows, colored shadows, badges/kickers above H1s, icon-grid
   feature cards, emoji-as-icons, cards-in-cards, ALL-CAPS letter-spaced
   labels, or centered-everything. Layout voice is the left-aligned hairline
   ledger.
-- Radius scale is exactly field (6px) / card (12px) / pill; shadows neutral.
+- Radius scale is exactly field (8px) / card (16px) / pill; shadows neutral.
 - Motion: interaction-tied micro-transitions plus the one scroll-linked hero
   fan; no load/scroll-in reveals or staggers; respect reduced motion.
 - States first: any new data surface ships loading/empty/error designs and
   keeps the global `:focus-visible` ring (no `outline-none`).
-- Vision loop: screenshot desktop+mobile (plus states), audit against the
-  banned list, fix, re-screenshot, before calling UI work done.
+- Vision loop: screenshot desktop+mobile (plus states) IN BOTH THEMES, audit
+  against the banned list, fix, re-screenshot, before calling UI work done.
+  `npm run theme:flows` (against a running dev server) automates the theme
+  half: contrast, un-tinted art, persistence, no-flash, mobile header.
 
 Stack conventions (locked in Phase 0; revisit as the app grows):
 

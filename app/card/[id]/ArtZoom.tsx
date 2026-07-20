@@ -61,13 +61,14 @@ const ArtZoom: React.FC<ArtZoomProps> = ({ name, imageLarge }) => {
           className="fixed inset-0 z-50 flex items-center justify-center bg-surface-night/95 p-4"
           onClick={() => setOpen(false)}
           data-testid="art-zoom-overlay"
+          data-stage="night"
         >
           <button
             ref={closeRef}
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Close zoom"
-            className="absolute right-4 top-4 rounded-pill border border-border-inverse px-4 py-2 text-sm font-medium text-foreground-inverse transition-colors hover:bg-white/10"
+            className="absolute right-4 top-4 rounded-pill border border-border-inverse px-4 py-2 text-sm font-medium text-foreground-inverse transition-colors hover:bg-surface-night-fill"
           >
             Close ✕
           </button>
