@@ -41,7 +41,7 @@ const AccountPage: React.FC = async () => {
             className="rounded-pill"
           />
         ) : (
-          <span className="flex h-16 w-16 items-center justify-center rounded-pill bg-surface-inverse font-display text-2xl font-bold text-primary-foreground">
+          <span className="flex h-16 w-16 items-center justify-center rounded-pill bg-surface-inverse font-display text-2xl font-bold text-foreground-on-inverse">
             {displayName.charAt(0).toUpperCase()}
           </span>
         )}

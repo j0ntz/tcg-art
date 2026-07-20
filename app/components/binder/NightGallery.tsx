@@ -32,10 +32,10 @@ const NightGallery: React.FC<NightGalleryProps> = ({ entries }) => (
           <figure className="flex w-full max-w-[300px] flex-col items-center">
             <Link
               href={`/card/${entry.card.id}`}
-              className="block w-full rounded-field bg-surface-inverse p-1 shadow-float transition-transform motion-safe:hover:-translate-y-1"
+              className="block w-full rounded-field bg-surface-night-frame p-1 shadow-float transition-transform motion-safe:hover:-translate-y-1"
             >
               {/* White mat between frame and art, like a real print. */}
-              <span className="block rounded-[4px] bg-surface p-2">
+              <span className="block rounded-[4px] bg-surface-mat p-2">
                 <Image
                   src={entry.card.images.large}
                   alt={entry.card.name}
@@ -46,16 +46,16 @@ const NightGallery: React.FC<NightGalleryProps> = ({ entries }) => (
                 />
               </span>
             </Link>
-            <figcaption className="mt-4 w-fit max-w-full rounded-field bg-surface px-4 py-2.5 text-left shadow-card">
-              <p className="text-sm text-foreground">
+            <figcaption className="mt-4 w-fit max-w-full rounded-field bg-surface-mat px-4 py-2.5 text-left shadow-card">
+              <p className="text-sm text-foreground-on-mat">
                 <span className="font-display font-semibold">{entry.card.name}</span>
-                <span className="text-foreground-subtle">, {entry.card.set.name}</span>
+                <span className="text-foreground-on-mat-subtle">, {entry.card.set.name}</span>
               </p>
-              <p className="mt-0.5 text-xs text-foreground-subtle">
+              <p className="mt-0.5 text-xs text-foreground-on-mat-subtle">
                 {entry.card.artist != null ? `Art by ${entry.card.artist}` : "Artist unknown"}
                 {entry.card.rarity != null ? ` · ${entry.card.rarity}` : ""}
               </p>
-              <p className="tnum mt-0.5 text-xs text-foreground-faint">
+              <p className="tnum mt-0.5 text-xs text-foreground-on-mat-faint">
                 Added {entry.acquiredLabel}
                 {entry.quantity > 1 ? ` · ×${entry.quantity}` : ""}
               </p>

@@ -67,7 +67,7 @@ const ArtZoom: React.FC<ArtZoomProps> = ({ name, imageLarge }) => {
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Close zoom"
-            className="absolute right-4 top-4 rounded-pill border border-border-inverse px-4 py-2 text-sm font-medium text-foreground-inverse transition-colors hover:bg-white/10"
+            className="absolute right-4 top-4 rounded-pill border border-border-inverse px-4 py-2 text-sm font-medium text-foreground-inverse transition-colors hover:bg-surface-night-fill"
           >
             Close ✕
           </button>

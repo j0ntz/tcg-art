@@ -76,6 +76,9 @@ energy types. Strict rule:
   the same class as the danger/success states.
 - Psychic's purple is the game's color for that type — a functional exception
   to the no-purple rule below, never a brand or decorative color.
+- Each type has a light and a dark triple. The **hue is what carries the
+  meaning, so the hue is constant across themes**; only lightness and chroma
+  flip (pale wash + dark text in light, deep wash + light text in dark).
 
 Pages consume only the semantic tier (`--color-surface`, `--color-foreground-*`,
 `--color-border*`, `--color-primary*`); primitives (`ink-600`, `ember-500`)
@@ -83,6 +86,71 @@ never appear in a component. No hex in components, no pure `#000` text, no
 purple/indigo/violet as brand or decoration, no gradients (backgrounds, text,
 or buttons), no gradient blobs/glows, no colored box-shadows (shadows are
 neutral black alphas only), no cyan-on-dark.
+
+## Themes: light and dark are both first-class
+
+The site ships **two complete palettes**. Neither is a derivative of the other:
+light is the landed gallery-white skin, dark is designed for a dark room (a
+lifted near-black, never `#000`, with `surface` a step *above* `background` so
+panels read as elevated where shadows cannot).
+
+**How a theme is selected.** Every semantic role in `app/globals.css` is
+`light-dark(LIGHT, DARK)`, and the resolution is driven by one property,
+`color-scheme` on `<html>`:
+
+| `<html>` | `color-scheme` | Result |
+| --- | --- | --- |
+| no `data-theme` | `light dark` | follows the OS (**the default**) |
+| `data-theme="light"` | `light` | explicit light |
+| `data-theme="dark"` | `dark` | explicit dark |
+
+`app/layout.tsx` reads the `theme` cookie server-side and stamps the attribute
+into the initial HTML, so the first paint is already correct: **no flash of the
+wrong theme and no render-blocking inline script**. System mode stamps *no*
+attribute, which is why OS theme changes re-theme a live page with zero JS.
+`ThemeToggle` (header) writes cookie + attribute and freezes transitions for the
+frame of the flip, so switching repaints at once instead of cross-fading through
+a half-themed state.
+
+### Rules for every UI change
+
+1. **No hardcoded colors in components.** No hex, no `bg-white`/`text-black`, no
+   Tailwind palette shades (`bg-slate-800`), no raw `oklch()` outside
+   `globals.css`. A hardcoded color cannot theme, so it is a merge-blocking bug.
+   Consume the semantic tier only. The single sanctioned exception is the
+   Google "G" mark in `app/components/auth/GoogleButton.tsx`: those four hexes
+   are a third-party brand asset that must NOT change with the theme.
+2. **No `dark:` utilities.** There are none in the app and there must not be. A
+   color that needs to differ in dark differs in the *token*, not the markup.
+3. **A new semantic role needs both values.** A single-valued `--color-*` is a
+   bug unless it is a stage token (below).
+4. **Stage tokens are deliberately single-valued.** The midnight hero, the Night
+   Gallery, and the zoom lightbox are a fixed near-black exhibition space, not a
+   reflection of the user's theme: `surface-night*`, `foreground-inverse*`,
+   `border-inverse`, `surface-mat`, `foreground-on-mat*`, `primary-bright`.
+   Inside a frame, text follows the *mat* (`foreground-on-mat`), never the theme
+   — that is the trap that renders white-on-white.
+5. **Art is never themed.** Card images carry no filter, tint, or dimming in
+   either theme. The art is the product.
+6. **Both themes ship together.** A new surface is not done until it has been
+   audited in light *and* dark.
+
+### The build config is load-bearing
+
+The `browserslist` field in `package.json` (Chrome 123 / Edge 123 / Firefox 120
+/ Safari 17.5) is what keeps `light-dark()` in the compiled CSS. Tailwind v4
+compiles through Lightning CSS, and at its default targets it silently
+**downlevels every token to its light branch and strips the `color-scheme`
+rules** — shipping a site with no dark theme and no build error. Do not remove
+or lower it.
+
+### Verification
+
+`npm run theme:flows` (against a running dev server) is the gate: it asserts the
+system default, live OS-change reactivity, toggle round-trip and persistence
+across reload, server-stamped no-flash markup, a one-line mobile header, and —
+on every surface in both themes — that no text falls under 3:1 and no card image
+is filtered. It writes the `docs/screenshots/issue-57-*` proof set.
 
 ## Spacing, radius, shadow
 

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Bricolage_Grotesque, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
+import { THEME_COOKIE, isThemeChoice, themeAttribute, type ThemeChoice } from "@/lib/theme";
 import SiteHeader from "./components/SiteHeader";
 import SiteFooter from "./components/SiteFooter";
 
@@ -42,18 +44,28 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+// The theme is resolved on the SERVER from the `theme` cookie and stamped onto
+// <html> before the document is sent, so the very first paint uses the right
+// palette: no flash of the wrong theme and no render-blocking inline script.
+// The default ("system") stamps NO attribute, leaving `color-scheme: light dark`
+// in globals.css to resolve prefers-color-scheme natively (lib/theme.ts).
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const stored = cookieStore.get(THEME_COOKIE)?.value;
+  const themeChoice: ThemeChoice = isThemeChoice(stored) ? stored : "system";
+
   return (
     <html
       lang="en"
+      data-theme={themeAttribute(themeChoice)}
       className={`${bricolage.variable} ${plexSans.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
-        <SiteHeader />
+        <SiteHeader themeChoice={themeChoice} />
         <div className="flex flex-1 flex-col">{children}</div>
         <SiteFooter />
       </body>

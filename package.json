@@ -2,6 +2,12 @@
   "name": "tcg-art",
   "version": "0.1.0",
   "private": true,
+  "browserslist": [
+    "chrome >= 123",
+    "edge >= 123",
+    "firefox >= 120",
+    "safari >= 17.5"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,6 +16,7 @@
     "auth:flows": "node orchestration/playwright/auth-flows.mjs",
     "binder:flows": "node orchestration/playwright/binder-flows.mjs",
     "art:flows": "node orchestration/playwright/art-search-flows.mjs",
+    "theme:flows": "node orchestration/playwright/theme-flows.mjs",
     "art:index": "node scripts/index-card-art.mjs"
   },
   "dependencies": {

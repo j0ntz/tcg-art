@@ -133,7 +133,7 @@ const SearchPage = async ({ searchParams }: SearchProps) => {
         aria-current={mode === "art" ? "page" : undefined}
         className={
           mode === "art"
-            ? "rounded-pill bg-surface-inverse px-4 py-1.5 font-medium text-primary-foreground"
+            ? "rounded-pill bg-surface-inverse px-4 py-1.5 font-medium text-foreground-on-inverse"
             : "rounded-pill border border-border-strong px-4 py-1.5 font-medium text-foreground-muted transition-colors hover:text-foreground"
         }
       >
@@ -144,7 +144,7 @@ const SearchPage = async ({ searchParams }: SearchProps) => {
         aria-current={mode === "name" ? "page" : undefined}
         className={
           mode === "name"
-            ? "rounded-pill bg-surface-inverse px-4 py-1.5 font-medium text-primary-foreground"
+            ? "rounded-pill bg-surface-inverse px-4 py-1.5 font-medium text-foreground-on-inverse"
             : "rounded-pill border border-border-strong px-4 py-1.5 font-medium text-foreground-muted transition-colors hover:text-foreground"
         }
       >

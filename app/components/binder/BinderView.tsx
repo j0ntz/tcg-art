@@ -49,7 +49,7 @@ const BinderView: React.FC<BinderViewProps> = ({ entries, initialMode }) => {
             className={cn(
               "rounded-pill px-3 py-1.5 text-sm font-medium transition-colors sm:px-4",
               mode === candidate
-                ? "bg-surface-inverse text-primary-foreground shadow-card"
+                ? "bg-surface-inverse text-foreground-on-inverse shadow-card"
                 : "text-foreground-muted hover:text-foreground",
             )}
           >
