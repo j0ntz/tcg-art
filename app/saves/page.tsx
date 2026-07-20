@@ -61,7 +61,7 @@ const SavesPage = async ({ searchParams }: SavesPageProps) => {
   if (items == null) {
     return (
       <main className="mx-auto flex w-full max-w-content flex-1 flex-col gap-8 px-gutter py-10">
-        <h1 className="font-display text-heading font-semibold tracking-tight text-foreground">
+        <h1 className="font-display text-heading font-bold tracking-tight text-foreground">
           Your Saves
         </h1>
         <div className={cn(cardVariants(), "p-8 text-foreground-muted")}>
@@ -98,7 +98,7 @@ const SavesPage = async ({ searchParams }: SavesPageProps) => {
   return (
     <main className="mx-auto flex w-full max-w-content flex-1 flex-col gap-8 px-gutter py-10">
       <header className="flex flex-wrap items-end justify-between gap-3">
-        <h1 className="font-display text-heading font-semibold tracking-tight text-foreground">
+        <h1 className="font-display text-heading font-bold tracking-tight text-foreground">
           Your Saves
         </h1>
         {items.length > 0 ? <ViewToggle view={view} params={params} /> : null}
@@ -122,7 +122,7 @@ const SavesPage = async ({ searchParams }: SavesPageProps) => {
             <path d="M19.5 12.6 12 20l-7.5-7.4a5 5 0 1 1 7-7.1l.5.5.5-.5a5 5 0 1 1 7 7.1Z" />
           </svg>
           <div className="flex flex-col gap-1">
-            <h2 className="font-display text-lg font-semibold text-foreground">
+            <h2 className="font-display text-lg font-bold text-foreground">
               Nothing saved yet
             </h2>
             <p className="max-w-sm text-foreground-muted">

@@ -96,7 +96,7 @@ const DeckPage = async ({ params, searchParams }: DeckPageProps) => {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-2">
           <h1
-            className="font-display text-heading font-semibold tracking-tight text-foreground"
+            className="font-display text-heading font-bold tracking-tight text-foreground"
             data-testid="deck-title"
           >
             {deck.name}
@@ -114,7 +114,7 @@ const DeckPage = async ({ params, searchParams }: DeckPageProps) => {
           data-testid="deck-empty"
         >
           <div className="flex flex-col gap-1">
-            <h2 className="font-display text-lg font-semibold text-foreground">
+            <h2 className="font-display text-lg font-bold text-foreground">
               This deck is empty
             </h2>
             <p className="max-w-sm text-foreground-muted">
@@ -177,7 +177,7 @@ const DeckPage = async ({ params, searchParams }: DeckPageProps) => {
       ) : null}
 
       <section className="flex flex-col gap-4 border-t border-border pt-6" aria-label="Manage deck">
-        <h2 className="font-display text-lg font-semibold text-foreground">Manage</h2>
+        <h2 className="font-display text-lg font-bold text-foreground">Manage</h2>
         <form action={renameDeck} className="flex w-full max-w-md gap-3">
           <input type="hidden" name="deckId" value={deck.id} />
           <input

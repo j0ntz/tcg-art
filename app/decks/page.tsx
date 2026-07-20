@@ -33,7 +33,7 @@ const DecksPage = async () => {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-gutter py-10">
       <header className="flex flex-col gap-2">
-        <h1 className="font-display text-heading font-semibold tracking-tight text-foreground">
+        <h1 className="font-display text-heading font-bold tracking-tight text-foreground">
           Your Decks
         </h1>
         <p className="max-w-xl text-foreground-muted">
@@ -65,7 +65,7 @@ const DecksPage = async () => {
         </div>
       ) : decks.length === 0 ? (
         <div className="flex flex-col gap-1 border-t border-border pt-6" data-testid="decks-empty">
-          <h2 className="font-display text-lg font-semibold text-foreground">No decks yet</h2>
+          <h2 className="font-display text-lg font-bold text-foreground">No decks yet</h2>
           <p className="max-w-sm text-foreground-muted">
             Create one above, or use “+ Deck” on any card in{" "}
             <Link href="/search" className="underline underline-offset-4 hover:text-foreground">

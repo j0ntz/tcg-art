@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { FacetGroupKey, FacetGroupView, SortKey } from "@/lib/facets";
 import { cn } from "@/lib/utils";
+import { typeChipClasses, typeSwatchClasses } from "../ui/TypeBadge";
 
 // Faceted filter + sort controls, following the established conventions:
 // desktop gets a left facet rail, mobile gets a bottom-sheet panel, applied
@@ -182,6 +183,18 @@ const FacetControls: React.FC<FacetControlsProps> = ({
                         data-testid={`${idPrefix}facet-${group.key}-${option.value}`}
                         className="h-4 w-4 shrink-0 accent-(--color-surface-inverse)"
                       />
+                      {/* Energy types speak in their own color, here as a
+                          compact swatch (type ramps are functional data ink,
+                          Type-group elements only). */}
+                      {group.key === "type" ? (
+                        <span
+                          aria-hidden
+                          className={cn(
+                            "h-2.5 w-2.5 shrink-0 rounded-pill",
+                            typeSwatchClasses(option.value),
+                          )}
+                        />
+                      ) : null}
                       <span className="truncate">{option.value}</span>
                     </span>
                     {showCounts ? (
@@ -230,7 +243,7 @@ const FacetControls: React.FC<FacetControlsProps> = ({
     <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-10">
       <aside className="hidden lg:block lg:w-60 lg:shrink-0" aria-label="Filters">
         <div className="flex items-baseline justify-between pb-1">
-          <h2 className="font-display text-lg font-semibold text-foreground">Filters</h2>
+          <h2 className="font-display text-lg font-bold text-foreground">Filters</h2>
           {activeCount > 0 ? (
             <button
               type="button"
@@ -272,7 +285,14 @@ const FacetControls: React.FC<FacetControlsProps> = ({
                   onClick={() => toggleValue(group.key, value)}
                   data-testid={`chip-${group.key}-${value}`}
                   aria-label={`Remove filter ${group.label}: ${value}`}
-                  className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-surface-muted px-3 py-1 text-sm text-foreground-secondary transition-colors hover:border-border-strong hover:text-foreground"
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-pill border px-3 py-1 text-sm transition-colors",
+                    // An applied Type chip wears its energy type's color (the
+                    // game-native coding); every other group stays neutral.
+                    group.key === "type"
+                      ? cn("font-semibold", typeChipClasses(value))
+                      : "border-border bg-surface-muted text-foreground-secondary hover:border-border-strong hover:text-foreground",
+                  )}
                 >
                   {value}
                   <span aria-hidden>×</span>
@@ -311,7 +331,7 @@ const FacetControls: React.FC<FacetControlsProps> = ({
             className="absolute inset-x-0 bottom-0 flex max-h-[80vh] flex-col rounded-t-card border-t border-border bg-surface"
           >
             <div className="flex items-center justify-between border-b border-border px-gutter py-3">
-              <h2 className="font-display text-lg font-semibold text-foreground">
+              <h2 className="font-display text-lg font-bold text-foreground">
                 Filter &amp; sort
               </h2>
               {activeCount > 0 ? (
