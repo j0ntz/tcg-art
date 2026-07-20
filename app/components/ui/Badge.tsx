@@ -10,7 +10,7 @@ export const badgeVariants = cva(
     variants: {
       variant: {
         soft: "gap-2 border border-border bg-surface-muted text-foreground-secondary",
-        solid: "bg-surface-inverse text-primary-foreground",
+        solid: "bg-surface-inverse text-foreground-on-inverse",
       },
       size: {
         sm: "px-2.5 py-0.5",

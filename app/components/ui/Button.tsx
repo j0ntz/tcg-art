@@ -5,13 +5,15 @@ import { cn } from "@/lib/utils";
 // is exported so links (`<Link>`/`<a>`) can wear the same styling without nesting
 // a real <button>; the Button component is the plain <button> convenience.
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-pill text-center",
+  // whitespace-nowrap: header nav items must never wrap to a second line, which
+  // would double the header height on narrow viewports.
+  "inline-flex items-center justify-center whitespace-nowrap rounded-pill text-center",
   {
     variants: {
       variant: {
         // dark ink fill: the default app action (header CTA, form submits)
         primary:
-          "bg-surface-inverse font-medium text-primary-foreground transition-colors hover:bg-surface-inverse-hover",
+          "bg-surface-inverse font-medium text-foreground-on-inverse transition-colors hover:bg-surface-inverse-hover",
         // ember fill: THE primary CTA. Part of the accent budget (globals.css);
         // at most one per view.
         accent:

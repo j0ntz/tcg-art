@@ -33,7 +33,7 @@ const Hero: React.FC<HeroProps> = ({ showcase }) => {
               name="q"
               placeholder="Try: surfing pikachu, on the beach, mewtwo…"
               aria-label="Search Pokémon cards"
-              className="flex-1 rounded-pill border border-border-inverse bg-white/10 px-5 py-3 text-foreground-inverse placeholder:text-foreground-inverse-subtle focus:border-border-inverse"
+              className="flex-1 rounded-pill border border-border-inverse bg-surface-night-fill px-5 py-3 text-foreground-inverse placeholder:text-foreground-inverse-subtle focus:border-border-inverse"
             />
             <Button type="submit" variant="accent" size="lg">
               Search Free
@@ -58,7 +58,7 @@ const Hero: React.FC<HeroProps> = ({ showcase }) => {
                 key={card.id}
                 // hero-fan-card adds the scroll-linked fan opening (globals.css);
                 // it animates `translate`, which composes with this transform.
-                className="hero-fan-card absolute top-1/2 left-1/2 w-28 -translate-y-1/2 rounded-field shadow-float ring-1 ring-white/15 sm:w-32 lg:w-44"
+                className="hero-fan-card absolute top-1/2 left-1/2 w-28 -translate-y-1/2 rounded-field shadow-float ring-1 ring-border-inverse sm:w-32 lg:w-44"
                 style={
                   {
                     "--i": index - 2,

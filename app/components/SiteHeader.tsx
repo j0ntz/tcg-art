@@ -1,14 +1,23 @@
 import Link from "next/link";
 
 import { getSessionUser } from "@/lib/auth";
+import { cn } from "@/lib/utils";
+import type { ThemeChoice } from "@/lib/theme";
 import { buttonVariants } from "./ui/Button";
+import ThemeToggle from "./ThemeToggle";
 
 // Shared top nav across the marketing landing and the search app. Branding on
 // the left; on the right the auth-aware actions: logged out gets Log In plus
 // the sign-up CTA, logged in gets an Account link. The session check is
 // server-side (it reads the session cookie), which makes every page dynamic;
 // acceptable at this stage since the search page already renders per-request.
-const SiteHeader: React.FC = async () => {
+interface SiteHeaderProps {
+  // Resolved server-side in app/layout.tsx from the theme cookie, so the
+  // toggle's first client render matches the markup already on screen.
+  themeChoice: ThemeChoice;
+}
+
+const SiteHeader: React.FC<SiteHeaderProps> = async ({ themeChoice }) => {
   const user = await getSessionUser();
 
   return (
@@ -23,7 +32,8 @@ const SiteHeader: React.FC = async () => {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-2 sm:gap-4">
+        <nav className="flex items-center gap-1 sm:gap-3">
+          <ThemeToggle initial={themeChoice} />
           <Link href="/search" className={buttonVariants({ variant: "ghost", size: "nav" })}>
             Search
           </Link>
@@ -38,7 +48,12 @@ const SiteHeader: React.FC = async () => {
             </>
           ) : (
             <>
-              <Link href="/login" className={buttonVariants({ variant: "ghost", size: "nav" })}>
+              {/* Hidden on the narrowest viewports so the nav (now carrying the
+                  theme toggle) never wraps; /signup links to /login inline. */}
+              <Link
+                href="/login"
+                className={cn(buttonVariants({ variant: "ghost", size: "nav" }), "hidden sm:inline-flex")}
+              >
                 Log In
               </Link>
               <Link href="/signup" className={buttonVariants({ variant: "primary", size: "sm" })}>
