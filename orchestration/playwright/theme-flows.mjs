@@ -15,6 +15,11 @@
 //      a `theme=light` cookie already carries data-theme="light", so the first
 //      paint is correct (checked on the raw response body, before any JS).
 //   5. back to System clears the override and returns to the OS preference.
+//   6. SURFACE completeness (issue #59): every audited surface is checked on
+//      PAINTED PIXELS, not on body/html computed styles. A child container with
+//      a hardcoded color paints over a correctly themed body, so body-level
+//      assertions pass while the user sees the wrong theme; that is exactly how
+//      the search page shipped light-in-dark. See auditPaintedTheme below.
 import { chromium } from "@playwright/test";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -174,10 +179,145 @@ const auditArtUntouched = async (page, label) => {
   assert(filtered.length === 0, `no filtered/dimmed card art on ${label} (${filtered.join(", ")})`);
 };
 
+// =============================================================================
+// The surface guard (issue #59).
+//
+// `bodyLightness` above reads document.body, which is NOT enough: a child
+// container carrying a hardcoded color paints OVER a correctly themed body, so
+// the body assertion passes while every pixel the user sees is the wrong
+// theme. The guard below therefore works on what is actually on screen, two
+// ways, and both must hold for every surface in both themes:
+//
+//   A. PAINTED PIXELS. Take a real screenshot, decode it in the page on a
+//      canvas, and sample the page's left and right gutter columns down the
+//      full scroll height. Those columns are page background on every layout
+//      (content is a centered max-w-content column), so they are the honest
+//      answer to "what theme is on screen", whatever the DOM claims.
+//   B. THE OUTERMOST VISIBLE CONTAINER. Hit-test a grid of viewport points and
+//      walk up from each hit to the first ancestor painting an opaque
+//      background. That is the container the user's eye reads at that point,
+//      and it names the offending element when the pixel check trips.
+//
+// STAGE surfaces (the midnight hero, the Night Gallery, the zoom lightbox) are
+// fixed near-black by design in BOTH themes, so they carry `data-stage` and are
+// excluded from both checks rather than being special-cased by selector here.
+// =============================================================================
+
+const stageRegions = page =>
+  page.evaluate(() =>
+    Array.from(document.querySelectorAll("[data-stage]")).map(el => {
+      const rect = el.getBoundingClientRect();
+      return { top: rect.top + window.scrollY, bottom: rect.bottom + window.scrollY };
+    }),
+  );
+
+// A. Painted pixels, sampled off a real screenshot.
+const paintedGutterFailures = async (page, expected) => {
+  const regions = await stageRegions(page);
+  const screenshot = (await page.screenshot({ fullPage: true })).toString("base64");
+  return page.evaluate(
+    async ({ screenshot, regions, expected }) => {
+      const bitmap = await createImageBitmap(
+        await (await fetch(`data:image/png;base64,${screenshot}`)).blob(),
+      );
+      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(bitmap, 0, 0);
+      // The screenshot is in DEVICE pixels; every rect above is in CSS pixels.
+      const scale = bitmap.width / document.documentElement.scrollWidth;
+      const channel = s => (s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4);
+      const sample = (cssX, cssY) => {
+        const { data } = ctx.getImageData(Math.round(cssX * scale), Math.round(cssY * scale), 1, 1);
+        const [r, g, b] = [data[0] / 255, data[1] / 255, data[2] / 255];
+        return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+      };
+      const width = document.documentElement.scrollWidth;
+      const height = document.documentElement.scrollHeight;
+      const inStage = y => regions.some(region => y >= region.top - 1 && y <= region.bottom + 1);
+      const failures = [];
+      for (let y = 4; y < height - 4; y += 24) {
+        if (inStage(y)) continue;
+        for (const x of [3, width - 4]) {
+          const lum = sample(x, y);
+          const wrong = expected === "dark" ? lum > 0.3 : lum < 0.7;
+          if (wrong) failures.push({ x, y, lum: Number(lum.toFixed(3)) });
+        }
+      }
+      return failures;
+    },
+    { screenshot, regions, expected },
+  );
+};
+
+// B. The outermost visible container under a grid of points.
+const paintedContainerFailures = (page, expected) =>
+  page.evaluate(
+    new Function(
+      "expected",
+      `${COLOR_HELPERS}
+      const isStage = el => el.closest("[data-stage]") != null;
+      const describe = el => {
+        let out = el.tagName.toLowerCase();
+        if (el.id) out += "#" + el.id;
+        if (typeof el.className === "string" && el.className.trim() !== "") {
+          out += "." + el.className.trim().split(/\\s+/).slice(0, 5).join(".");
+        }
+        return out;
+      };
+      const failures = [];
+      const seen = new Set();
+      for (let x = 8; x < window.innerWidth; x += Math.max(40, Math.floor(window.innerWidth / 12))) {
+        for (let y = 8; y < window.innerHeight; y += Math.max(40, Math.floor(window.innerHeight / 12))) {
+          const hit = document.elementFromPoint(x, y);
+          if (hit == null || isStage(hit)) continue;
+          // Card art legitimately paints any color; the surface BEHIND it is
+          // what has to follow the theme.
+          let node = hit;
+          while (node != null && (node.tagName === "IMG" || luminance(getComputedStyle(node).backgroundColor) == null)) {
+            node = node.parentElement;
+          }
+          if (node == null || isStage(node)) continue;
+          // Only SURFACE-sized elements are judged. Small inverse controls (the
+          // ink-filled CTA, the avatar disc, a selected pill) are deliberately
+          // counter-theme design, whereas a container big enough to be read as
+          // "the page" is the thing this guard exists to catch.
+          const rect = node.getBoundingClientRect();
+          if (rect.width * rect.height < window.innerWidth * window.innerHeight * 0.2) continue;
+          const lum = luminance(getComputedStyle(node).backgroundColor);
+          const wrong = expected === "dark" ? lum > 0.3 : lum < 0.7;
+          if (!wrong) continue;
+          const key = describe(node);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          failures.push({ el: key, bg: getComputedStyle(node).backgroundColor, lum: Number(lum.toFixed(3)) });
+        }
+      }
+      return failures;`,
+    ),
+    expected,
+  );
+
+const auditPaintedTheme = async (page, label, expected) => {
+  await settleColors(page);
+  const containers = await paintedContainerFailures(page, expected);
+  assert(
+    containers.length === 0,
+    `no container paints the wrong theme on ${label} (expected ${expected}: ${JSON.stringify(containers)})`,
+  );
+  const pixels = await paintedGutterFailures(page, expected);
+  assert(
+    pixels.length === 0,
+    `screenshot pixels are ${expected} on ${label} (${pixels.length} wrong samples: ${JSON.stringify(pixels.slice(0, 5))})`,
+  );
+};
+
 const SURFACES = [
   { path: "/", name: "landing", ready: null },
   { path: "/search?mode=name&q=charizard", name: "search", ready: "result-summary" },
+  { path: "/search", name: "search-prompt", ready: null },
+  { path: "/search?mode=name&q=zzzzzznotacard", name: "search-empty", ready: "search-empty" },
   { path: "/login", name: "login", ready: null },
+  { path: "/signup", name: "signup", ready: null },
   { path: "/nope-this-does-not-exist", name: "404", ready: null },
 ];
 
@@ -198,6 +338,7 @@ const run = async () => {
   assert(await themeAttr(page) === null, "no data-theme attribute in system mode");
   assert(await isDark(page), "system default with a dark OS renders the dark theme");
   await auditContrast(page, "landing (system dark)");
+  await auditPaintedTheme(page, "landing (system dark)", "dark");
   await auditArtUntouched(page, "landing (system dark)");
 
   // ---- 2. system-change reactivity, no reload -----------------------------
@@ -274,10 +415,14 @@ const run = async () => {
       await page.goto(`${BASE_URL}${surface.path}`, { waitUntil: "networkidle" });
       if (surface.ready != null) await page.getByTestId(surface.ready).waitFor();
       await auditContrast(page, `${surface.name} (${theme})`);
+      await auditPaintedTheme(page, `${surface.name} (${theme}) desktop`, theme);
       await auditArtUntouched(page, `${surface.name} (${theme})`);
       await page.setViewportSize(DESKTOP);
       await shot(page, `${surface.name}-${theme}-desktop`);
       await page.setViewportSize(MOBILE);
+      // Mobile is a separate risk: gutters collapse and some containers only
+      // exist below the sm breakpoint, so it gets its own painted-pixel pass.
+      await auditPaintedTheme(page, `${surface.name} (${theme}) mobile`, theme);
       await shot(page, `${surface.name}-${theme}-mobile`);
       await page.setViewportSize(DESKTOP);
     }
@@ -288,6 +433,7 @@ const run = async () => {
     const href = await page.locator('a[href^="/card/"]').first().getAttribute("href");
     await page.goto(`${BASE_URL}${href}`, { waitUntil: "networkidle" });
     await auditContrast(page, `card detail (${theme})`);
+    await auditPaintedTheme(page, `card detail (${theme})`, theme);
     await auditArtUntouched(page, `card detail (${theme})`);
     await shot(page, `detail-${theme}-desktop`);
     await page.setViewportSize(MOBILE);
@@ -322,11 +468,13 @@ const run = async () => {
     await page.goto(`${BASE_URL}/account`, { waitUntil: "networkidle" });
     await page.getByTestId(`theme-${theme}`).click();
     await auditContrast(page, `account (${theme})`);
+    await auditPaintedTheme(page, `account (${theme})`, theme);
     await shot(page, `account-${theme}-desktop`);
 
     await page.goto(`${BASE_URL}/binder`, { waitUntil: "networkidle" });
     await page.getByTestId("binder-pages").waitFor();
     await auditContrast(page, `binder (${theme})`);
+    await auditPaintedTheme(page, `binder (${theme})`, theme);
     await auditArtUntouched(page, `binder (${theme})`);
     await shot(page, `binder-${theme}-desktop`);
 

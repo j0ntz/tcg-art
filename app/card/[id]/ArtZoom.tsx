@@ -61,6 +61,7 @@ const ArtZoom: React.FC<ArtZoomProps> = ({ name, imageLarge }) => {
           className="fixed inset-0 z-50 flex items-center justify-center bg-surface-night/95 p-4"
           onClick={() => setOpen(false)}
           data-testid="art-zoom-overlay"
+          data-stage="night"
         >
           <button
             ref={closeRef}

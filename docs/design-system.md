@@ -152,6 +152,24 @@ across reload, server-stamped no-flash markup, a one-line mobile header, and —
 on every surface in both themes — that no text falls under 3:1 and no card image
 is filtered. It writes the `docs/screenshots/issue-57-*` proof set.
 
+**Theme checks are screenshot-based, never body-level.** A child container with
+a hardcoded color paints over a correctly themed `<body>`, so an assertion on
+`getComputedStyle(document.body)` passes while every pixel the user sees is the
+wrong theme; that is how the search page shipped light-in-dark (issue #59). The
+surface guard therefore judges what is on screen, two ways, on every surface in
+both themes at desktop and mobile:
+
+1. it screenshots the page, decodes it on a canvas, and samples the left and
+   right gutter columns down the full scroll height;
+2. it hit-tests a grid of points and walks up to the first ancestor painting an
+   opaque background, which names the offending element when check 1 trips.
+
+Surfaces that are fixed near-black in BOTH themes by design (the midnight hero,
+the Night Gallery, the zoom lightbox) opt out by carrying `data-stage`. Mark any
+new stage surface the same way rather than special-casing it in the test. Small
+counter-theme controls (the ink-filled CTA, the avatar disc) are exempt by size:
+only elements covering 20%+ of the viewport are judged as surfaces.
+
 ## Spacing, radius, shadow
 
 - Spacing: 4px base rhythm through Tailwind's scale; dense grids use tight
