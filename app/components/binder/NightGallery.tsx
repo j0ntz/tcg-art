@@ -16,6 +16,7 @@ const NightGallery: React.FC<NightGalleryProps> = ({ entries }) => (
   <section
     className="rounded-panel bg-surface-night px-5 pb-14 pt-10 sm:px-10"
     data-testid="night-gallery"
+    data-stage="night"
   >
     <header className="mb-10 flex flex-col gap-1">
       <p className="font-display text-lg font-bold text-foreground-inverse">
