@@ -298,10 +298,10 @@ const IntegrationPage: React.FC = () => (
         Workday integrations authenticate with OAuth 2.0, not a generic API key. In the tenant you{" "}
         <span className="font-medium text-foreground">Register an API Client for Integrations</span>,
         which issues a client ID and secret. The client is bound to an{" "}
-        <span className="font-medium text-foreground">Integration System User (ISU)</span> that holds
-        a long-lived (often non-expiring) refresh token. At call time the adapter exchanges that
-        refresh token for a short-lived (~1 hour) access token at the tenant&rsquo;s token endpoint,
-        then sends it as a Bearer token. Scopes are granted as{" "}
+        <span className="font-medium text-foreground">Integration System User (ISU)</span>{" "}
+        that holds a long-lived (often non-expiring) refresh token. At call time the adapter
+        exchanges that refresh token for a short-lived (~1 hour) access token at the
+        tenant&rsquo;s token endpoint, then sends it as a Bearer token. Scopes are granted as{" "}
         <span className="font-medium text-foreground">Functional Areas</span> (Staffing, Recruiting,
         custom-report access), not per-endpoint keys.
       </p>
@@ -379,12 +379,13 @@ const IntegrationPage: React.FC = () => (
       </h2>
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-foreground-muted">
         Workday is the system of record and the event source. When the{" "}
-        <span className="font-medium text-foreground">Hire business process</span> completes, that
-        event is what mints the worker and drives provisioning{" "}
+        <span className="font-medium text-foreground">Hire business process</span>{" "}
+        completes, that event is what mints the worker and drives provisioning{" "}
         <span className="font-medium text-foreground">outbound</span>: downstream systems create the
         account (Entra ID / AD) and set up payroll. External apps like this console{" "}
-        <span className="font-medium text-foreground">read</span> status back out via a RaaS report or
-        EIB batch. A demo that writes INTO Workday as a passive store inverts reality.
+        <span className="font-medium text-foreground">read</span>{" "}
+        status back out via a RaaS report or EIB batch. A demo that writes INTO Workday as a passive
+        store inverts reality.
       </p>
       <div className="mt-6 overflow-x-auto">
         <svg

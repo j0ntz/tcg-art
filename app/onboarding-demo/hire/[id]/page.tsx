@@ -57,7 +57,7 @@ const HireDetail: React.FC = () => {
         href="/onboarding-demo"
         className="inline-flex items-center gap-1.5 text-sm text-foreground-muted transition-colors hover:text-foreground"
       >
-        <span aria-hidden>←</span> All hires
+        <span aria-hidden>←</span> All workers
       </Link>
 
       <header className="mt-5 flex flex-col gap-4 border-b border-border pb-8 sm:flex-row sm:items-start sm:justify-between">
