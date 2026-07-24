@@ -7,8 +7,10 @@ import { formatDate } from "../format";
 import Avatar from "./Avatar";
 import PipelineBar from "./PipelineBar";
 
-// One incoming hire on the dashboard grid: identity, requisition facts, and the
-// pipeline progress. The whole card is the link target to the detail view.
+// One worker in onboarding on the dashboard grid: identity, requisition facts,
+// and the pipeline progress. The whole card is the link target to the detail
+// view. Pre-hire records (not yet through the Hire business process) are tagged
+// as such.
 interface HireCardProps {
   record: HireRecord;
 }
@@ -33,11 +35,18 @@ const HireCard: React.FC<HireCardProps> = ({ record }) => {
           </p>
           <p className="truncate text-sm text-foreground-muted">{worker.businessTitle}</p>
         </div>
-        {summary.hasBlocker ? (
-          <span className="shrink-0 rounded-pill border border-danger-border px-2 py-0.5 text-xs font-medium text-danger">
-            Attention
-          </span>
-        ) : null}
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          {summary.hasBlocker ? (
+            <span className="rounded-pill border border-danger-border px-2 py-0.5 text-xs font-medium text-danger">
+              Attention
+            </span>
+          ) : null}
+          {worker.isPreHire ? (
+            <span className="rounded-pill border border-border px-2 py-0.5 text-xs font-medium text-foreground-muted">
+              Pre-hire
+            </span>
+          ) : null}
+        </div>
       </div>
 
       <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">

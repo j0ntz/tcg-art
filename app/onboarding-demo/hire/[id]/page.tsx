@@ -13,9 +13,11 @@ import Avatar from "../../components/Avatar";
 import StageTrack from "../../components/StageTrack";
 import TaskRow from "../../components/TaskRow";
 
-// New-hire detail: the profile as it would come from Workday, the pipeline
-// track, and the task list grouped by stage with owners, due dates, and status
-// transitions that persist for the session (via the provider).
+// Worker detail: the profile as it would come from Workday, the lifecycle
+// track, and the Onboarding Setup task list grouped by stage with the role each
+// step routes to, due dates, and status transitions that persist for the
+// session (via the provider). Pre-hire records show no WID until the Hire
+// business process mints one.
 const HireDetail: React.FC = () => {
   const params = useParams<{ id: string }>();
   const { getHire } = useOnboarding();
@@ -33,11 +35,16 @@ const HireDetail: React.FC = () => {
   const { worker, requisition, tasks } = record;
 
   const profileFacts: { label: string; value: string }[] = [
-    { label: "Employee ID", value: worker.employeeId },
+    { label: "WID", value: worker.wid ?? "Pending Hire completion" },
+    ...worker.references.map((reference) => ({
+      label: reference.type.replace(/_/g, " "),
+      value: reference.value,
+    })),
+    { label: "Position ID", value: worker.positionId ?? "Assigned at Hire completion" },
     { label: "Work email", value: worker.primaryWorkEmail },
     { label: "Job profile", value: worker.jobProfile },
     { label: "Worker type", value: worker.workerType },
-    { label: "Team", value: worker.supervisoryOrganization },
+    { label: "Supervisory org", value: worker.supervisoryOrganization },
     { label: "Manager", value: worker.managerName },
     { label: "Location", value: worker.location },
     { label: "Start date", value: formatDate(worker.hireDate) },
@@ -62,8 +69,14 @@ const HireDetail: React.FC = () => {
             </h1>
             <p className="mt-1 text-lead text-foreground-muted">{worker.businessTitle}</p>
             <p className="mt-1 text-sm text-foreground-faint">
-              Legal name: {worker.legalName.first} {worker.legalName.last} · WID {worker.workerId}
+              Legal name: {worker.legalName.first} {worker.legalName.last}
+              {worker.wid != null ? ` · WID ${worker.wid}` : " · Pre-hire (no WID yet)"}
             </p>
+            {worker.isPreHire ? (
+              <span className="mt-2 inline-flex w-fit items-center rounded-pill border border-border-strong bg-surface-muted px-2.5 py-0.5 text-xs font-medium text-foreground-muted">
+                Pre-hire · not yet a worker
+              </span>
+            ) : null}
           </div>
         </div>
         <div className="sm:text-right">

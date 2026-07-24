@@ -1,8 +1,8 @@
 // Simulated Workday dataset for the onboarding demo.
 //
-// This stands in for what a live tenant's Staffing/Recruiting/RaaS endpoints
-// would return. It is realistic but entirely fictional: no data here comes from
-// or reaches Workday. The mock adapter (adapter.ts) reads exclusively from this
+// This stands in for what a live tenant's Staffing and RaaS endpoints would
+// return. It is realistic but entirely fictional: no data here comes from or
+// reaches Workday. The mock adapter (adapter.ts) reads exclusively from this
 // module, which keeps the "what the data looks like" concern in one file.
 
 import type {
@@ -12,6 +12,8 @@ import type {
   WorkdayJobRequisition,
   WorkdayOnboardingTask,
   WorkdayWorker,
+  WorkerReference,
+  WorkerType,
 } from "./types";
 
 // --- Date helpers ---------------------------------------------------------
@@ -25,9 +27,11 @@ const addDays = (isoDate: string, days: number): string => {
 };
 
 // --- Task template --------------------------------------------------------
-// Every hire runs the same onboarding business process, so the tasks are
-// generated from one template. `dueOffset` is days relative to the hire date
-// (negative = before day one, the norm for provisioning and screening).
+// Every hire runs the same lifecycle: the Hire business process, then the
+// Onboarding Setup business process to-dos, then outbound provisioning, then
+// day-one readiness. Tasks are generated from one template. `dueOffset` is days
+// relative to the hire date (negative = before day one). `owner` is the role the
+// business-process step routes to, exactly as Workday routes to-dos.
 
 interface TaskTemplate {
   stage: OnboardingStage;
@@ -36,24 +40,35 @@ interface TaskTemplate {
   dueOffset: number;
 }
 
+// The task at this index marks the Hire business process. Everything before it
+// is pre-hire; completing it is what mints the Employee_ID + WID.
+const HIRE_TASK_INDEX = 1;
+
 const TASK_TEMPLATES: readonly TaskTemplate[] = [
-  { stage: "offer", name: "Signed offer letter received", owner: "Recruiting", dueOffset: -21 },
-  { stage: "background_check", name: "Identity & right-to-work (I-9)", owner: "People Ops", dueOffset: -10 },
-  { stage: "background_check", name: "Background screening (Sterling)", owner: "People Ops", dueOffset: -7 },
-  { stage: "provisioning", name: "Laptop & peripherals shipped", owner: "IT — Provisioning", dueOffset: -4 },
-  { stage: "provisioning", name: "Accounts & access provisioned", owner: "IT — Identity", dueOffset: -2 },
-  { stage: "day_one", name: "Day-one orientation scheduled", owner: "People Ops", dueOffset: 0 },
-  { stage: "day_one", name: "Workspace & badge ready", owner: "Facilities", dueOffset: 0 },
-  { stage: "ramp", name: "30-day goals set with manager", owner: "Hiring Manager", dueOffset: 14 },
-  { stage: "ramp", name: "Team intro & onboarding buddy assigned", owner: "Hiring Manager", dueOffset: 5 },
+  { stage: "pre_hire", name: "Offer accepted, pre-hire record created", owner: "HR Partner", dueOffset: -21 },
+  { stage: "hire", name: "Hire business process completed (Employee ID + WID minted)", owner: "HR Partner", dueOffset: -14 },
+  { stage: "onboarding_setup", name: "Personal information", owner: "Worker", dueOffset: -10 },
+  { stage: "onboarding_setup", name: "Federal & state tax withholding", owner: "Worker", dueOffset: -9 },
+  { stage: "onboarding_setup", name: "Direct deposit", owner: "Worker", dueOffset: -8 },
+  { stage: "onboarding_setup", name: "Emergency contacts", owner: "Worker", dueOffset: -8 },
+  { stage: "onboarding_setup", name: "Form I-9 / work authorization", owner: "HR Partner", dueOffset: -6 },
+  { stage: "onboarding_setup", name: "Benefits enrollment", owner: "Worker", dueOffset: -4 },
+  { stage: "onboarding_setup", name: "Policy acknowledgements", owner: "Worker", dueOffset: -3 },
+  { stage: "provisioning", name: "Provision Entra ID / AD account (Hire event, outbound)", owner: "IT", dueOffset: -2 },
+  { stage: "provisioning", name: "Hardware & system access", owner: "IT", dueOffset: -1 },
+  { stage: "day_one", name: "Manager day-one plan", owner: "Manager", dueOffset: 0 },
 ] as const;
 
-// A worker's seed record: identity plus how far along the pipeline they are.
+// A worker's seed record: identity plus how far along the lifecycle they are.
 // `completedTasks` marks the first N template steps done; the (N+1)th is
 // in_progress; the rest not_started. `blockedTaskIndex`, when set, overrides
-// that one step to "blocked" for state variety.
+// that one step to "blocked" for state variety. A record with fewer than
+// HIRE_TASK_INDEX+1 completed steps is still a pre-hire (no WID yet).
 interface WorkerSeed {
-  worker: Omit<WorkdayWorker, "workerId" | "employeeId">;
+  worker: Omit<
+    WorkdayWorker,
+    "workerId" | "wid" | "references" | "isPreHire" | "positionId"
+  >;
   requisitionTitle: string;
   hiringManager: string;
   completedTasks: number;
@@ -76,7 +91,7 @@ const WORKER_SEEDS: readonly WorkerSeed[] = [
     },
     requisitionTitle: "Senior Product Designer",
     hiringManager: "Priya Nair",
-    completedTasks: 9,
+    completedTasks: 12,
   },
   {
     worker: {
@@ -93,7 +108,7 @@ const WORKER_SEEDS: readonly WorkerSeed[] = [
     },
     requisitionTitle: "Staff Software Engineer, Platform",
     hiringManager: "Marcus Bell",
-    completedTasks: 6,
+    completedTasks: 7,
   },
   {
     worker: {
@@ -110,7 +125,7 @@ const WORKER_SEEDS: readonly WorkerSeed[] = [
     },
     requisitionTitle: "Engineering Manager, Payments",
     hiringManager: "Sofia Almeida",
-    completedTasks: 4,
+    completedTasks: 5,
   },
   {
     worker: {
@@ -127,8 +142,8 @@ const WORKER_SEEDS: readonly WorkerSeed[] = [
     },
     requisitionTitle: "Data Scientist, Growth",
     hiringManager: "Ada Okonkwo",
-    completedTasks: 3,
-    blockedTaskIndex: 2,
+    completedTasks: 4,
+    blockedTaskIndex: 6,
   },
   {
     worker: {
@@ -145,7 +160,7 @@ const WORKER_SEEDS: readonly WorkerSeed[] = [
     },
     requisitionTitle: "Product Manager, Merchant",
     hiringManager: "Tomás Herrera",
-    completedTasks: 2,
+    completedTasks: 3,
   },
   {
     worker: {
@@ -162,7 +177,7 @@ const WORKER_SEEDS: readonly WorkerSeed[] = [
     },
     requisitionTitle: "Site Reliability Engineer",
     hiringManager: "Marcus Bell",
-    completedTasks: 5,
+    completedTasks: 6,
   },
   {
     worker: {
@@ -196,7 +211,7 @@ const WORKER_SEEDS: readonly WorkerSeed[] = [
     },
     requisitionTitle: "Solutions Architect",
     hiringManager: "Nadia Haddad",
-    completedTasks: 7,
+    completedTasks: 8,
   },
   {
     worker: {
@@ -209,11 +224,11 @@ const WORKER_SEEDS: readonly WorkerSeed[] = [
       managerName: "Ravi Suresh",
       location: "Remote — US West",
       hireDate: "2026-08-31",
-      workerType: "Contingent",
+      workerType: "Contingent Worker",
     },
-    requisitionTitle: "Technical Writer (Contract)",
+    requisitionTitle: "Technical Writer (Contingent)",
     hiringManager: "Ravi Suresh",
-    completedTasks: 2,
+    completedTasks: 3,
   },
   {
     worker: {
@@ -230,8 +245,8 @@ const WORKER_SEEDS: readonly WorkerSeed[] = [
     },
     requisitionTitle: "Security Engineer",
     hiringManager: "Helena Vogt",
-    completedTasks: 4,
-    blockedTaskIndex: 4,
+    completedTasks: 5,
+    blockedTaskIndex: 9,
   },
   {
     worker: {
@@ -303,10 +318,22 @@ const WORKER_SEEDS: readonly WorkerSeed[] = [
   },
 ] as const;
 
-// Build the full HireRecord list once at module load. IDs are derived from the
-// index so they are stable across reads (a live tenant's WIDs are likewise
-// stable). `preferredName` is trimmed defensively in case a seed carries stray
-// whitespace.
+// --- Identifier minters ----------------------------------------------------
+// Deterministic so server and client render the same value (no RNG, which would
+// also break SSR hydration). A live tenant's WIDs are likewise stable.
+
+// A 32-hex pseudo-GUID derived from the seed index, matching the shape of a real
+// Workday WID. Uses a linear congruential walk seeded by the index.
+const widFromIndex = (index: number): string => {
+  let state = ((index + 1) * 0x9e3779b1) >>> 0;
+  let hex = "";
+  while (hex.length < 32) {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    hex += state.toString(16).padStart(8, "0");
+  }
+  return hex.slice(0, 32);
+};
+
 const buildStatus = (
   index: number,
   completedTasks: number,
@@ -318,13 +345,36 @@ const buildStatus = (
   return "not_started";
 };
 
+// Build the full HireRecord list once at module load. The pre-hire id is the
+// stable record key present across the whole lifecycle; the WID + Employee_ID
+// (or Contingent_Worker_ID) and position id exist only once the Hire business
+// process has completed. `preferredName` / `legalName` are trimmed defensively
+// in case a seed carries stray whitespace.
 const buildRecord = (seed: WorkerSeed, seedIndex: number): HireRecord => {
-  const workerId = `wid-${String(seedIndex + 1).padStart(4, "0")}-northwind`;
-  const employeeId = `E-${10400 + seedIndex + 1}`;
+  const preHireId = `PRH-${4000 + seedIndex + 1}`;
+  const isPreHire = seed.completedTasks <= HIRE_TASK_INDEX;
+  const isContingent = seed.worker.workerType === ("Contingent Worker" satisfies WorkerType);
+
+  const references: WorkerReference[] = [{ type: "Pre_Hire_ID", value: preHireId }];
+  let wid: string | null = null;
+  let positionId: string | null = null;
+  if (!isPreHire) {
+    wid = widFromIndex(seedIndex);
+    positionId = `POS-${21000 + seedIndex + 1}`;
+    references.push(
+      isContingent
+        ? { type: "Contingent_Worker_ID", value: `C-${3000 + seedIndex + 1}` }
+        : { type: "Employee_ID", value: String(21000 + seedIndex + 1) },
+    );
+  }
+
   const worker: WorkdayWorker = {
     ...seed.worker,
-    workerId,
-    employeeId,
+    workerId: preHireId,
+    wid,
+    references,
+    isPreHire,
+    positionId,
     preferredName: seed.worker.preferredName.trim(),
     legalName: {
       first: seed.worker.legalName.first.trim(),
@@ -338,12 +388,12 @@ const buildRecord = (seed: WorkerSeed, seedIndex: number): HireRecord => {
     supervisoryOrganization: seed.worker.supervisoryOrganization,
     hiringManager: seed.hiringManager,
     status: "Filled",
-    filledByWorkerId: workerId,
+    filledByWorkerId: preHireId,
   };
 
   const tasks: WorkdayOnboardingTask[] = TASK_TEMPLATES.map((template, taskIndex) => ({
-    taskId: `${workerId}-t${String(taskIndex + 1).padStart(2, "0")}`,
-    workerId,
+    taskId: `${preHireId}-t${String(taskIndex + 1).padStart(2, "0")}`,
+    workerId: preHireId,
     stage: template.stage,
     name: template.name,
     owner: template.owner,

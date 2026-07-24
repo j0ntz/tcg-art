@@ -6,10 +6,10 @@ import { summarizePipeline } from "@/lib/workday";
 import { useOnboarding } from "./OnboardingProvider";
 import HireCard from "./components/HireCard";
 
-// Onboarding dashboard: every incoming hire with their pipeline progress.
+// Onboarding dashboard: every worker in onboarding with their pipeline progress.
 // Reads from the session provider so a status change on a detail view is
-// reflected here on return. Hires with a blocker sort first (attention up top),
-// then by soonest start date.
+// reflected here on return. Workers with a blocker sort first (attention up
+// top), then by soonest start date.
 const OnboardingDashboard: React.FC = () => {
   const { records } = useOnboarding();
 
@@ -33,11 +33,11 @@ const OnboardingDashboard: React.FC = () => {
     <main className="mx-auto w-full max-w-content flex-1 px-gutter py-10 sm:py-12">
       <header className="flex flex-col gap-3 border-b border-border pb-8">
         <h1 className="font-display text-title font-bold tracking-tight text-foreground">
-          Incoming hires
+          Workers in onboarding
         </h1>
         <p className="max-w-2xl text-lead text-foreground-muted">
-          {records.length} new {records.length === 1 ? "hire" : "hires"} in onboarding, pulled from
-          Workday and tracked through offer, screening, provisioning, day one, and ramp.
+          {records.length} {records.length === 1 ? "worker" : "workers"} in onboarding, tracked from
+          pre-hire through the Hire business process, Onboarding Setup, provisioning, and day one.
           {attentionCount > 0
             ? ` ${attentionCount} need${attentionCount === 1 ? "s" : ""} attention.`
             : ""}
@@ -46,9 +46,9 @@ const OnboardingDashboard: React.FC = () => {
 
       {sorted.length === 0 ? (
         <div className="mt-10 rounded-panel border border-dashed border-border bg-surface-muted p-10 text-center">
-          <p className="font-medium text-foreground">No hires in onboarding</p>
+          <p className="font-medium text-foreground">No workers in onboarding</p>
           <p className="mt-1 text-sm text-foreground-muted">
-            When a requisition is filled in Workday, the new hire appears here.
+            When a Hire business process completes in Workday, the new worker appears here.
           </p>
         </div>
       ) : (

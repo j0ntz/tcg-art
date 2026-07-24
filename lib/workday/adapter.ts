@@ -1,16 +1,17 @@
 // The Workday integration boundary.
 //
 // `WorkdayAdapter` is the ONLY surface the UI depends on. The demo binds it to
-// `createMockWorkdayAdapter()` (backed by mock-data.ts); a production
-// deployment binds it to a live adapter talking to a real tenant. Because the
-// UI imports the adapter through `getWorkdayAdapter()` and never touches a data
-// source directly, that swap is a one-line change here, with zero UI edits.
+// `createMockWorkdayAdapter()` (backed by mock-data.ts); a production deployment
+// binds it to a live adapter talking to a real tenant. Because the UI imports
+// the adapter through `getWorkdayAdapter()` and never touches a data source
+// directly, that swap is a one-line change here, with zero UI edits.
 //
 // The method set mirrors how Workday actually exposes this data:
-//   - listOnboardingWorkers ......  a RaaS (Report-as-a-Service) worker report
-//   - getWorker / getJobRequisition  Staffing & Recruiting REST GETs
-//   - listOnboardingTasks .........  onboarding business-process steps
-//   - updateOnboardingTaskStatus ..  a Staffing business-process action (write)
+//   - listOnboardingWorkers ......  a RaaS "Onboarding Status" custom report read
+//   - getWorker / getHire .........  Staffing REST GET workers/{wid}
+//   - getJobRequisition ...........  Recruiting REST GET jobRequisitions/{id}
+//   - listOnboardingTasks .........  the RaaS report filtered to one worker
+//   - updateOnboardingTaskStatus ..  a DEMO-LOCAL session write (see note below)
 
 import type {
   HireRecord,
@@ -26,21 +27,25 @@ export interface WorkdayAdapter {
   // honest "Simulated data" vs "Live tenant" label; it never fakes "live".
   readonly mode: "mock" | "live";
 
-  // RaaS worker report: every worker currently in the onboarding process,
-  // with their requisition and task list assembled per record.
+  // RaaS Onboarding Status report: every worker and pre-hire currently in the
+  // onboarding process, with their requisition and task list assembled per
+  // record. Workday is the system of record; this is an outbound READ.
   listOnboardingWorkers(): Promise<HireRecord[]>;
 
-  // Staffing GET: a single worker's full record, or null if unknown.
-  getHire(workerId: string): Promise<HireRecord | null>;
+  // A single record's full detail, or null if unknown. Keyed on the stable
+  // record id (the pre-hire id, present across the whole lifecycle).
+  getHire(recordId: string): Promise<HireRecord | null>;
 
-  // Staffing/Recruiting GETs, exposed individually for parity with the real API.
-  getWorker(workerId: string): Promise<WorkdayWorker | null>;
-  getJobRequisition(workerId: string): Promise<WorkdayJobRequisition | null>;
-  listOnboardingTasks(workerId: string): Promise<WorkdayOnboardingTask[]>;
+  // Staffing / Recruiting / RaaS reads, exposed individually for parity with
+  // the real API surface.
+  getWorker(recordId: string): Promise<WorkdayWorker | null>;
+  getJobRequisition(recordId: string): Promise<WorkdayJobRequisition | null>;
+  listOnboardingTasks(recordId: string): Promise<WorkdayOnboardingTask[]>;
 
-  // Staffing business-process action (write): advance one onboarding task and
-  // return the updated task. A live adapter POSTs this to Workday; the demo
-  // mutates its in-memory copy (see the note in the mock below).
+  // DEMO-LOCAL session write. Workday is the system of record for onboarding
+  // status: task state originates INSIDE Workday and flows outbound, so a real
+  // external app does not write it back. This method advances the demo's own
+  // in-memory copy to keep the console interactive; nothing is sent to a tenant.
   updateOnboardingTaskStatus(
     taskId: string,
     status: TaskStatus,
@@ -52,12 +57,16 @@ export interface WorkdayAdapter {
 // mutate the module-level seed, and keeps writes in a per-instance map. NOTE:
 // in a serverless deployment each request may get a fresh instance, so the
 // authoritative "session" state for status transitions lives client-side (see
-// app/onboarding-demo/OnboardingProvider.tsx). The write method exists to prove
-// the adapter interface a real tenant would fill, and to keep a single instance
-// consistent within one request.
+// app/onboarding-demo/OnboardingProvider.tsx). The write method exists only to
+// keep a single instance consistent within one request; it is not a Workday
+// write (see the interface note above).
 
 const cloneRecord = (record: HireRecord): HireRecord => ({
-  worker: { ...record.worker, legalName: { ...record.worker.legalName } },
+  worker: {
+    ...record.worker,
+    legalName: { ...record.worker.legalName },
+    references: record.worker.references.map((reference) => ({ ...reference })),
+  },
   requisition: { ...record.requisition },
   tasks: record.tasks.map((task) => ({ ...task })),
 });
@@ -82,23 +91,28 @@ export const createMockWorkdayAdapter = (): WorkdayAdapter => {
       return records.map(cloneRecord);
     },
 
-    async getHire(workerId: string) {
-      const record = byId.get(workerId);
+    async getHire(recordId: string) {
+      const record = byId.get(recordId);
       return record != null ? cloneRecord(record) : null;
     },
 
-    async getWorker(workerId: string) {
-      const record = byId.get(workerId);
-      return record != null ? { ...record.worker, legalName: { ...record.worker.legalName } } : null;
+    async getWorker(recordId: string) {
+      const record = byId.get(recordId);
+      if (record == null) return null;
+      return {
+        ...record.worker,
+        legalName: { ...record.worker.legalName },
+        references: record.worker.references.map((reference) => ({ ...reference })),
+      };
     },
 
-    async getJobRequisition(workerId: string) {
-      const record = byId.get(workerId);
+    async getJobRequisition(recordId: string) {
+      const record = byId.get(recordId);
       return record != null ? { ...record.requisition } : null;
     },
 
-    async listOnboardingTasks(workerId: string) {
-      const record = byId.get(workerId);
+    async listOnboardingTasks(recordId: string) {
+      const record = byId.get(recordId);
       return record != null ? record.tasks.map((task) => ({ ...task })) : [];
     },
 
@@ -115,67 +129,73 @@ export const createMockWorkdayAdapter = (): WorkdayAdapter => {
 // Left intentionally unimplemented: no Workday credentials exist for this demo
 // and none should be sought. The interface below is the exact seam a real
 // integration fills. To go live, implement each method against the endpoints
-// named in the comments, authenticating with OAuth 2.0 client credentials
-// (see WorkdayConfig), and point getWorkdayAdapter() at it. The UI does not
-// change.
+// named in the comments, authenticating with OAuth 2.0 (see WorkdayConfig): the
+// ISU-bound refresh token is exchanged for a ~1h access token at the tenant's
+// ccx/oauth2/{tenant}/token endpoint, then sent as a Bearer token. Point
+// getWorkdayAdapter() at it and the UI does not change.
 
 export interface WorkdayConfig {
-  // e.g. "https://wd5-impl-services1.workday.com" (the tenant's API host).
-  tenantUrl: string;
-  // The tenant short name, e.g. "northwind".
+  // The tenant's API host, e.g. "https://wd5-impl-services1.workday.com".
+  tenantHost: string;
+  // The tenant short name, used in every path, e.g. "northwind".
   tenant: string;
-  // OAuth 2.0 client-credentials pair for an Integration System User (ISU).
+  // OAuth 2.0 API Client for Integrations, registered in the tenant.
   clientId: string;
   clientSecret: string;
-  // Optional: the RaaS report path for the onboarding worker report.
-  onboardingReportPath?: string;
+  // The refresh token bound to the Integration System User (ISU); exchanged for
+  // short-lived access tokens at ccx/oauth2/{tenant}/token.
+  refreshToken: string;
 }
 
 export const createLiveWorkdayAdapter = (_config: WorkdayConfig): WorkdayAdapter => {
   const notImplemented = (endpoint: string): never => {
     throw new Error(
       `Live Workday adapter is not implemented in this demo. Wire ${endpoint} against the tenant, ` +
-        "authenticating with OAuth 2.0 client credentials. See the integration page for the map.",
+        "exchanging the ISU refresh token for an access token at ccx/oauth2/{tenant}/token. " +
+        "See the integration page for the map.",
     );
   };
 
   return {
     mode: "live",
-    // GET {tenantUrl}/ccx/service/customreport2/{tenant}/{report} (RaaS)
-    listOnboardingWorkers: () => notImplemented("the onboarding RaaS report"),
-    // GET {tenantUrl}/ccx/api/staffing/v6/{tenant}/workers/{id}
-    getHire: () => notImplemented("Staffing GET workers/{id}"),
-    getWorker: () => notImplemented("Staffing GET workers/{id}"),
-    // GET {tenantUrl}/ccx/api/recruiting/v5/{tenant}/jobRequisitions?worker={id}
-    getJobRequisition: () => notImplemented("Recruiting GET jobRequisitions"),
-    // GET {tenantUrl}/ccx/api/staffing/v6/{tenant}/workers/{id}/onboardingTasks
-    listOnboardingTasks: () => notImplemented("Staffing GET onboardingTasks"),
-    // POST {tenantUrl}/ccx/api/staffing/v6/{tenant}/onboardingTasks/{id}
-    updateOnboardingTaskStatus: () => notImplemented("Staffing POST onboardingTasks/{id}"),
+    // GET {tenantHost}/ccx/service/customreport2/{tenant}/{owner}/Onboarding_Status?format=json (RaaS)
+    listOnboardingWorkers: () => notImplemented("the Onboarding Status RaaS report"),
+    // GET {tenantHost}/ccx/api/staffing/v6/{tenant}/workers/{wid}
+    getHire: () => notImplemented("Staffing GET workers/{wid}"),
+    // GET {tenantHost}/ccx/api/staffing/v6/{tenant}/workers/{wid}
+    getWorker: () => notImplemented("Staffing GET workers/{wid}"),
+    // GET {tenantHost}/ccx/api/recruiting/v4/{tenant}/jobRequisitions/{id}
+    getJobRequisition: () => notImplemented("Recruiting GET jobRequisitions/{id}"),
+    // GET {tenantHost}/ccx/service/customreport2/{tenant}/{owner}/Onboarding_Status?Worker!WID={wid}&format=json (RaaS)
+    listOnboardingTasks: () => notImplemented("the Onboarding Status RaaS report, filtered by worker"),
+    // No live write: Workday is the system of record for onboarding status.
+    updateOnboardingTaskStatus: () =>
+      notImplemented("nothing — onboarding status is read from Workday, not written to it"),
   };
 };
 
 // --- Factory --------------------------------------------------------------
-// The single place the app chooses a data source. When the four required env
-// vars are present it would return a live adapter; the demo has none, so it
-// returns the mock. Reading the env here (not in the UI) is what keeps the
-// "simulated data" boundary honest and swappable.
+// The single place the app chooses a data source. When the full set of env vars
+// is present it would return a live adapter; the demo has none, so it returns
+// the mock. Reading the env here (not in the UI) is what keeps the "simulated
+// data" boundary honest and swappable.
 
 const readConfig = (): WorkdayConfig | null => {
-  const tenantUrl = process.env.WORKDAY_TENANT_URL;
+  const tenantHost = process.env.WORKDAY_TENANT_HOST;
   const tenant = process.env.WORKDAY_TENANT;
   const clientId = process.env.WORKDAY_CLIENT_ID;
   const clientSecret = process.env.WORKDAY_CLIENT_SECRET;
-  if (tenantUrl == null || tenant == null || clientId == null || clientSecret == null) {
+  const refreshToken = process.env.WORKDAY_REFRESH_TOKEN;
+  if (
+    tenantHost == null ||
+    tenant == null ||
+    clientId == null ||
+    clientSecret == null ||
+    refreshToken == null
+  ) {
     return null;
   }
-  return {
-    tenantUrl,
-    tenant,
-    clientId,
-    clientSecret,
-    onboardingReportPath: process.env.WORKDAY_ONBOARDING_REPORT,
-  };
+  return { tenantHost, tenant, clientId, clientSecret, refreshToken };
 };
 
 export const getWorkdayAdapter = (): WorkdayAdapter => {
