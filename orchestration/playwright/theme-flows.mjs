@@ -53,10 +53,19 @@ const settleImages = async page => {
     .catch(() => console.warn("some images did not settle; capturing anyway"));
 };
 
-const shot = async (page, name) => {
+const shot = async (page, name, prefix = "issue-57") => {
   await settleImages(page);
-  await page.screenshot({ path: join(SHOTS_DIR, `issue-57-${name}.png`), fullPage: true });
-  console.log(`captured issue-57-${name}.png`);
+  await page.screenshot({ path: join(SHOTS_DIR, `${prefix}-${name}.png`), fullPage: true });
+  console.log(`captured ${prefix}-${name}.png`);
+};
+
+// Click something that fires a server action and wait for the POST round-trip,
+// so a follow-up navigation cannot outrun the database write.
+const clickAction = async (page, locator) => {
+  await Promise.all([
+    page.waitForResponse(response => response.request().method() === "POST"),
+    locator.click(),
+  ]);
 };
 
 // Colors here are authored in OKLCH, wrapped in light-dark(), and compiled by
@@ -198,7 +207,7 @@ const auditArtUntouched = async (page, label) => {
 //      background. That is the container the user's eye reads at that point,
 //      and it names the offending element when the pixel check trips.
 //
-// STAGE surfaces (the midnight hero, the Night Gallery, the zoom lightbox) are
+// STAGE surfaces (the midnight hero, the zoom lightbox) are
 // fixed near-black by design in BOTH themes, so they carry `data-stage` and are
 // excluded from both checks rather than being special-cased by selector here.
 // =============================================================================
@@ -297,13 +306,18 @@ const paintedContainerFailures = (page, expected) =>
     expected,
   );
 
-const auditPaintedTheme = async (page, label, expected) => {
+// `gutters: false` is for the one layout where card art legitimately reaches
+// the page edge (the focus carousel's full-bleed scroll strip): art pixels are
+// any color, so the gutter sampler would flag them; the container check still
+// guards every real surface behind the strip.
+const auditPaintedTheme = async (page, label, expected, { gutters = true } = {}) => {
   await settleColors(page);
   const containers = await paintedContainerFailures(page, expected);
   assert(
     containers.length === 0,
     `no container paints the wrong theme on ${label} (expected ${expected}: ${JSON.stringify(containers)})`,
   );
+  if (!gutters) return;
   const pixels = await paintedGutterFailures(page, expected);
   assert(
     pixels.length === 0,
@@ -314,6 +328,10 @@ const auditPaintedTheme = async (page, label, expected) => {
 const SURFACES = [
   { path: "/", name: "landing", ready: null },
   { path: "/search?mode=name&q=charizard", name: "search", ready: "result-summary" },
+  // The faceted state: rail selection + an applied type chip, which wears its
+  // energy type's color triple in both themes (issue #46's game-native coding),
+  // so the contrast audit covers the type ramps too.
+  { path: "/search?mode=name&q=charizard&type=Fire", name: "search-faceted", ready: "result-summary", prefix: "issue-46-theme" },
   { path: "/search", name: "search-prompt", ready: null },
   { path: "/search?mode=name&q=zzzzzznotacard", name: "search-empty", ready: "search-empty" },
   { path: "/login", name: "login", ready: null },
@@ -418,12 +436,12 @@ const run = async () => {
       await auditPaintedTheme(page, `${surface.name} (${theme}) desktop`, theme);
       await auditArtUntouched(page, `${surface.name} (${theme})`);
       await page.setViewportSize(DESKTOP);
-      await shot(page, `${surface.name}-${theme}-desktop`);
+      await shot(page, `${surface.name}-${theme}-desktop`, surface.prefix ?? "issue-57");
       await page.setViewportSize(MOBILE);
       // Mobile is a separate risk: gutters collapse and some containers only
       // exist below the sm breakpoint, so it gets its own painted-pixel pass.
       await auditPaintedTheme(page, `${surface.name} (${theme}) mobile`, theme);
-      await shot(page, `${surface.name}-${theme}-mobile`);
+      await shot(page, `${surface.name}-${theme}-mobile`, surface.prefix ?? "issue-57");
       await page.setViewportSize(DESKTOP);
     }
 
@@ -447,11 +465,10 @@ const run = async () => {
     await page.keyboard.press("Escape");
   }
 
-  // ---- authenticated surfaces: account + the binder's three modes ---------
-  // The Night Gallery is the riskiest surface in a theming change: it is a
-  // STAGE (fixed near-black) whose picture frames hold a white mat and placard,
-  // so its text must follow the mat, not the theme. A theme-following token in
-  // there reads as white-on-white in light or dark. Worth a real signup.
+  // ---- authenticated surfaces: account, saves (grid + carousel), decks ----
+  // The saves/deck surfaces (issue #46) only render with real data, so this
+  // takes a real signup, hearts three cards, and builds a deck holding one
+  // before auditing every logged-in surface in both themes.
   await page.goto(`${BASE_URL}/signup`, { waitUntil: "networkidle" });
   await page.fill("#email", `theme+${Date.now()}@example.com`);
   await page.fill("#password", "supersecret1");
@@ -459,10 +476,27 @@ const run = async () => {
   await page.getByRole("button", { name: "Create Account" }).click();
   await page.waitForURL("**/account");
 
-  await page.goto(`${BASE_URL}/search?mode=name&q=charizard`, { waitUntil: "networkidle" });
-  await page.getByTestId("result-summary").waitFor();
-  await page.locator('[data-testid^="add-"]').first().click();
-  await page.waitForLoadState("networkidle");
+  await page.goto(`${BASE_URL}/search?q=charizard`, { waitUntil: "networkidle" });
+  const heartButtons = page.locator('[data-testid^="fav-"]');
+  await heartButtons.first().waitFor();
+  const savedIds = [];
+  for (let i = 0; i < 3; i++) {
+    savedIds.push((await heartButtons.nth(i).getAttribute("data-testid")).replace("fav-", ""));
+  }
+  for (const cardId of savedIds) {
+    await clickAction(page, page.getByTestId(`fav-${cardId}`));
+    await page.waitForSelector(`[data-testid="fav-${cardId}"][data-saved="true"]`);
+  }
+
+  await page.goto(`${BASE_URL}/decks`, { waitUntil: "networkidle" });
+  await page.getByTestId("deck-create-name").fill("Theme Proof");
+  await clickAction(page, page.getByTestId("deck-create-submit"));
+  const deckLink = page.locator('[data-testid^="deck-link-"]').first();
+  await deckLink.waitFor();
+  const deckId = (await deckLink.getAttribute("data-testid")).replace("deck-link-", "");
+  await page.goto(`${BASE_URL}/search?q=charizard`, { waitUntil: "networkidle" });
+  await page.getByTestId(`deck-menu-${savedIds[0]}`).click();
+  await clickAction(page, page.getByTestId(`deck-add-${deckId}-${savedIds[0]}`));
 
   for (const theme of ["light", "dark"]) {
     await page.goto(`${BASE_URL}/account`, { waitUntil: "networkidle" });
@@ -471,20 +505,42 @@ const run = async () => {
     await auditPaintedTheme(page, `account (${theme})`, theme);
     await shot(page, `account-${theme}-desktop`);
 
-    await page.goto(`${BASE_URL}/binder`, { waitUntil: "networkidle" });
-    await page.getByTestId("binder-pages").waitFor();
-    await auditContrast(page, `binder (${theme})`);
-    await auditPaintedTheme(page, `binder (${theme})`, theme);
-    await auditArtUntouched(page, `binder (${theme})`);
-    await shot(page, `binder-${theme}-desktop`);
-
-    await page.getByTestId("mode-gallery").click();
-    await page.getByTestId("night-gallery").waitFor();
-    await auditContrast(page, `night gallery (${theme})`);
-    await auditArtUntouched(page, `night gallery (${theme})`);
-    await shot(page, `gallery-${theme}-desktop`);
+    // Saves: the workhorse grid plus the facet rail, desktop and mobile.
+    await page.goto(`${BASE_URL}/saves`, { waitUntil: "networkidle" });
+    await page.locator('[data-testid^="card-tile-"]').first().waitFor();
+    await auditContrast(page, `saves (${theme})`);
+    await auditPaintedTheme(page, `saves (${theme}) desktop`, theme);
+    await auditArtUntouched(page, `saves (${theme})`);
+    await shot(page, `saves-${theme}-desktop`, "issue-46-theme");
     await page.setViewportSize(MOBILE);
-    await shot(page, `gallery-${theme}-mobile`);
+    await auditPaintedTheme(page, `saves (${theme}) mobile`, theme);
+    await shot(page, `saves-${theme}-mobile`, "issue-46-theme");
+    await page.setViewportSize(DESKTOP);
+
+    // The focus carousel, the retained alternate view. Its full-bleed strip
+    // puts card art in the gutters, so the pixel sampler sits this one out.
+    await page.getByTestId("view-carousel").click();
+    await page.getByTestId("carousel-placard").waitFor();
+    await auditContrast(page, `saves carousel (${theme})`);
+    await auditPaintedTheme(page, `saves carousel (${theme})`, theme, { gutters: false });
+    await shot(page, `saves-carousel-${theme}-desktop`, "issue-46-theme");
+
+    // The deck ledger and a populated deck detail (grid + facets + manage).
+    await page.goto(`${BASE_URL}/decks`, { waitUntil: "networkidle" });
+    await page.locator('[data-testid^="deck-link-"]').first().waitFor();
+    await auditContrast(page, `decks (${theme})`);
+    await auditPaintedTheme(page, `decks (${theme})`, theme);
+    await shot(page, `decks-${theme}-desktop`, "issue-46-theme");
+
+    await page.goto(`${BASE_URL}/decks/${deckId}`, { waitUntil: "networkidle" });
+    await page.locator('[data-testid^="card-tile-"]').first().waitFor();
+    await auditContrast(page, `deck detail (${theme})`);
+    await auditPaintedTheme(page, `deck detail (${theme}) desktop`, theme);
+    await auditArtUntouched(page, `deck detail (${theme})`);
+    await shot(page, `deck-${theme}-desktop`, "issue-46-theme");
+    await page.setViewportSize(MOBILE);
+    await auditPaintedTheme(page, `deck detail (${theme}) mobile`, theme);
+    await shot(page, `deck-${theme}-mobile`, "issue-46-theme");
     await page.setViewportSize(DESKTOP);
   }
 

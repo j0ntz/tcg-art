@@ -20,6 +20,32 @@ const TYPE_CLASSES: Record<string, string> = {
   Colorless: "border-type-colorless-border bg-type-colorless-subtle text-type-colorless-strong",
 };
 
+// Small round swatch for compact type-meaningful elements (the Type facet's
+// option list) where a full badge per row would shout. Uses the -border step:
+// saturated enough to read as the type's hue at 10px in both themes.
+const TYPE_SWATCH_CLASSES: Record<string, string> = {
+  Grass: "bg-type-grass-border",
+  Fire: "bg-type-fire-border",
+  Water: "bg-type-water-border",
+  Lightning: "bg-type-lightning-border",
+  Psychic: "bg-type-psychic-border",
+  Fighting: "bg-type-fighting-border",
+  Darkness: "bg-type-darkness-border",
+  Metal: "bg-type-metal-border",
+  Fairy: "bg-type-fairy-border",
+  Dragon: "bg-type-dragon-border",
+  Colorless: "bg-type-colorless-border",
+};
+
+// Classes for a type-colored chip/swatch outside the badge itself; keeping
+// every consumer of the type ramps routed through this module preserves the
+// "only type-meaningful elements" rule as a grep-able boundary.
+export const typeChipClasses = (type: string): string =>
+  TYPE_CLASSES[type] ?? TYPE_CLASSES.Colorless;
+
+export const typeSwatchClasses = (type: string): string =>
+  TYPE_SWATCH_CLASSES[type] ?? TYPE_SWATCH_CLASSES.Colorless;
+
 interface TypeBadgeProps {
   type: string;
   className?: string;

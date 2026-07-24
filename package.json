@@ -14,10 +14,11 @@
     "start": "next start",
     "lint": "eslint",
     "auth:flows": "node orchestration/playwright/auth-flows.mjs",
-    "binder:flows": "node orchestration/playwright/binder-flows.mjs",
+    "saves:flows": "node orchestration/playwright/saves-decks-flows.mjs",
     "art:flows": "node orchestration/playwright/art-search-flows.mjs",
     "theme:flows": "node orchestration/playwright/theme-flows.mjs",
-    "art:index": "node scripts/index-card-art.mjs"
+    "art:index": "node scripts/index-card-art.mjs",
+    "art:enrich": "node scripts/enrich-card-metadata.mjs"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.2",

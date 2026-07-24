@@ -7,7 +7,7 @@ const NotFound: React.FC = () => (
   <main className="mx-auto flex w-full max-w-content flex-1 flex-col items-start justify-center gap-6 px-gutter py-24">
     <p className="tnum text-sm text-foreground-subtle">404</p>
     <h1 className="font-display text-title font-bold tracking-tight text-foreground">
-      This card isn&apos;t in the binder.
+      This card isn&apos;t in the collection.
     </h1>
     <p className="max-w-md text-lead text-foreground-muted">
       The page you&apos;re after doesn&apos;t exist or has moved. The art you remember is still
