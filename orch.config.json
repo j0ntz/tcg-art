@@ -1,0 +1,65 @@
+{
+  "_doc": "site-orch per-site config (see ~/git/site-orch/README.md). Board ids from gh project field-list.",
+  "slug": "tcg-art",
+  "github": {
+    "owner": "j0ntz",
+    "repo": "tcg-art",
+    "branchPrefix": "jon/task-"
+  },
+  "repoPath": "~/git/tcg-art",
+  "worktreesRoot": "~/git/.tcg-art-worktrees",
+  "buildCommand": "npm run build",
+  "maxConcurrent": 1,
+  "board": {
+    "owner": "j0ntz",
+    "projectNumber": 1,
+    "projectId": "PVT_kwHOD6Er384BbyER",
+    "statusFieldId": "PVTSSF_lAHOD6Er384BbyERzhWgFFU",
+    "statusOptions": {
+      "Backlog": "55f65bf5",
+      "Pending": "067666ad",
+      "Running": "2d6f70b8",
+      "Verifying": "d0ceaa92",
+      "Verified": "ec3c40de",
+      "Landing": "8d75b6b9",
+      "Done": "8eb8a571"
+    }
+  },
+  "verify": {
+    "resolver": "vercel"
+  },
+  "land": {
+    "_doc": "How the lander merges PRs from Land-state tasks. mergeMethod: squash | merge | rebase.",
+    "mergeMethod": "squash"
+  },
+  "agent": {
+    "modelFieldId": "PVTSSF_lAHOD6Er384BbyERzhW-zdA",
+    "modelOptions": {
+      "Fable 5": "f9785bc8",
+      "Opus 4.8": "35d09df7",
+      "Opus 4.7": "ec3f4bb9",
+      "Sonnet 5": "5d2c2426",
+      "Sonnet 4.6": "6b72c87c"
+    },
+    "models": {
+      "Fable 5": "claude-fable-5",
+      "Opus 4.8": "claude-opus-4-8",
+      "Opus 4.7": "claude-opus-4-7",
+      "Sonnet 5": "claude-sonnet-5",
+      "Sonnet 4.6": "claude-sonnet-4-6"
+    },
+    "defaultModel": "",
+    "effortFieldId": "PVTSSF_lAHOD6Er384BbyERzhW-1gA",
+    "effortOptions": {
+      "low": "5b91529f",
+      "medium": "e866caa7",
+      "high": "28c335e7",
+      "xhigh": "4f0a5b7d",
+      "max": "68601140"
+    },
+    "defaultEffort": "",
+    "remoteControlStages": [
+      "work"
+    ]
+  }
+}
