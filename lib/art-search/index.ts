@@ -44,6 +44,14 @@ const loadIndex = async (): Promise<ArtIndexEntry[]> => {
   return entries;
 };
 
+// Index rows for specific cards (saves/deck views resolve display data and
+// vision facet attributes through this before falling back to the API).
+export const getIndexEntriesByIds = async (cardIds: string[]): Promise<Map<string, ArtIndexEntry>> => {
+  const entries = await loadIndex();
+  const wanted = new Set(cardIds);
+  return new Map(entries.filter(entry => wanted.has(entry.cardId)).map(entry => [entry.cardId, entry]));
+};
+
 // `limit` lets the search page serve its "Show more" affordance; the default
 // stays the classic top-24 ranked slice (the /api/art-search surface).
 export const searchArt = async (rawQuery: string, limit = RESULT_LIMIT): Promise<ArtSearchResponse> => {

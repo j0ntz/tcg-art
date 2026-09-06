@@ -3,7 +3,7 @@ import type { AdapterAccountType } from "next-auth/adapters";
 
 // Auth.js-compatible tables (column names match @auth/drizzle-adapter's default
 // Postgres schema so the adapter works unmodified), extended for credentials
-// login. Future features (card binders/portfolios) should reference users.id
+// login. Future features (saves/decks and beyond) should reference users.id
 // with a foreign key, the same way accounts.userId does below.
 
 export const users = pgTable("user", {
@@ -42,21 +42,52 @@ export const accounts = pgTable(
   account => [primaryKey({ columns: [account.provider, account.providerAccountId] })],
 );
 
-// A user's card collection (the /binder page). One row per (user, card); adding
-// a card the user already owns increments quantity instead of inserting a second
-// row. Only the Pokemon TCG API card id is stored (never card blobs); display
-// data is fetched through lib/pokemon.ts at render time.
-export const collectionItems = pgTable(
-  "collection_item",
+// A user's saved cards (the /saves page). One row per (user, card): a favorite
+// is a boolean relation, not an ownership count (the old binder's quantity
+// semantics are retired; migration 0003 folded any owned card into one
+// favorite row). Only the Pokemon TCG API card id is stored (never card
+// blobs); display data comes from the art index or lib/pokemon.ts at render.
+export const favorites = pgTable(
+  "favorite",
   {
     userId: text("userId")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     cardId: text("cardId").notNull(),
-    quantity: integer("quantity").notNull().default(1),
-    acquiredAt: timestamp("acquiredAt", { mode: "date" }).notNull().defaultNow(),
+    savedAt: timestamp("savedAt", { mode: "date" }).notNull().defaultNow(),
   },
-  item => [primaryKey({ columns: [item.userId, item.cardId] })],
+  favorite => [primaryKey({ columns: [favorite.userId, favorite.cardId] })],
+);
+
+// A user-created named deck. v1 enforces no game rules (no 60-card limit, no
+// copy limits); if legality rules layer on later they become derived checks
+// over deck_card rows (plus e.g. a nullable `format` column here), not a
+// schema rewrite.
+export const decks = pgTable("deck", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { mode: "date" }).notNull().defaultNow(),
+});
+
+// Deck membership: one row per (deck, card). A future rules layer would add a
+// `count` column here for multi-copy formats; v1 decks are art groupings, so
+// membership is boolean like favorites.
+export const deckCards = pgTable(
+  "deck_card",
+  {
+    deckId: text("deckId")
+      .notNull()
+      .references(() => decks.id, { onDelete: "cascade" }),
+    cardId: text("cardId").notNull(),
+    addedAt: timestamp("addedAt", { mode: "date" }).notNull().defaultNow(),
+  },
+  deckCard => [primaryKey({ columns: [deckCard.deckId, deckCard.cardId] })],
 );
 
 // Semantic art index: one row per card, produced offline by
@@ -84,6 +115,15 @@ export const cardArtIndex = pgTable("card_art_index", {
   palette: jsonb("palette").$type<string[]>().notNull(),
   setting: text("setting"),
   style: text("style"),
+  // Game metadata for faceted filtering/sorting, merged from the Pokemon TCG
+  // API dataset by scripts/enrich-card-metadata.mjs (metadata only; the vision
+  // fields above are never re-described). Nullable: enrichment is best-effort
+  // and older rows may predate it.
+  supertype: text("supertype"),
+  subtypes: jsonb("subtypes").$type<string[]>(),
+  types: jsonb("types").$type<string[]>(),
+  nationalPokedexNumbers: jsonb("nationalPokedexNumbers").$type<number[]>(),
+  releaseDate: text("releaseDate"),
   // Lowercased concatenation of every describable field; the lexical ranker
   // scores against this plus the structured fields above.
   searchText: text("searchText").notNull(),

@@ -22,7 +22,7 @@ const RouteError: React.FC<ErrorProps> = ({ error, reset }) => {
         Something went wrong.
       </h1>
       <p className="max-w-md text-lead text-foreground-muted">
-        An unexpected error interrupted this page. Your binder and account are unaffected.
+        An unexpected error interrupted this page. Your saves, decks, and account are unaffected.
       </p>
       <Button type="button" variant="primary" size="md" onClick={reset}>
         Try again

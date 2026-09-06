@@ -18,6 +18,13 @@ export interface ArtIndexEntry {
   palette: string[];
   setting: string | null;
   style: string | null;
+  // Game metadata merged from the Pokemon TCG dataset (scripts/
+  // enrich-card-metadata.mjs); null/empty on rows that predate enrichment.
+  supertype: string | null;
+  subtypes: string[] | null;
+  types: string[] | null;
+  nationalPokedexNumbers: number[] | null;
+  releaseDate: string | null;
   searchText: string;
   model: string;
 }

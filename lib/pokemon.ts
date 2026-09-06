@@ -17,16 +17,20 @@ export interface Card {
   artist: string | null;
   set: CardSet;
   images: { small: string; large: string };
+  // Facet metadata (lib/facets) so every card query exposes the filterable
+  // attributes, whether the card came from the art index or straight from
+  // the API.
+  supertype: string | null;
+  subtypes: string[];
+  types: string[];
+  nationalPokedexNumbers: number[];
+  releaseDate: string | null;
 }
 
 // The card detail page's superset of Card: full metadata for one card.
 export interface CardDetail extends Card {
-  supertype: string | null;
-  subtypes: string[];
   hp: string | null;
-  types: string[];
   flavorText: string | null;
-  releaseDate: string | null;
 }
 
 // One page of search results plus the API's total, so the UI can paginate.
@@ -47,6 +51,7 @@ interface ApiCard {
   subtypes?: string[];
   hp?: string;
   types?: string[];
+  nationalPokedexNumbers?: number[];
   flavorText?: string;
   set: { id: string; name: string; series: string; releaseDate?: string };
   images: { small: string; large: string };
@@ -62,6 +67,10 @@ interface ApiSingleResponse {
 }
 
 export const SEARCH_PAGE_SIZE = 24;
+
+// Every card query selects the same fields so facet metadata (supertype,
+// subtypes, types, dex numbers, release date) rides along everywhere.
+const CARD_SELECT = "id,name,number,rarity,artist,supertype,subtypes,types,nationalPokedexNumbers,set,images";
 
 // Lucene control characters the API query syntax reserves. We strip them from user
 // input so a stray character cannot break the query or inject operators.
@@ -86,7 +95,19 @@ async function fetchCardPage(params: URLSearchParams, revalidate: number): Promi
   };
 }
 
-export async function searchCards(rawQuery: string, page = 1): Promise<CardPage> {
+// Extra constraints callers can push into the Lucene query. `clauses` are
+// pre-built field clauses from lib/facets (facet selections applied
+// API-side in name mode); `orderBy` is the API's sort key.
+export interface CardQueryOptions {
+  clauses?: string[];
+  orderBy?: string;
+}
+
+export async function searchCards(
+  rawQuery: string,
+  page = 1,
+  options: CardQueryOptions = {},
+): Promise<CardPage> {
   const query = rawQuery.trim();
   const safePage = sanitizePage(page);
   const empty: CardPage = { cards: [], totalCount: 0, page: safePage, pageSize: SEARCH_PAGE_SIZE };
@@ -103,20 +124,24 @@ export async function searchCards(rawQuery: string, page = 1): Promise<CardPage>
   }
 
   // Wildcard-match every token against the card name, e.g. "surfing pikachu" -> name:*surfing* name:*pikachu*.
-  const q = tokens.map(token => `name:*${token}*`).join(" ");
+  const q = [...tokens.map(token => `name:*${token}*`), ...(options.clauses ?? [])].join(" ");
   const params = new URLSearchParams({
     q,
     page: String(safePage),
     pageSize: String(SEARCH_PAGE_SIZE),
-    orderBy: "name",
-    select: "id,name,number,rarity,artist,set,images",
+    orderBy: options.orderBy ?? "name",
+    select: CARD_SELECT,
   });
   return fetchCardPage(params, 3600);
 }
 
 // All cards credited to one illustrator, newest set first. Reached from the
 // artist attribution link on the card detail page.
-export async function searchCardsByArtist(rawArtist: string, page = 1): Promise<CardPage> {
+export async function searchCardsByArtist(
+  rawArtist: string,
+  page = 1,
+  options: CardQueryOptions = {},
+): Promise<CardPage> {
   const artist = rawArtist.trim().replace(/"/g, "");
   const safePage = sanitizePage(page);
   if (artist.length === 0) {
@@ -124,11 +149,11 @@ export async function searchCardsByArtist(rawArtist: string, page = 1): Promise<
   }
 
   const params = new URLSearchParams({
-    q: `artist:"${artist}"`,
+    q: [`artist:"${artist}"`, ...(options.clauses ?? [])].join(" "),
     page: String(safePage),
     pageSize: String(SEARCH_PAGE_SIZE),
-    orderBy: "-set.releaseDate",
-    select: "id,name,number,rarity,artist,set,images",
+    orderBy: options.orderBy ?? "-set.releaseDate",
+    select: CARD_SELECT,
   });
   return fetchCardPage(params, 86400);
 }
@@ -142,6 +167,11 @@ function toCard(card: ApiCard): Card {
     artist: card.artist ?? null,
     set: { id: card.set.id, name: card.set.name, series: card.set.series },
     images: card.images,
+    supertype: card.supertype ?? null,
+    subtypes: card.subtypes ?? [],
+    types: card.types ?? [],
+    nationalPokedexNumbers: card.nationalPokedexNumbers ?? [],
+    releaseDate: card.set.releaseDate ?? null,
   };
 }
 
@@ -172,12 +202,8 @@ export async function getCardById(rawId: string): Promise<CardDetail | null> {
   const card = body.data;
   return {
     ...toCard(card),
-    supertype: card.supertype ?? null,
-    subtypes: card.subtypes ?? [],
     hp: card.hp ?? null,
-    types: card.types ?? [],
     flavorText: card.flavorText ?? null,
-    releaseDate: card.set.releaseDate ?? null,
   };
 }
 
@@ -190,7 +216,7 @@ async function fetchCardsByIdChunk(ids: string[]): Promise<Card[]> {
   const params = new URLSearchParams({
     q,
     pageSize: String(IDS_PER_REQUEST),
-    select: "id,name,number,rarity,artist,set,images",
+    select: CARD_SELECT,
   });
 
   const res = await fetch(`${API_URL}?${params.toString()}`, {
@@ -204,7 +230,7 @@ async function fetchCardsByIdChunk(ids: string[]): Promise<Card[]> {
   return body.data.map(toCard);
 }
 
-// Batch-resolve stored card ids to display data (the /binder page). Returned
+// Batch-resolve stored card ids to display data (saves and deck views). Returned
 // order is the API's, not the input's; callers re-order by mapping over their
 // own id list. Ids the API no longer knows are simply absent from the result.
 export async function getCardsByIds(rawIds: string[]): Promise<Map<string, Card>> {
@@ -227,7 +253,7 @@ export async function getShowcaseCards(count = 5): Promise<Card[]> {
     q: 'name:charizard (rarity:"Illustration Rare" OR rarity:"Special Illustration Rare" OR rarity:"Rare Holo")',
     pageSize: String(count),
     orderBy: "-set.releaseDate",
-    select: "id,name,number,rarity,artist,set,images",
+    select: CARD_SELECT,
   });
 
   const res = await fetch(`${API_URL}?${params.toString()}`, {

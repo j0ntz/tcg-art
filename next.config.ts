@@ -15,6 +15,12 @@ const nextConfig: NextConfig = {
   // Keep the DB drivers out of the server bundle: pg has optional native
   // bindings and PGlite loads a WASM asset from its package directory.
   serverExternalPackages: ["@electric-sql/pglite", "pg"],
+  async redirects() {
+    return [
+      // The binder retired in favor of saves + decks; old links land on saves.
+      { source: "/binder", destination: "/saves", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

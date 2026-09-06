@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 // Server-side session gate: no session, no page. This is the pattern future
-// signed-in features (binders/portfolios) should copy.
+// signed-in features (saves/decks) should copy.
 const AccountPage: React.FC = async () => {
   const user = await getSessionUser();
   if (user == null) redirect("/login");
