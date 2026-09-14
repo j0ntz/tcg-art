@@ -35,18 +35,16 @@
   "agent": {
     "modelFieldId": "PVTSSF_lAHOD6Er384BbyERzhW-zdA",
     "modelOptions": {
-      "Fable 5": "f9785bc8",
-      "Opus 4.8": "35d09df7",
-      "Opus 4.7": "ec3f4bb9",
-      "Sonnet 5": "5d2c2426",
-      "Sonnet 4.6": "6b72c87c"
+      "Fable": "5f5335a3",
+      "Opus": "877960b6",
+      "Sonnet": "37cc7484",
+      "Haiku": "b34f51b4"
     },
     "models": {
-      "Fable 5": "claude-fable-5",
-      "Opus 4.8": "claude-opus-4-8",
-      "Opus 4.7": "claude-opus-4-7",
-      "Sonnet 5": "claude-sonnet-5",
-      "Sonnet 4.6": "claude-sonnet-4-6"
+      "Fable": "fable",
+      "Opus": "opus",
+      "Sonnet": "sonnet",
+      "Haiku": "haiku"
     },
     "defaultModel": "",
     "effortFieldId": "PVTSSF_lAHOD6Er384BbyERzhW-1gA",
