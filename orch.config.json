@@ -1,5 +1,5 @@
 {
-  "_doc": "site-orch per-site config (see ~/git/site-orch/README.md). Board ids from gh project field-list.",
+  "_doc": "site-orch per-tenant config (see ~/git/site-orch/README.md). Board ids from gh project field-list.",
   "slug": "tcg-art",
   "github": {
     "owner": "j0ntz",
