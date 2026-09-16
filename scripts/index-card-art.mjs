@@ -76,7 +76,8 @@ if (useStub && !hasFlag("stub")) {
 
 // ---------- Pokemon TCG API ----------
 
-const SELECT = "id,name,number,rarity,artist,set,images,types,subtypes,flavorText";
+const SELECT =
+  "id,name,number,rarity,artist,set,images,types,subtypes,supertype,nationalPokedexNumbers,flavorText";
 
 const fetchJson = async (url, init, attempts = 3) => {
   for (let attempt = 1; ; attempt++) {
@@ -281,6 +282,13 @@ const toEntry = (card, description) => {
     palette: description.palette,
     setting: description.setting,
     style: description.style,
+    // Game metadata for the faceted filters (see lib/facets); same fields
+    // scripts/enrich-card-metadata.mjs backfills for older entries.
+    supertype: card.supertype ?? null,
+    subtypes: card.subtypes ?? [],
+    types: card.types ?? [],
+    nationalPokedexNumbers: card.nationalPokedexNumbers ?? [],
+    releaseDate: card.set.releaseDate ?? null,
     searchText,
     model: description.model,
   };
@@ -322,15 +330,19 @@ const openDb = async () => {
 const UPSERT_SQL = `
 INSERT INTO "card_art_index"
   ("cardId","name","setId","setName","number","rarity","artist","imageSmall","imageLarge",
-   "scene","subjects","action","mood","palette","setting","style","searchText","model","indexedAt")
-VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,now())
+   "scene","subjects","action","mood","palette","setting","style",
+   "supertype","subtypes","types","nationalPokedexNumbers","releaseDate",
+   "searchText","model","indexedAt")
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,now())
 ON CONFLICT ("cardId") DO UPDATE SET
   "name"=excluded."name","setId"=excluded."setId","setName"=excluded."setName",
   "number"=excluded."number","rarity"=excluded."rarity","artist"=excluded."artist",
   "imageSmall"=excluded."imageSmall","imageLarge"=excluded."imageLarge",
   "scene"=excluded."scene","subjects"=excluded."subjects","action"=excluded."action",
   "mood"=excluded."mood","palette"=excluded."palette","setting"=excluded."setting",
-  "style"=excluded."style","searchText"=excluded."searchText","model"=excluded."model",
+  "style"=excluded."style","supertype"=excluded."supertype","subtypes"=excluded."subtypes",
+  "types"=excluded."types","nationalPokedexNumbers"=excluded."nationalPokedexNumbers",
+  "releaseDate"=excluded."releaseDate","searchText"=excluded."searchText","model"=excluded."model",
   "indexedAt"=now()`;
 
 const upsertEntry = (db, entry) =>
@@ -338,7 +350,10 @@ const upsertEntry = (db, entry) =>
     entry.cardId, entry.name, entry.setId, entry.setName, entry.number, entry.rarity,
     entry.artist, entry.imageSmall, entry.imageLarge, entry.scene,
     JSON.stringify(entry.subjects), entry.action, JSON.stringify(entry.mood),
-    JSON.stringify(entry.palette), entry.setting, entry.style, entry.searchText, entry.model,
+    JSON.stringify(entry.palette), entry.setting, entry.style,
+    entry.supertype ?? null, JSON.stringify(entry.subtypes ?? []),
+    JSON.stringify(entry.types ?? []), JSON.stringify(entry.nationalPokedexNumbers ?? []),
+    entry.releaseDate ?? null, entry.searchText, entry.model,
   ]);
 
 // ---------- Main ----------

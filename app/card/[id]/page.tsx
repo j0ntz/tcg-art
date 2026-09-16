@@ -3,11 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getSessionUser } from "@/lib/auth";
-import { getOwnedQuantities } from "@/lib/collection";
-import { addCardToCollection } from "@/lib/collection/actions";
+import { getDeckMembership, getDecks } from "@/lib/decks";
+import { getFavoriteCardIds } from "@/lib/favorites";
 import { getCardById } from "@/lib/pokemon";
-import Badge from "../../components/ui/Badge";
-import Button from "../../components/ui/Button";
+import AddToDeckMenu from "../../components/cards/AddToDeckMenu";
+import FavoriteButton from "../../components/cards/FavoriteButton";
 import TypeBadge from "../../components/ui/TypeBadge";
 import ArtZoom from "./ArtZoom";
 
@@ -49,7 +49,14 @@ const CardDetailPage = async ({ params }: CardPageProps) => {
   if (card == null) notFound();
 
   const user = await getSessionUser();
-  const owned = user != null ? (await getOwnedQuantities(user.id)).get(card.id) : undefined;
+  const [saved, decks, memberOf] =
+    user != null
+      ? await Promise.all([
+          getFavoriteCardIds(user.id).then(ids => ids.has(card.id)),
+          getDecks(user.id),
+          getDeckMembership(user.id, card.id),
+        ])
+      : [false, null, new Set<string>()];
 
   return (
     <main className="mx-auto flex w-full max-w-content flex-1 flex-col gap-8 px-gutter py-10">
@@ -120,24 +127,24 @@ const CardDetailPage = async ({ params }: CardPageProps) => {
 
           {user != null ? (
             <div className="flex items-center gap-3">
-              <form action={addCardToCollection}>
-                <input type="hidden" name="cardId" value={card.id} />
-                <Button type="submit" variant="primary" size="md" data-testid={`add-${card.id}`}>
-                  {owned != null ? "+ Add another to binder" : "+ Add to binder"}
-                </Button>
-              </form>
-              {owned != null ? (
-                <Badge variant="solid" size="sm" data-testid={`owned-${card.id}`}>
-                  ×{owned} in your binder
-                </Badge>
-              ) : null}
+              <FavoriteButton
+                cardId={card.id}
+                cardName={card.name}
+                saved={saved}
+                appearance="labeled"
+              />
+              <AddToDeckMenu
+                cardId={card.id}
+                decks={decks ?? []}
+                memberOf={[...memberOf]}
+              />
             </div>
           ) : (
             <p className="text-sm text-foreground-subtle">
               <Link href="/signup" className="underline underline-offset-4 transition-colors hover:text-foreground">
                 Sign up free
               </Link>{" "}
-              to save this card to your binder.
+              to save this card and build decks around it.
             </p>
           )}
         </div>
