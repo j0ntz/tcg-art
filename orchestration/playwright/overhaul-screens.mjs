@@ -1,7 +1,7 @@
 // Vision self-review capture for the site overhaul (issue #47): every surface,
-// desktop (1440) and mobile (390), including empty/404 states and the binder
-// behind a real signup. Reduced motion is emulated so content is captured at
-// rest; the one scroll-linked animation is verified live, not here.
+// desktop (1440) and mobile (390), including empty/404 states and the saves
+// pages behind a real signup. Reduced motion is emulated so content is captured
+// at rest; the one scroll-linked animation is verified live, not here.
 //
 //   BASE_URL=http://localhost:3000 node orchestration/playwright/overhaul-screens.mjs
 import { chromium } from "@playwright/test";
@@ -110,7 +110,7 @@ const run = async () => {
   await shot(page, "signup-mobile");
   await page.setViewportSize(DESKTOP);
 
-  // --- Binder (real signup against the dev PGlite database) -----------------
+  // --- Saves (real signup against the dev PGlite database) ------------------
   const email = `overhaul+${Date.now()}@example.com`;
   await page.goto(`${BASE_URL}/signup`, { waitUntil: "networkidle" });
   await page.fill("#email", email);
@@ -119,23 +119,25 @@ const run = async () => {
   await page.getByRole("button", { name: "Create Account" }).click();
   await page.waitForURL("**/account");
 
-  await page.goto(`${BASE_URL}/binder`, { waitUntil: "networkidle" });
-  await page.getByTestId("binder-empty").waitFor();
-  await shot(page, "binder-empty-desktop");
+  await page.goto(`${BASE_URL}/saves`, { waitUntil: "networkidle" });
+  await page.getByTestId("saves-empty").waitFor();
+  await shot(page, "saves-empty-desktop");
 
   await page.goto(`${BASE_URL}/search?mode=name&q=charizard`, { waitUntil: "networkidle" });
   await page.getByTestId("result-summary").waitFor();
-  await page.locator('[data-testid^="add-"]').first().click();
-  await page.waitForLoadState("networkidle");
+  const heart = page.locator('[data-testid^="fav-"]').first();
+  const favId = (await heart.getAttribute("data-testid")).replace("fav-", "");
+  await heart.click();
+  await page.waitForSelector(`[data-testid="fav-${favId}"][data-saved="true"]`);
 
-  await page.goto(`${BASE_URL}/binder`, { waitUntil: "networkidle" });
-  await page.getByTestId("binder-pages").waitFor();
-  await shot(page, "binder-desktop");
-  await page.getByTestId("mode-gallery").click();
-  await page.getByTestId("night-gallery").waitFor();
-  await shot(page, "binder-gallery-desktop");
+  await page.goto(`${BASE_URL}/saves`, { waitUntil: "networkidle" });
+  await page.getByTestId(`card-tile-${favId}`).waitFor();
+  await shot(page, "saves-desktop");
+  await page.getByTestId("view-carousel").click();
+  await page.getByTestId("carousel").waitFor();
+  await shot(page, "saves-carousel-desktop");
   await page.setViewportSize(MOBILE);
-  await shot(page, "binder-gallery-mobile");
+  await shot(page, "saves-carousel-mobile");
 
   await browser.close();
   console.log("overhaul-screens: done");
