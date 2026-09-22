@@ -4,7 +4,7 @@ Working name: TCG-Art. A Pokemon-card art search engine, modeled on the live pro
 artfindertcg.com (walked end to end logged in, captured in `~/pokemon-artfinder-scrape-and-spec.md`).
 This document is the consolidated product spec. Build and hosting decisions that sit above the
 product (agent orchestration, CI posture, verification bar) live in
-[orchestration-plan.md](orchestration-plan.md), which is the source of truth for those; this spec
+the [site-orch README](https://github.com/j0ntz/site-orch), which is the source of truth for those; this spec
 references them where they touch the stack.
 
 ## 1. Product summary
@@ -104,7 +104,7 @@ Phased, cheapest-first, no model training at any stage:
   services.
 
 Note on billing: these embedding costs are the product's own runtime spend (one-time, small) and are
-unrelated to the Claude-subscription constraint that governs the build agent (see orchestration-plan.md).
+unrelated to the Claude-subscription constraint that governs the build agent (see the site-orch README).
 
 ## 6. Data model
 
@@ -141,7 +141,7 @@ Added at v2/v3: `textEmbedding: vector`, `imageEmbedding: vector` (pgvector colu
   app is interactive. Chosen over Vite for SSR/SSG, server-side API-key handling, and the v2 server-side
   embedding lookups.
 - **Hosting:** Vercel, deploy-on-push from `main` to production. This is a settled decision in
-  orchestration-plan.md. Deferred for Phase 0: the first MVP runs and is verified locally only
+  the site-orch README. Deferred for Phase 0: the first MVP runs and is verified locally only
   (`next dev`), with the Vercel deploy as the first step once remote access is back.
 - **Data + images:** Pokemon TCG API for card data and CDN image URLs; TCGdex as a fallback source. A
   weekly GitHub Action refreshes the local dataset so new sets appear without manual work.
@@ -155,7 +155,7 @@ Added at v2/v3: `textEmbedding: vector`, `imageEmbedding: vector` (pgvector colu
 - **Package manager / lint:** per this repo's `CLAUDE.md`, use the lockfile's manager (npm or pnpm) and
   the repo's own ESLint/Prettier with plain `git commit`. No Edge `lint-commit.sh`, no yarn.
 
-Build and deploy posture (from orchestration-plan.md, summarized): commit to `main`, Vercel owns the
+Build and deploy posture (from the original orchestration plan, summarized): commit to `main`, Vercel owns the
 build, no GitHub Actions running Claude (the agent stays local, interactive, subscription-billed). "Done"
 requires both a green Vercel build and a real browser drive of the deployed URL with a proof screenshot.
 CI-green alone does not count.

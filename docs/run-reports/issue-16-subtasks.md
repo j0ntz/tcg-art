@@ -7,7 +7,7 @@
 | Task | #16 · https://github.com/j0ntz/tcg-art/issues/16 |
 | PR | https://github.com/j0ntz/tcg-art/pull/26 |
 | Branch | `jon/task-16` |
-| Design | `docs/orch-subtasks-design.md` |
+| Design | `docs/orch-subtasks-design.md` (now `site-orch/docs/orch-subtasks-design.md`) |
 | Date | 2026-07-02 |
 
 ## Summary

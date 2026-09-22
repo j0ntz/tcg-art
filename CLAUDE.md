@@ -1,6 +1,6 @@
 # tcg-art
 
-Next.js webapp deployed on Vercel, built and maintained by a hands-off agent orchestration. See [docs/orchestration-plan.md](docs/orchestration-plan.md) for the orchestration design and decisions.
+Next.js webapp deployed on Vercel, built and maintained by a hands-off agent orchestration. The orchestration is [site-orch](https://github.com/j0ntz/site-orch); its README describes the board, agents, verify and landing. This repo's side of the contract is [orchestration/README.md](orchestration/README.md).
 
 ## This repo overrides the global Edge rules
 
